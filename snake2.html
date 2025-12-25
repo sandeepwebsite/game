@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Snake Game</title>
+<title>Snake Ultimate</title>
 
 <style>
 :root {
@@ -138,11 +138,26 @@ button {
   </div>
 </div>
 
-
 <div class="overlay" id="overlay">
   <div class="overlay-content">
     <h2>🐍 Snake Ultimate</h2>
     <p id="skinText"></p>
+    <div style="margin: 12px 0;">
+      <label>
+        <input type="radio" name="difficulty" value="easy" checked>
+        Easy
+      </label>
+      &nbsp;&nbsp;
+      <label>
+        <input type="radio" name="difficulty" value="medium">
+        Medium
+      </label>
+      &nbsp;&nbsp;
+      <label>
+        <input type="radio" name="difficulty" value="hard">
+        Hard
+      </label>
+    </div>
     <button id="startBtn">Start</button>
   </div>
 </div>
@@ -177,12 +192,23 @@ const loseSound = document.getElementById("loseSound");
 let snake, dir, food, score, level, speed;
 let particles = [];
 let boss = null;
+let bossDir = { x:0, y:0 };
 let paused = true;
 let lastTime = 0, acc = 0;
+let difficulty = "easy";
 
-/* ---------- STORAGE ---------- */
-let highScore = +localStorage.getItem("snakeHigh") || 0;
-highEl.textContent = highScore;
+/* ---------- BOSS FOOD SPAWN LOGIC ---------- */
+let bossAppearFood = 15;
+let bossHideAfter = 5;
+let bossFoodCounter = 0;
+
+/* ---------- STORAGE / HIGH SCORES ---------- */
+let highScores = {
+  easy: +localStorage.getItem("snakeHigh_easy") || 0,
+  medium: +localStorage.getItem("snakeHigh_medium") || 0,
+  hard: +localStorage.getItem("snakeHigh_hard") || 0
+};
+highEl.textContent = highScores[difficulty];
 
 /* ---------- SKINS ---------- */
 const skins = [
@@ -217,6 +243,7 @@ function startGame() {
   food = spawnFood();
   particles = [];
   boss = null;
+  bossFoodCounter = 0;
   score = 0;
   level = 1;
   speed = 140;
@@ -225,6 +252,7 @@ function startGame() {
 
   scoreEl.textContent = score;
   levelEl.textContent = level;
+  highEl.textContent = highScores[difficulty];
 
   updateSkin();
   initChallenge();
@@ -240,45 +268,120 @@ function gameOver() {
   paused = true;
   loseSound.currentTime = 0;
   loseSound.play();
-  if (score > highScore) {
-    highScore = score;
-    localStorage.setItem("snakeHigh", score);
-    highEl.textContent = score;
+
+  if (score > highScores[difficulty]) {
+    highScores[difficulty] = score;
+    localStorage.setItem(`snakeHigh_${difficulty}`, score);
   }
+  highEl.textContent = highScores[difficulty];
   overlay.style.display = "flex";
 }
 
 /* ---------- UPDATE ---------- */
 function update() {
   const h = snake[0];
-  const nx = h.x + dir.x;
-  const ny = h.y + dir.y;
+  let nx = h.x + dir.x;
+  let ny = h.y + dir.y;
 
-  if (
-    nx < 0 || ny < 0 || nx >= tiles || ny >= tiles ||
-    snake.some(s => s.x === nx && s.y === ny) ||
-    (boss && boss.x === nx && boss.y === ny)
-  ) return gameOver();
+  /* ---------- WALL WRAP / DEATH ---------- */
+  if (difficulty === "easy" || difficulty === "medium") {
+    if (nx < 0) nx = tiles - 1;
+    if (nx >= tiles) nx = 0;
+    if (ny < 0) ny = tiles - 1;
+    if (ny >= tiles) ny = 0;
+  } else if (difficulty === "hard") {
+    if (nx < 0 || ny < 0 || nx >= tiles || ny >= tiles) return gameOver();
+  }
+
+  /* ---------- SELF COLLISION ---------- */
+  if ((difficulty === "medium" || difficulty === "hard") &&
+      snake.some(s => s.x === nx && s.y === ny)) return gameOver();
+
+  /* ---------- BOSS COLLISION (circular) ---------- */
+  if (boss) {
+    const bossX = boss.x * grid + grid/2;
+    const bossY = boss.y * grid + grid/2;
+    const snakeX = nx * grid + grid/2;
+    const snakeY = ny * grid + grid/2;
+    
+    const dx = bossX - snakeX;
+    const dy = bossY - snakeY;
+    const distance = Math.sqrt(dx*dx + dy*dy);
+    const bossRadius = (grid * 1.5)/2; // match circular boss radius
+
+    if (distance < bossRadius) return gameOver();
+  }
 
   snake.forEach(s => { s.px = s.x; s.py = s.y; });
-  snake.unshift({ x:nx, y:ny, px:h.x, py:h.y });
+  snake.unshift({ x: nx, y: ny, px: h.x, py: h.y });
 
   emitParticles(h.x, h.y);
 
+  /* ---------- FOOD ---------- */
   if (nx === food.x && ny === food.y) {
     eatSound.currentTime = 0;
     eatSound.play();
+
     score++;
     scoreEl.textContent = score;
+
+    bossFoodCounter++;
+
+    // Spawn boss after 15 food eaten
+    if (!boss && score >= bossAppearFood) {
+      spawnBoss();
+      bossFoodCounter = 0;
+    }
+
+    // Hide boss after 5 more food eaten
+    if (boss && bossFoodCounter >= bossHideAfter) {
+      boss = null;
+    }
+
     if (score % 5 === 0) {
       level++;
       levelEl.textContent = level;
       speed = Math.max(60, speed - 10);
       updateSkin();
-      if (level % 5 === 0) spawnBoss();
     }
+
     food = spawnFood();
   } else snake.pop();
+
+  /* ---------- BOSS FLOATING ---------- */
+  if (boss) {
+    boss.x += bossDir.x * 0.1;
+    boss.y += bossDir.y * 0.1;
+    boss.x = Math.max(0, Math.min(tiles - 1, boss.x));
+    boss.y = Math.max(0, Math.min(tiles - 1, boss.y));
+  }
+
+  /* ---------- WALL-BOUNCE BOSS MOVEMENT ---------- */
+if (boss) {
+  const bossRadiusTiles = 0.75; // matches grid * 1.5 / 2
+
+  boss.x += bossDir.x * 0.1;
+  boss.y += bossDir.y * 0.1;
+
+  // Bounce horizontally
+  if (boss.x <= bossRadiusTiles || boss.x >= tiles - 1 - bossRadiusTiles) {
+    bossDir.x *= -1;
+    boss.x = Math.max(
+      bossRadiusTiles,
+      Math.min(tiles - 1 - bossRadiusTiles, boss.x)
+    );
+  }
+
+  // Bounce vertically
+  if (boss.y <= bossRadiusTiles || boss.y >= tiles - 1 - bossRadiusTiles) {
+    bossDir.y *= -1;
+    boss.y = Math.max(
+      bossRadiusTiles,
+      Math.min(tiles - 1 - bossRadiusTiles, boss.y)
+    );
+  }
+}
+
 
   updateChallenge();
 }
@@ -287,17 +390,72 @@ function update() {
 function draw(a) {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // food
-  ctx.fillStyle="#f87171";
-  ctx.fillRect(food.x*grid, food.y*grid, grid, grid);
+  /* ---------- FOOD: Animated Frog ---------- */
+  const fx = food.x * grid + grid/2;
+  const fy = food.y * grid + grid/2;
+  const bounce = Math.sin(Date.now()/200) * 4;
 
-  // boss
+  ctx.save();
+  ctx.translate(fx, fy - bounce);
+
+  // Body
+  ctx.fillStyle = "#4ade80";
+  ctx.beginPath();
+  ctx.arc(0,0,grid/2 - 2,0,Math.PI*2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(-6,-6,4,0,Math.PI*2);
+  ctx.arc(6,-6,4,0,Math.PI*2);
+  ctx.fill();
+
+  // Pupils
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(-6,-6,2,0,Math.PI*2);
+  ctx.arc(6,-6,2,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* ---------- BOSS: Circular Pulsing + Chasing Eyes ---------- */
   if (boss) {
-    ctx.fillStyle="#dc2626";
-    ctx.fillRect(boss.x*grid, boss.y*grid, grid, grid);
+    const bx = boss.x * grid + grid/2;
+    const by = boss.y * grid + grid/2;
+    const baseSize = grid * 1.5;
+    const pulse = Math.sin(Date.now()/200) * 4;
+    const size = baseSize + pulse;
+    const hue = (Date.now()/10)%360;
+
+    ctx.fillStyle = `hsl(${hue}, 80%, 50%)`;
+    ctx.beginPath();
+    ctx.arc(bx, by, size/2, 0, Math.PI*2);
+    ctx.fill();
+
+    // Eyes follow snake head
+    const head = snake[0];
+    const hx = head.x * grid + grid/2;
+    const hy = head.y * grid + grid/2;
+    const angle = Math.atan2(hy - by, hx - bx);
+
+    const eyeOffset = 12;
+    const pupilOffset = 3;
+
+    const leftEyeX = bx - eyeOffset;
+    const leftEyeY = by - eyeOffset;
+    const rightEyeX = bx + eyeOffset;
+    const rightEyeY = by - eyeOffset;
+
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(leftEyeX + Math.cos(angle)*pupilOffset, leftEyeY + Math.sin(angle)*pupilOffset, 3, 0, Math.PI*2);
+    ctx.arc(rightEyeX + Math.cos(angle)*pupilOffset, rightEyeY + Math.sin(angle)*pupilOffset, 3, 0, Math.PI*2);
+    ctx.fill();
   }
 
-  // snake
+  /* ---------- SNAKE ---------- */
   snake.forEach((s,i)=>{
     const x=(s.px+(s.x-s.px)*a)*grid;
     const y=(s.py+(s.y-s.py)*a)*grid;
@@ -310,14 +468,13 @@ function draw(a) {
     ctx.roundRect(x+2, y+2, grid-4, grid-4, i===0?8:6);
     ctx.fill();
 
-    // HEAD EYES
-    if (i === 0) {
-      const ox = dir.x * 4;
-      const oy = dir.y * 4;
-      ctx.fillStyle = "#000";
+    if (i===0){
+      const ox = dir.x*4;
+      const oy = dir.y*4;
+      ctx.fillStyle="#000";
       ctx.beginPath();
-      ctx.arc(x + grid/2 - 4 + ox, y + grid/2 - 4 + oy, 2, 0, Math.PI*2);
-      ctx.arc(x + grid/2 + 4 + ox, y + grid/2 - 4 + oy, 2, 0, Math.PI*2);
+      ctx.arc(x+grid/2-4+ox, y+grid/2-4+oy,2,0,Math.PI*2);
+      ctx.arc(x+grid/2+4+ox, y+grid/2-4+oy,2,0,Math.PI*2);
       ctx.fill();
     }
   });
@@ -347,16 +504,19 @@ function emitParticles(x,y) {
     x:x*grid+grid/2,
     y:y*grid+grid/2,
     life:20,
-    color: skin.neon
-      ? `hsl(${Math.random()*360},100%,60%)`
-      : skin.particle
+    color: skin.neon ? `hsl(${Math.random()*360},100%,60%)` : skin.particle
   });
 }
 
 function spawnBoss() {
-  boss = { x:rand(), y:rand() };
-  banner.style.display="block";
-  setTimeout(()=>banner.style.display="none",1500);
+  boss = { x: rand(), y: rand() };
+  bossDir = {
+    x: Math.random() < 0.5 ? 1 : -1,
+    y: Math.random() < 0.5 ? 1 : -1
+  };
+
+  banner.style.display = "block";
+  setTimeout(() => banner.style.display = "none", 1500);
 }
 
 function updateChallenge() {
@@ -376,45 +536,44 @@ function updateChallenge() {
 /* ---------- LOOP ---------- */
 function loop(t) {
   if (paused) return;
-  if (!lastTime) lastTime = t;
-  acc += t - lastTime;
-  lastTime = t;
-  while (acc >= speed) {
-    update();
-    acc -= speed;
-  }
-  draw(acc / speed);
+  if (!lastTime) lastTime=t;
+  acc+=t-lastTime;
+  lastTime=t;
+  while(acc>=speed){update();acc-=speed;}
+  draw(acc/speed);
   requestAnimationFrame(loop);
 }
 
 /* ---------- INPUT ---------- */
-document.addEventListener("keydown", e => {
-  if (paused) startGame();
-  if (e.key==="ArrowUp" && dir.y!==1) dir={x:0,y:-1};
-  if (e.key==="ArrowDown" && dir.y!==-1) dir={x:0,y:1};
-  if (e.key==="ArrowLeft" && dir.x!==1) dir={x:-1,y:0};
-  if (e.key==="ArrowRight" && dir.x!==-1) dir={x:1,y:0};
+document.addEventListener("keydown", e=>{
+  if(paused) startGame();
+  if(e.key==="ArrowUp" && dir.y!==1) dir={x:0,y:-1};
+  if(e.key==="ArrowDown" && dir.y!==-1) dir={x:0,y:1};
+  if(e.key==="ArrowLeft" && dir.x!==1) dir={x:-1,y:0};
+  if(e.key==="ArrowRight" && dir.x!==-1) dir={x:1,y:0};
 });
 
-/* ---------- MOBILE BUTTON CONTROLS ---------- */
-document.querySelectorAll(".mobile-controls button").forEach(btn => {
-  btn.addEventListener("touchstart", e => {
+document.querySelectorAll(".mobile-controls button").forEach(btn=>{
+  btn.addEventListener("touchstart", e=>{
     e.preventDefault();
-    const d = btn.dataset.dir;
-
-    if (paused) startGame();
-
-    if (d === "up" && dir.y !== 1) dir = { x: 0, y: -1 };
-    if (d === "down" && dir.y !== -1) dir = { x: 0, y: 1 };
-    if (d === "left" && dir.x !== 1) dir = { x: -1, y: 0 };
-    if (d === "right" && dir.x !== -1) dir = { x: 1, y: 0 };
+    const d=btn.dataset.dir;
+    if(paused) startGame();
+    if(d==="up" && dir.y!==1) dir={x:0,y:-1};
+    if(d==="down" && dir.y!==-1) dir={x:0,y:1};
+    if(d==="left" && dir.x!==1) dir={x:-1,y:0};
+    if(d==="right" && dir.x!==-1) dir={x:1,y:0};
   });
 });
 
+/* ---------- DIFFICULTY SELECTOR ---------- */
+document.querySelectorAll('input[name="difficulty"]').forEach(radio=>{
+  radio.addEventListener("change", e=>{
+    difficulty=e.target.value;
+    highEl.textContent=highScores[difficulty];
+  });
+});
 
-document.getElementById("startBtn").onclick = startGame;
+document.getElementById("startBtn").onclick=startGame;
 </script>
 </body>
 </html>
-
-
