@@ -107,6 +107,21 @@ canvas {
 .left { grid-column: 1; }
 .down { grid-column: 2; }
 .right { grid-column: 3; }
+
+
+/* start overlay */
+#startOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+}
 </style>
 </head>
 
@@ -133,8 +148,12 @@ canvas {
   </div>
 </div>
 
-<audio id="eat" src="https://assets.mixkit.co/sfx/preview/mixkit-game-ball-tap-2073.mp3"></audio>
-<audio id="lose" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-game-over-470.mp3"></audio>
+<!-- Audio -->
+<audio id="eat" src="sound/eat.mp3" preload="auto"></audio>
+<audio id="lose" src="sound/lose.mp3" preload="auto"></audio>
+
+<!-- Start overlay -->
+<div id="startOverlay">Click or press any key to start</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -163,6 +182,29 @@ let lastTime = 0;
 let accumulator = 0;
 let stepTime = 140;
 let slowMo = 1;
+
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  [eatSound, loseSound].forEach(a => {
+    a.volume = 0.5;
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{});
+  });
+  audioUnlocked = true;
+}
+
+// Start overlay interaction
+const overlay = document.getElementById("startOverlay");
+overlay.addEventListener("click", startGame, { once: true });
+document.addEventListener("keydown", startGame, { once: true });
+
+function startGame() {
+  overlay.style.display = "none";
+  unlockAudio();
+  start();
+  requestAnimationFrame(loop);
+}
 
 function start() {
   snake = [{ x: 10, y: 10, px: 10, py: 10 }];
