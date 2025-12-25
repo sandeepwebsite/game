@@ -179,6 +179,23 @@ header {
   font-size: 0.9rem;
 }
 
+  .cards a.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-card);
+  padding: 1.2rem;
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.cards a.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+
 /* ================= FOOTER ================= */
 footer {
   text-align: center;
