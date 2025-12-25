@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Animated Snake Game</title>
+
+<style>
+:root {
+  --bg: linear-gradient(135deg, #1d2671, #c33764);
+  --panel: rgba(255,255,255,.15);
+  --snake: #4ade80;
+  --food: #f87171;
+  --text: #fff;
+}
+
+[data-theme="light"] {
+  --bg: linear-gradient(135deg, #fdfbfb, #ebedee);
+  --panel: rgba(0,0,0,.08);
+  --snake: #16a34a;
+  --food: #dc2626;
+  --text: #111;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text);
+  transition: background 0.6s ease;
+}
+
+.container {
+  width: min(95vw, 420px);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 16px;
+  text-align: center;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button {
+  background: rgba(255,255,255,.25);
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-around;
+  margin: 10px 0;
+}
+
+.score-anim {
+  animation: pop .25s ease;
+}
+
+@keyframes pop {
+  50% { transform: scale(1.4); }
+}
+
+.level-flash {
+  animation: flash .4s ease;
+}
+
+@keyframes flash {
+  0% { background: rgba(255,255,255,.4); }
+}
+
+canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(0,0,0,.3);
+  border-radius: 12px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.controls button {
+  font-size: 1.2rem;
+  padding: 14px;
+}
+
+.up { grid-column: 2; }
+.left { grid-column: 1; }
+.down { grid-column: 2; }
+.right { grid-column: 3; }
+</style>
+</head>
+
+<body data-theme="dark">
+<div class="container">
+  <header>
+    <h2>🐍 Snake</h2>
+    <button id="themeToggle">🌙</button>
+  </header>
+
+  <div class="stats">
+    <div>Score <span id="score">0</span></div>
+    <div>Level <span id="level">1</span></div>
+    <div>High <span id="high">0</span></div>
+  </div>
+
+  <canvas id="game" width="400" height="400"></canvas>
+
+  <div class="controls">
+    <button class="up">⬆</button>
+    <button class="left">⬅</button>
+    <button class="down">⬇</button>
+    <button class="right">➡</button>
+  </div>
+</div>
+
+<audio id="eat" src="https://assets.mixkit.co/sfx/preview/mixkit-game-ball-tap-2073.mp3"></audio>
+<audio id="lose" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-game-over-470.mp3"></audio>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const levelEl = document.getElementById("level");
+const highEl = document.getElementById("high");
+
+const eatSound = document.getElementById("eat");
+const loseSound = document.getElementById("lose");
+
+const grid = 20;
+const tiles = canvas.width / grid;
+
+let snake, dir, food, score, level;
+let highScore = localStorage.getItem("snakeHigh") || 0;
+highEl.textContent = highScore;
+
+let particles = [];
+let powerUps = [];
+let activePower = null;
+
+// timing
+let lastTime = 0;
+let accumulator = 0;
+let stepTime = 140;
+let slowMo = 1;
+
+function start() {
+  snake = [{ x: 10, y: 10, px: 10, py: 10 }];
+  dir = { x: 1, y: 0 };
+  food = spawnFood();
+  powerUps = [];
+  activePower = null;
+  score = 0;
+  level = 1;
+  stepTime = 140;
+  slowMo = 1;
+  updateStats();
+}
+
+const rand = () => Math.floor(Math.random() * tiles);
+
+function spawnFood() {
+  return { x: rand(), y: rand(), pulse: 0 };
+}
+
+function spawnPowerUp() {
+  const types = ["speed", "shield", "double"];
+  powerUps.push({
+    x: rand(),
+    y: rand(),
+    type: types[Math.floor(Math.random() * types.length)],
+    pulse: 0
+  });
+}
+
+function logicUpdate() {
+  const head = snake[0];
+  const nx = head.x + dir.x;
+  const ny = head.y + dir.y;
+
+  const hitSelf = snake.some(s => s.x === nx && s.y === ny);
+  if (
+    nx < 0 || ny < 0 || nx >= tiles || ny >= tiles ||
+    (hitSelf && activePower !== "shield")
+  ) {
+    loseSound.play();
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem("snakeHigh", highScore);
+      highEl.textContent = highScore;
+    }
+    start();
+    return;
+  }
+
+  snake.forEach(s => { s.px = s.x; s.py = s.y; });
+  snake.unshift({ x: nx, y: ny, px: head.x, py: head.y });
+
+  // Food
+  if (nx === food.x && ny === food.y) {
+    eatSound.play();
+    score += activePower === "double" ? 2 : 1;
+    spawnParticles(nx, ny);
+
+    if (Math.random() < 0.25) spawnPowerUp();
+
+    if (score % 5 === 0) {
+      level++;
+      stepTime = Math.max(60, stepTime - 15);
+      slowMotion();
+    }
+    food = spawnFood();
+  } else {
+    snake.pop();
+  }
+
+  // Power-ups
+  powerUps.forEach((p, i) => {
+    if (p.x === nx && p.y === ny) {
+      activePower = p.type;
+      spawnParticles(nx, ny, true);
+      setTimeout(() => activePower = null, 5000);
+      powerUps.splice(i, 1);
+    }
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+}
+
+function slowMotion() {
+  slowMo = 0.4;
+  setTimeout(() => slowMo = 1, 600);
+}
+
+function draw(alpha) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Food pulse
+  food.pulse += 0.1;
+  const size = grid * (0.9 + Math.sin(food.pulse) * 0.1);
+  ctx.fillStyle = getCss("--food");
+  ctx.shadowColor = getCss("--food");
+  ctx.shadowBlur = 15;
+  ctx.fillRect(
+    food.x * grid + (grid - size) / 2,
+    food.y * grid + (grid - size) / 2,
+    size, size
+  );
+  ctx.shadowBlur = 0;
+
+  // Power-ups
+  powerUps.forEach(p => {
+    p.pulse += 0.1;
+    ctx.fillStyle =
+      p.type === "speed" ? "#60a5fa" :
+      p.type === "shield" ? "#facc15" :
+      "#a78bfa";
+    ctx.shadowBlur = 20;
+    ctx.fillRect(
+      p.x * grid + 4 + Math.sin(p.pulse) * 2,
+      p.y * grid + 4,
+      grid - 8,
+      grid - 8
+    );
+  });
+  ctx.shadowBlur = 0;
+
+  // Snake (curved + rotated head)
+  snake.forEach((s, i) => {
+    const x = (s.px + (s.x - s.px) * alpha) * grid;
+    const y = (s.py + (s.y - s.py) * alpha) * grid;
+
+    ctx.fillStyle = activePower === "shield" ? "#fde047" : getCss("--snake");
+    ctx.beginPath();
+    ctx.roundRect(x + 2, y + 2, grid - 4, grid - 4, 8);
+    ctx.fill();
+
+    // Head eye direction
+    if (i === 0) {
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.arc(x + grid / 2 + dir.x * 4, y + grid / 2 + dir.y * 4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // Particles
+  particles.forEach((p, i) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    ctx.globalAlpha = p.life / 20;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, 4, 4);
+    if (p.life <= 0) particles.splice(i, 1);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function spawnParticles(x, y, power = false) {
+  for (let i = 0; i < 12; i++) {
+    particles.push({
+      x: x * grid + grid / 2,
+      y: y * grid + grid / 2,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 20,
+      color: power ? "#a78bfa" : getCss("--food")
+    });
+  }
+}
+
+function loop(time) {
+  if (!lastTime) lastTime = time;
+  const delta = (time - lastTime) * slowMo;
+  lastTime = time;
+  accumulator += delta;
+
+  while (accumulator >= stepTime) {
+    logicUpdate();
+    accumulator -= stepTime;
+  }
+
+  draw(accumulator / stepTime);
+  requestAnimationFrame(loop);
+}
+
+const getCss = v => getComputedStyle(document.body).getPropertyValue(v);
+
+// Controls
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && dir.y !== 1) dir = { x: 0, y: -1 };
+  if (e.key === "ArrowDown" && dir.y !== -1) dir = { x: 0, y: 1 };
+  if (e.key === "ArrowLeft" && dir.x !== 1) dir = { x: -1, y: 0 };
+  if (e.key === "ArrowRight" && dir.x !== -1) dir = { x: 1, y: 0 };
+});
+
+["up","down","left","right"].forEach(d => {
+  document.querySelector("." + d).onclick = () => {
+    if (d === "up" && dir.y !== 1) dir = { x: 0, y: -1 };
+    if (d === "down" && dir.y !== -1) dir = { x: 0, y: 1 };
+    if (d === "left" && dir.x !== 1) dir = { x: -1, y: 0 };
+    if (d === "right" && dir.x !== -1) dir = { x: 1, y: 0 };
+  };
+});
+
+// Theme
+const btn = document.getElementById("themeToggle");
+btn.onclick = () => {
+  document.body.dataset.theme =
+    document.body.dataset.theme === "dark" ? "light" : "dark";
+  btn.textContent = document.body.dataset.theme === "dark" ? "🌙" : "☀️";
+};
+
+start();
+requestAnimationFrame(loop);
+</script>
+
+
+</body>
+</html>
