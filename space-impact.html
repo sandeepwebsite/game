@@ -25,18 +25,25 @@ canvas{width:100%;height:100%;display:block;}
 <body>
 <div class="game">
   <div class="topbar">
-    <div id="score">Score: 0</div>
-    <div id="high">High: 0</div>
-    <div id="level">Level: 1</div>
+    <div id="score-container">
+      <span class="label">Score:</span> <span id="score">0</span>
+    </div>
+    <div id="high-container">
+      <span class="label">High:</span> <span id="high">0</span>
+    </div>
+    <div id="level-container">
+      <span class="label">Level:</span> <span id="level">1</span>
+    </div>
     <div id="soundBtn">🔊</div>
   </div>
+
 
   <canvas id="game" width="360" height="640"></canvas>
 
   <div class="controls">
     <button class="btn" id="left">◀</button>
-    <button class="btn fire" id="fire">FIRE</button>
     <button class="btn" id="right">▶</button>
+    <button class="btn fire" id="fire">FIRE</button>
   </div>
 
   <div class="overlay" id="startScreen">
@@ -240,7 +247,7 @@ function draw(){
   ctx.fillStyle="#fff";
   stars.forEach(s=>ctx.fillRect(s.x,s.y,2,2));
 
-  if(running){ctx.font="28px serif";ctx.fillText("🛸",ship.x,ship.y+26)}
+  if(running){ctx.font="28px serif";ctx.fillText("🛸",ship.x,ship.y+40)}
 
   ctx.fillStyle="#fff";
   bullets.forEach(b=>{ if(b) ctx.fillRect(b.x,b.y,b.w,b.h); });
