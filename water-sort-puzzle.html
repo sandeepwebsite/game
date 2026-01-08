@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Sort Puzzle</title>
+
+<style>
+:root{
+  --bg:#020617;
+  --tube:#0f172a;
+  --border:#38bdf8;
+  --radius:14px;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+body{
+  margin:0;
+  background:linear-gradient(180deg,#020617,#020617);
+  font-family:system-ui,sans-serif;
+  color:white;
+  display:flex;
+  justify-content:center;
+}
+
+.game{
+  max-width:480px;
+  width:100%;
+  padding:14px;
+}
+
+h1{text-align:center;margin:6px 0}
+
+.info{
+  display:flex;
+  justify-content:space-between;
+  font-size:.85rem;
+  color:#38bdf8;
+  margin-bottom:8px;
+}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(50px,1fr));
+  gap:14px;
+  justify-items:center;
+  overflow: visible;
+}
+
+.tube{
+  width:50px;
+  height:180px;
+  background:var(--tube);
+  border:2px solid var(--border);
+  border-radius:var(--radius);
+  padding:6px;
+  display:flex;
+  flex-direction:column-reverse;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+  will-change: transform, box-shadow;
+}
+
+.tube.selected{
+  transform:translateY(-8px);
+  box-shadow:0 0 18px #38bdf8;
+}
+
+.layer{
+  flex:1;
+  margin:2px 0;
+  border-radius:8px;
+  background:#020617;
+  transition:background .3s ease;
+}
+
+.pouring{animation:tilt .3s ease}
+
+@keyframes tilt{
+  0%{transform:rotate(0)}
+  50%{transform:rotate(-6deg)}
+  100%{transform:rotate(0)}
+}
+
+.controls{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+button{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  font-weight:600;
+  background:#38bdf8;
+  color:#020617;
+  cursor:pointer;
+}
+
+.hint{
+  margin-top:8px;
+  text-align:center;
+  font-size:.8rem;
+  color:#facc15;
+}
+
+.map{
+  display:none;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+.level-btn{
+  padding:10px 0;
+  border-radius:8px;
+  background:#0f172a;
+  text-align:center;
+  font-size:.75rem;
+  border:1px solid #1e293b;
+  cursor:pointer;
+}
+
+.level-btn.locked{opacity:.3;pointer-events:none}
+.level-btn.active{border-color:#38bdf8}
+.stars{color:#facc15;font-size:.7rem}
+</style>
+</head>
+
+<body>
+<div class="game">
+<h1>Water Sort Puzzle</h1>
+
+<div class="info">
+  <div id="level"></div>
+  <div id="moves"></div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="controls">
+  <button onclick="resetLevel()">Reset</button>
+  <button onclick="showHint()">Hint</button>
+  <button onclick="toggleMap()">Map</button>
+</div>
+
+<div class="hint" id="hint"></div>
+<div class="map" id="map"></div>
+
+<audio id="pourSound" preload="auto">
+  <source src="sound/pour.mp3" type="audio/mpeg">
+</audio>
+<audio id="winSound" preload="auto">
+  <source src="sound/win.mp3" type="audio/mpeg">
+</audio>
+</div>
+
+<script>
+const MAX=4;
+const COLORS=["red","blue","yellow","green","purple","orange","cyan","pink"];
+const COLOR_MAP={
+ red:"#ef4444",blue:"#3b82f6",yellow:"#facc15",
+ green:"#22c55e",purple:"#a855f7",orange:"#fb923c",
+ cyan:"#22d3ee",pink:"#ec4899"
+};
+const SOLVER_DEPTH_LIMIT = 25; // safe for mobile
+
+let save=JSON.parse(localStorage.getItem("waterSortSave"))||{level:1,stars:{}};
+let level=save.level;
+let tubes=[],selected=null,moves=0,optimal=0,animating=false;
+
+const board=document.getElementById("board");
+const levelEl=document.getElementById("level");
+const movesEl=document.getElementById("moves");
+const hintEl=document.getElementById("hint");
+const mapEl=document.getElementById("map");
+const pourSound=document.getElementById("pourSound");
+const winSound=document.getElementById("winSound");
+
+function playSound(a){
+  if(!a) return;
+  a.currentTime=0;
+  a.play().catch(()=>{});
+}
+
+document.body.addEventListener("pointerdown",()=>{
+  [pourSound,winSound].forEach(a=>{
+    a.play().then(()=>a.pause()).catch(()=>{});
+  });
+},{once:true});
+
+function persist(){
+ save.level=Math.max(save.level,level);
+ localStorage.setItem("waterSortSave",JSON.stringify(save));
+}
+
+function generateLevel(lvl){
+ const colorCount=Math.min(3+Math.floor(lvl/2),COLORS.length);
+ const empties=2;
+ const pool=[];
+ for(let i=0;i<colorCount;i++)
+  for(let j=0;j<MAX;j++) pool.push(COLORS[i]);
+ pool.sort(()=>Math.random()-.5);
+ const t=Array.from({length:colorCount+empties},()=>[]);
+ pool.forEach((c,i)=>t[i%colorCount].push(c));
+ optimal=solve(JSON.parse(JSON.stringify(t)));
+ return t;
+}
+
+function loadLevel(lvl){
+ level=lvl;
+ tubes=generateLevel(level);
+ moves=0;
+ selected=null;
+ hintEl.textContent="";
+ render();
+}
+
+function render(){
+ board.innerHTML="";
+ levelEl.textContent=`Level ${level}`;
+ movesEl.textContent=`Moves ${moves} / ${optimal}`;
+ tubes.forEach((tube,i)=>{
+  const el=document.createElement("div");
+  el.className="tube"+(selected===i?" selected":"");
+  el.onclick=()=>selectTube(i);
+  for(let j=0;j<MAX;j++){
+   const l=document.createElement("div");
+   l.className="layer";
+   if(tube[j]) l.style.background=COLOR_MAP[tube[j]];
+   el.appendChild(l);
+  }
+  board.appendChild(el);
+ });
+}
+
+function selectTube(i){
+ if(animating) return;
+ if(selected===null){
+  if(!tubes[i].length) return;
+  selected=i;
+ }else{
+  if(selected!==i && pour(selected,i)) moves++;
+  selected=null;
+ }
+}
+
+function pour(a,b){
+ const A=tubes[a],B=tubes[b];
+ if(!A.length||B.length>=MAX) return false;
+ const c=A[A.length-1];
+ if(B.length&&B[B.length-1]!==c) return false;
+
+ animating=true;
+ playSound(pourSound);
+ board.children[a].classList.add("pouring");
+
+ setTimeout(()=>{
+  while(A.length&&A[A.length-1]===c&&B.length<MAX) B.push(A.pop());
+  board.children[a].classList.remove("pouring");
+  animating=false;
+  render();
+  checkWin();     // ✅ FIX: win check AFTER animation
+ },300);
+ return true;
+}
+
+function checkWin(){
+ if(!tubes.length) return;
+ const won=tubes.every(t=>!t.length||(t.length===MAX&&t.every(c=>c===t[0])));
+ if(!won) return;
+
+ let stars=1;
+ if(moves<=optimal) stars=3;
+ else if(moves<=optimal+5) stars=2;
+
+ save.stars[level]=Math.max(save.stars[level]||0,stars);
+ persist();
+
+ hintEl.textContent="🎉 Level Complete!";
+ playSound(winSound);
+
+ setTimeout(()=>loadLevel(level+1),1200);
+}
+
+function resetLevel(){loadLevel(level)}
+
+function showHint(){
+ hintEl.textContent=`Optimal solution ≈ ${optimal} moves. Try freeing blocked colors using empty tubes.`;
+}
+
+function toggleMap(){
+ mapEl.style.display=mapEl.style.display==="grid"?"none":"grid";
+ renderMap();
+}
+
+function renderMap(){
+ mapEl.innerHTML="";
+ for(let i=1;i<=Math.max(save.level,20);i++){
+  const b=document.createElement("div");
+  b.className="level-btn";
+  if(i>save.level) b.classList.add("locked");
+  if(i===level) b.classList.add("active");
+  b.innerHTML=`${i}<div class="stars">${"★".repeat(save.stars[i]||0)}</div>`;
+  b.onclick=()=>{mapEl.style.display="none";loadLevel(i)};
+  mapEl.appendChild(b);
+ }
+}
+
+/* ---------- SOLVER ---------- */
+function serialize(t){return t.map(x=>x.join(",")).join("|")}
+function solve(start){
+  const seen = new Set([serialize(start)]);
+  const q = [[start, 0]];
+
+  while (q.length) {
+    const [s, d] = q.shift();
+
+    // ✅ LIMIT DEPTH (FIX)
+    if (d > SOLVER_DEPTH_LIMIT) return SOLVER_DEPTH_LIMIT;
+
+    // Win condition
+    if (s.every(t =>
+      !t.length || (t.length === MAX && t.every(c => c === t[0]))
+    )) {
+      return d;
+    }
+
+    for (let i = 0; i < s.length; i++) {
+      for (let j = 0; j < s.length; j++) {
+        if (i === j) continue;
+
+        const A = s[i], B = s[j];
+        if (!A.length || B.length >= MAX) continue;
+
+        const c = A[A.length - 1];
+        if (B.length && B[B.length - 1] !== c) continue;
+
+        const ns = s.map(t => t.slice());
+        while (
+          ns[i].length &&
+          ns[i][ns[i].length - 1] === c &&
+          ns[j].length < MAX
+        ) {
+          ns[j].push(ns[i].pop());
+        }
+
+        const key = serialize(ns);
+        if (!seen.has(key)) {
+          seen.add(key);
+          q.push([ns, d + 1]);
+        }
+      }
+    }
+  }
+
+  // Fallback if unsolved within limit
+  return SOLVER_DEPTH_LIMIT;
+}
+
+
+loadLevel(level);
+</script>
+</body>
+</html>
