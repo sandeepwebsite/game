@@ -246,17 +246,24 @@ function persist(){
 }
 
 function generateLevel(lvl){
- const colorCount=Math.min(3+Math.floor(lvl/2),COLORS.length);
- const empties=2;
- const pool=[];
- for(let i=0;i<colorCount;i++)
-  for(let j=0;j<MAX;j++) pool.push(COLORS[i]);
- pool.sort(()=>Math.random()-.5);
- const t=Array.from({length:colorCount+empties},()=>[]);
- pool.forEach((c,i)=>t[i%colorCount].push(c));
- optimal=solve(JSON.parse(JSON.stringify(t)));
- return t;
+  const colorCount = Math.min(3 + Math.floor(lvl / 2), COLORS.length);
+  const empties = 2;
+  const pool = [];
+
+  for(let i = 0; i < colorCount; i++)
+    for(let j = 0; j < MAX; j++) pool.push(COLORS[i]);
+
+  pool.sort(() => Math.random() - 0.5);
+
+  const t = Array.from({ length: colorCount + empties }, () => []);
+  pool.forEach((c, i) => t[i % colorCount].push(c));
+
+  // ✅ FAST heuristic instead of solver
+  optimal = Math.max(7, colorCount * 3);
+
+  return t;
 }
+
 
 function loadLevel(lvl){
  level=lvl;
