@@ -6,11 +6,11 @@
 <title>Water Sort Puzzle</title>
 
 <style>
-:root{
-  --bg:#020617;
-  --tube:#0f172a;
-  --border:#38bdf8;
-  --radius:14px;
+:root {
+  --bg: #020617;
+  --tube-glass: rgba(255, 255, 255, 0.1); /* Semi-transparent glass */
+  --border: #38bdf8;
+  --radius: 30px; /* Increased for the U-shape */
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -48,31 +48,79 @@ h1{text-align:center;margin:6px 0}
   overflow: visible;
 }
 
-.tube{
-  width:50px;
-  height:180px;
-  background:var(--tube);
-  border:2px solid var(--border);
-  border-radius:var(--radius);
-  padding:6px;
-  display:flex;
-  flex-direction:column-reverse;
-  cursor:pointer;
-  transition:transform .15s ease, box-shadow .15s ease;
-  will-change: transform, box-shadow;
+.tube {
+  position: relative;
+  width: 50px;
+  height: 180px;
+  background: var(--tube-glass);
+  /*border: 1px solid var(--border);*/
+  /* The Secret: Top is flat, Bottom is circular */
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  
+  /*padding: 0px 1px 0px 1px;*/
+  display: flex;
+  flex-direction: column-reverse;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden; /* Keeps "water" inside the glass shape */
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
 }
 
-.tube.selected{
-  transform:translateY(-8px);
-  box-shadow:0 0 18px #38bdf8;
+/* The Test Tube Rim */
+.tube::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110%; /* Makes it slightly wider than the tube */
+  height: 6px;
+  background: var(--border);
+  border-radius: 4px;
+  z-index: 11;
 }
 
-.layer{
-  flex:1;
-  margin:2px 0;
-  border-radius:8px;
-  background:#020617;
-  transition:background .3s ease;
+/* Glass Shine/Highlight */
+.tube::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: 15%;
+  width: 20%;
+  height: 70%;
+  background: linear-gradient(to right, rgba(255,255,255,0.15), transparent);
+  border-radius: 10px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.tube.selected {
+  transform: translateY(-15px); /* Lift higher */
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
+  z-index: 100;
+  border-color: #fff;
+}
+
+.layer:first-child {
+  /* Matches the bottom curvature of the tube */
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+
+.layer {
+  flex: 1;
+  margin: 0px; /* Remove gaps for seamless liquid look */
+  width: 100%;
+  transition: background 0.3s ease;
+}
+
+@media (min-width: 480px){
+  .tube{
+    width:62px;
+  }
 }
 
 .pouring{animation:tilt .3s ease}
@@ -237,15 +285,23 @@ function render(){
  });
 }
 
-function selectTube(i){
- if(animating) return;
- if(selected===null){
-  if(!tubes[i].length) return;
-  selected=i;
- }else{
-  if(selected!==i && pour(selected,i)) moves++;
-  selected=null;
- }
+function selectTube(i) {
+  if (animating) return;
+
+  const tubeEls = document.querySelectorAll('.tube');
+
+  if (selected === null) {
+    if (!tubes[i].length) return;
+    selected = i;
+    tubeEls[i].classList.add("selected");
+  } else {
+    const oldSelected = selected;
+    if (selected !== i && pour(selected, i)) {
+      moves++;
+    }
+    selected = null;
+    tubeEls[oldSelected].classList.remove("selected");
+  }
 }
 
 function pour(a,b){
