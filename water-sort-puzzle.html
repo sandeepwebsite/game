@@ -8,9 +8,9 @@
 <style>
 :root {
   --bg: #020617;
-  --tube-glass: rgba(255, 255, 255, 0.1); /* Semi-transparent glass */
+  --tube-glass: rgba(255, 255, 255, 0.1);
   --border: #38bdf8;
-  --radius: 30px; /* Increased for the U-shape */
+  --radius: 30px;
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -35,100 +35,87 @@ h1{text-align:center;margin:6px 0}
 .info{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   font-size:.85rem;
   color:#38bdf8;
   margin-bottom:8px;
 }
+
+.sound-btn{
+  background:none;
+  border:none;
+  font-size:1.1rem;
+  cursor:pointer;
+  color:#38bdf8;
+}
+
+.sound-btn.muted{opacity:.4}
 
 .board{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(50px,1fr));
   gap:14px;
   justify-items:center;
-  overflow: visible;
 }
 
-.tube {
-  position: relative;
-  width: 50px;
-  height: 180px;
-  background: var(--tube-glass);
-  /*border: 1px solid var(--border);*/
-  /* The Secret: Top is flat, Bottom is circular */
-  border-bottom-left-radius: var(--radius);
-  border-bottom-right-radius: var(--radius);
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  
-  /*padding: 0px 1px 0px 1px;*/
-  display: flex;
-  flex-direction: column-reverse;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  overflow: hidden; /* Keeps "water" inside the glass shape */
-  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+.tube{
+  position:relative;
+  width:50px;
+  height:180px;
+  background:var(--tube-glass);
+  border-bottom-left-radius:var(--radius);
+  border-bottom-right-radius:var(--radius);
+  border-top-left-radius:4px;
+  border-top-right-radius:4px;
+  display:flex;
+  flex-direction:column-reverse;
+  cursor:pointer;
+  transition:.2s;
+  overflow:hidden;
 }
 
-/* The Test Tube Rim */
-.tube::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 110%; /* Makes it slightly wider than the tube */
-  height: 6px;
-  background: var(--border);
-  border-radius: 4px;
-  z-index: 11;
+.tube::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:110%;
+  height:6px;
+  background:var(--border);
+  border-radius:4px;
+  z-index:11;
 }
 
-/* Glass Shine/Highlight */
-.tube::after {
-  content: "";
-  position: absolute;
-  top: 10%;
-  left: 15%;
-  width: 20%;
-  height: 70%;
-  background: linear-gradient(to right, rgba(255,255,255,0.15), transparent);
-  border-radius: 10px;
-  pointer-events: none;
-  overflow: hidden;
+.tube::after{
+  content:"";
+  position:absolute;
+  top:10%;
+  left:15%;
+  width:20%;
+  height:70%;
+  background:linear-gradient(to right,rgba(255,255,255,.15),transparent);
 }
 
-.tube.selected {
-  transform: translateY(-15px); /* Lift higher */
-  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
-  z-index: 100;
-  border-color: #fff;
+.tube.selected{
+  transform:translateY(-15px);
+  box-shadow:0 10px 25px rgba(56,189,248,.4);
+  z-index:100;
 }
 
-.layer:first-child {
-  /* Matches the bottom curvature of the tube */
-  border-bottom-left-radius: 22px;
-  border-bottom-right-radius: 22px;
+.layer{
+  flex:1;
+  width:100%;
 }
 
-.layer {
-  flex: 1;
-  margin: 0px; /* Remove gaps for seamless liquid look */
-  width: 100%;
-  transition: background 0.3s ease;
-}
-
-@media (min-width: 480px){
-  .tube{
-    width:62px;
-  }
+.layer:first-child{
+  border-bottom-left-radius:22px;
+  border-bottom-right-radius:22px;
 }
 
 .pouring{animation:tilt .3s ease}
-
 @keyframes tilt{
-  0%{transform:rotate(0)}
   50%{transform:rotate(-6deg)}
-  100%{transform:rotate(0)}
 }
 
 .controls{
@@ -146,6 +133,11 @@ button{
   background:#38bdf8;
   color:#020617;
   cursor:pointer;
+}
+
+button:disabled{
+  opacity:.4;
+  cursor:not-allowed;
 }
 
 .hint{
@@ -184,247 +176,204 @@ button{
 
 <div class="info">
   <div id="level"></div>
-  <div id="moves"></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div id="moves"></div>
+    <button id="soundBtn" class="sound-btn" onclick="toggleSound()">🔊</button>
+  </div>
 </div>
 
 <div class="board" id="board"></div>
 
 <div class="controls">
   <button onclick="resetLevel()">Reset</button>
-  <button onclick="showHint()">Hint</button>
+  <button id="undoBtn" onclick="undoMove()" disabled>Undo</button>
+  <button onclick="showHint()" style="display: none;">Hint</button>
   <button onclick="toggleMap()">Map</button>
 </div>
 
 <div class="hint" id="hint"></div>
 <div class="map" id="map"></div>
 
-<audio id="pourSound" preload="auto">
-  <source src="sound/pour.mp3" type="audio/mpeg">
-</audio>
-<audio id="winSound" preload="auto">
-  <source src="sound/win.mp3" type="audio/mpeg">
-</audio>
+<audio id="pourSound" preload="auto"><source src="sound/pour.mp3"></audio>
+<audio id="winSound" preload="auto"><source src="sound/win.mp3"></audio>
 </div>
 
 <script>
 const MAX=4;
 const COLORS=["red","blue","yellow","green","purple","orange","cyan","pink"];
-const COLOR_MAP={
- red:"#ef4444",blue:"#3b82f6",yellow:"#facc15",
- green:"#22c55e",purple:"#a855f7",orange:"#fb923c",
- cyan:"#22d3ee",pink:"#ec4899"
-};
-const SOLVER_DEPTH_LIMIT = 25; // safe for mobile
+const COLOR_MAP={red:"#ef4444",blue:"#3b82f6",yellow:"#facc15",green:"#22c55e",purple:"#a855f7",orange:"#fb923c",cyan:"#22d3ee",pink:"#ec4899"};
 
 let save=JSON.parse(localStorage.getItem("waterSortSave"))||{level:1,stars:{}};
-let level=save.level;
-let tubes=[],selected=null,moves=0,optimal=0,animating=false;
+let soundOn=JSON.parse(localStorage.getItem("soundOn")??"true");
+let level=save.level,tubes=[],selected=null,moves=0,optimal=0,animating=false;
+let history=[];
 
 const board=document.getElementById("board");
 const levelEl=document.getElementById("level");
 const movesEl=document.getElementById("moves");
 const hintEl=document.getElementById("hint");
 const mapEl=document.getElementById("map");
+const undoBtn=document.getElementById("undoBtn");
+const soundBtn=document.getElementById("soundBtn");
 const pourSound=document.getElementById("pourSound");
 const winSound=document.getElementById("winSound");
 
 function playSound(a){
-  if(!a) return;
+  if(!a||!soundOn)return;
   a.currentTime=0;
   a.play().catch(()=>{});
 }
 
-document.body.addEventListener("pointerdown",()=>{
-  [pourSound,winSound].forEach(a=>{
-    a.play().then(()=>a.pause()).catch(()=>{});
-  });
-},{once:true});
+function toggleSound(){
+  soundOn=!soundOn;
+  localStorage.setItem("soundOn",JSON.stringify(soundOn));
+  updateSoundUI();
+}
 
-function persist(){
- save.level=Math.max(save.level,level);
- localStorage.setItem("waterSortSave",JSON.stringify(save));
+function updateSoundUI(){
+  soundBtn.textContent=soundOn?"🔊":"🔇";
+  soundBtn.classList.toggle("muted",!soundOn);
+}
+
+function updateUndoUI(){
+  undoBtn.disabled=!history.length||animating;
 }
 
 function generateLevel(lvl){
-  const colorCount = Math.min(3 + Math.floor(lvl / 2), COLORS.length);
-  const empties = 2;
-  const pool = [];
-
-  for(let i = 0; i < colorCount; i++)
-    for(let j = 0; j < MAX; j++) pool.push(COLORS[i]);
-
-  pool.sort(() => Math.random() - 0.5);
-
-  const t = Array.from({ length: colorCount + empties }, () => []);
-  pool.forEach((c, i) => t[i % colorCount].push(c));
-
-  // ✅ FAST heuristic instead of solver
-  optimal = Math.max(7, colorCount * 3);
-
+  const count=Math.min(3+Math.floor(lvl/2),COLORS.length);
+  const pool=[];
+  for(let i=0;i<count;i++)for(let j=0;j<MAX;j++)pool.push(COLORS[i]);
+  pool.sort(()=>Math.random()-.5);
+  const t=Array.from({length:count+2},()=>[]);
+  pool.forEach((c,i)=>t[i%count].push(c));
+  optimal=Math.max(7,count*3);
   return t;
 }
 
-
 function loadLevel(lvl){
- level=lvl;
- tubes=generateLevel(level);
- moves=0;
- selected=null;
- hintEl.textContent="";
- render();
+  level=lvl;
+  tubes=generateLevel(level);
+  moves=0;
+  history=[];
+  selected=null;
+  hintEl.textContent="";
+  render();
+  updateUndoUI();
 }
 
 function render(){
- board.innerHTML="";
- levelEl.textContent=`Level ${level}`;
- movesEl.textContent=`Moves ${moves} / ${optimal}`;
- tubes.forEach((tube,i)=>{
-  const el=document.createElement("div");
-  el.className="tube"+(selected===i?" selected":"");
-  el.onclick=()=>selectTube(i);
-  for(let j=0;j<MAX;j++){
-   const l=document.createElement("div");
-   l.className="layer";
-   if(tube[j]) l.style.background=COLOR_MAP[tube[j]];
-   el.appendChild(l);
-  }
-  board.appendChild(el);
- });
+  board.innerHTML="";
+  levelEl.textContent=`Level ${level}`;
+  movesEl.textContent=`Moves ${moves} / ${optimal}`;
+  tubes.forEach((tube,i)=>{
+    const el=document.createElement("div");
+    el.className="tube"+(selected===i?" selected":"");
+    el.onclick=()=>selectTube(i);
+    for(let j=0;j<MAX;j++){
+      const l=document.createElement("div");
+      l.className="layer";
+      if(tube[j])l.style.background=COLOR_MAP[tube[j]];
+      el.appendChild(l);
+    }
+    board.appendChild(el);
+  });
 }
 
-function selectTube(i) {
-  if (animating) return;
-
-  const tubeEls = document.querySelectorAll('.tube');
-
-  if (selected === null) {
-    if (!tubes[i].length) return;
-    selected = i;
-    tubeEls[i].classList.add("selected");
-  } else {
-    const oldSelected = selected;
-    if (selected !== i && pour(selected, i)) {
-      moves++;
+function selectTube(i){
+  if(animating)return;
+  const els=document.querySelectorAll(".tube");
+  if(selected===null){
+    if(!tubes[i].length)return;
+    selected=i;
+    els[i].classList.add("selected");
+  }else{
+    const prev=selected;
+    if(selected!==i){
+      const snap=JSON.stringify(tubes);
+      if(pour(selected,i)){
+        history.push(snap);
+        moves++;
+        updateUndoUI();
+      }
     }
-    selected = null;
-    tubeEls[oldSelected].classList.remove("selected");
+    selected=null;
+    els[prev].classList.remove("selected");
   }
 }
 
 function pour(a,b){
- const A=tubes[a],B=tubes[b];
- if(!A.length||B.length>=MAX) return false;
- const c=A[A.length-1];
- if(B.length&&B[B.length-1]!==c) return false;
+  const A=tubes[a],B=tubes[b];
+  if(!A.length||B.length>=MAX)return false;
+  const c=A[A.length-1];
+  if(B.length&&B[B.length-1]!==c)return false;
+  animating=true;
+  updateUndoUI();
+  playSound(pourSound);
+  setTimeout(()=>{
+    while(A.length&&A[A.length-1]===c&&B.length<MAX)B.push(A.pop());
+    animating=false;
+    render();
+    updateUndoUI();
+    checkWin();
+  },300);
+  return true;
+}
 
- animating=true;
- playSound(pourSound);
- board.children[a].classList.add("pouring");
-
- setTimeout(()=>{
-  while(A.length&&A[A.length-1]===c&&B.length<MAX) B.push(A.pop());
-  board.children[a].classList.remove("pouring");
-  animating=false;
+function undoMove(){
+  if(animating||!history.length)return;
+  tubes=JSON.parse(history.pop());
+  moves=Math.max(0,moves-1);
+  selected=null;
   render();
-  checkWin();     // ✅ FIX: win check AFTER animation
- },300);
- return true;
+  updateUndoUI();
 }
 
 function checkWin(){
- if(!tubes.length) return;
- const won=tubes.every(t=>!t.length||(t.length===MAX&&t.every(c=>c===t[0])));
- if(!won) return;
-
- let stars=1;
- if(moves<=optimal) stars=3;
- else if(moves<=optimal+5) stars=2;
-
- save.stars[level]=Math.max(save.stars[level]||0,stars);
- persist();
-
- hintEl.textContent="🎉 Level Complete!";
- playSound(winSound);
-
- setTimeout(()=>loadLevel(level+1),1200);
+  if(!tubes.every(t=>!t.length||(t.length===MAX&&t.every(c=>c===t[0]))))return;
+  playSound(winSound);
+  hintEl.textContent="🎉 Level Complete!";
+  setTimeout(()=>loadLevel(level+1),1200);
 }
 
 function resetLevel(){loadLevel(level)}
-
-function showHint(){
- hintEl.textContent=`Optimal solution ≈ ${optimal} moves. Try freeing blocked colors using empty tubes.`;
-}
-
+function showHint(){hintEl.textContent=`Optimal solution ≈ ${optimal} moves.`}
 function toggleMap(){
- mapEl.style.display=mapEl.style.display==="grid"?"none":"grid";
- renderMap();
+  if(mapEl.style.display==="grid"){
+    mapEl.style.display="none";
+  }else{
+    mapEl.style.display="grid";
+    renderMap();   // ✅ THIS WAS MISSING
+  }
 }
+
 
 function renderMap(){
- mapEl.innerHTML="";
- for(let i=1;i<=Math.max(save.level,20);i++){
-  const b=document.createElement("div");
-  b.className="level-btn";
-  if(i>save.level) b.classList.add("locked");
-  if(i===level) b.classList.add("active");
-  b.innerHTML=`${i}<div class="stars">${"★".repeat(save.stars[i]||0)}</div>`;
-  b.onclick=()=>{mapEl.style.display="none";loadLevel(i)};
-  mapEl.appendChild(b);
- }
-}
+  mapEl.innerHTML="";
+  const maxLevel = Math.max(save.level, 20);
 
-/* ---------- SOLVER ---------- */
-function serialize(t){return t.map(x=>x.join(",")).join("|")}
-function solve(start){
-  const seen = new Set([serialize(start)]);
-  const q = [[start, 0]];
+  for(let i=1;i<=maxLevel;i++){
+    const b=document.createElement("div");
+    b.className="level-btn";
 
-  while (q.length) {
-    const [s, d] = q.shift();
+    if(i>save.level) b.classList.add("locked");
+    if(i===level) b.classList.add("active");
 
-    // ✅ LIMIT DEPTH (FIX)
-    if (d > SOLVER_DEPTH_LIMIT) return SOLVER_DEPTH_LIMIT;
+    b.innerHTML=`
+      ${i}
+      <div class="stars">${"★".repeat(save.stars[i]||0)}</div>
+    `;
 
-    // Win condition
-    if (s.every(t =>
-      !t.length || (t.length === MAX && t.every(c => c === t[0]))
-    )) {
-      return d;
-    }
+    b.onclick=()=>{
+      mapEl.style.display="none";
+      loadLevel(i);
+    };
 
-    for (let i = 0; i < s.length; i++) {
-      for (let j = 0; j < s.length; j++) {
-        if (i === j) continue;
-
-        const A = s[i], B = s[j];
-        if (!A.length || B.length >= MAX) continue;
-
-        const c = A[A.length - 1];
-        if (B.length && B[B.length - 1] !== c) continue;
-
-        const ns = s.map(t => t.slice());
-        while (
-          ns[i].length &&
-          ns[i][ns[i].length - 1] === c &&
-          ns[j].length < MAX
-        ) {
-          ns[j].push(ns[i].pop());
-        }
-
-        const key = serialize(ns);
-        if (!seen.has(key)) {
-          seen.add(key);
-          q.push([ns, d + 1]);
-        }
-      }
-    }
+    mapEl.appendChild(b);
   }
-
-  // Fallback if unsolved within limit
-  return SOLVER_DEPTH_LIMIT;
 }
 
 
+updateSoundUI();
 loadLevel(level);
 </script>
 </body>
