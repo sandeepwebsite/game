@@ -6,30 +6,24 @@
 <title>Water Sort Puzzle</title>
 
 <style>
-:root {
-  --bg: #020617;
-  --tube-glass: rgba(255, 255, 255, 0.1);
-  --border: #38bdf8;
-  --radius: 30px;
+:root{
+  --bg:#020617;
+  --tube-glass:rgba(255,255,255,.1);
+  --border:#38bdf8;
+  --radius:30px;
 }
-
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 body{
   margin:0;
-  background:linear-gradient(180deg,#020617,#020617);
+  background:#020617;
   font-family:system-ui,sans-serif;
   color:white;
   display:flex;
   justify-content:center;
 }
 
-.game{
-  max-width:480px;
-  width:100%;
-  padding:14px;
-}
-
+.game{max-width:480px;width:100%;padding:14px}
 h1{text-align:center;margin:6px 0}
 
 .info{
@@ -41,16 +35,6 @@ h1{text-align:center;margin:6px 0}
   margin-bottom:8px;
 }
 
-.sound-btn{
-  background:none;
-  border:none;
-  font-size:1.1rem;
-  cursor:pointer;
-  color:#38bdf8;
-}
-
-.sound-btn.muted{opacity:.4}
-
 .board{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(50px,1fr));
@@ -58,6 +42,7 @@ h1{text-align:center;margin:6px 0}
   justify-items:center;
 }
 
+/* ORIGINAL TUBE CSS */
 .tube{
   position:relative;
   width:50px;
@@ -84,7 +69,7 @@ h1{text-align:center;margin:6px 0}
   height:6px;
   background:var(--border);
   border-radius:4px;
-  z-index:11;
+  z-index:10;
 }
 
 .tube::after{
@@ -103,27 +88,13 @@ h1{text-align:center;margin:6px 0}
   z-index:100;
 }
 
-.layer{
-  flex:1;
-  width:100%;
-}
-
+.layer{flex:1;width:100%}
 .layer:first-child{
   border-bottom-left-radius:22px;
   border-bottom-right-radius:22px;
 }
 
-.pouring{animation:tilt .3s ease}
-@keyframes tilt{
-  50%{transform:rotate(-6deg)}
-}
-
-.controls{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
+.controls{display:flex;gap:8px;margin-top:10px}
 button{
   flex:1;
   padding:10px;
@@ -134,24 +105,34 @@ button{
   color:#020617;
   cursor:pointer;
 }
+button:disabled{opacity:.4}
 
-button:disabled{
-  opacity:.4;
-  cursor:not-allowed;
+.hint{text-align:center;font-size:.9rem;color:#facc15;margin-top:8px}
+
+/* MAP MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 100;
 }
 
-.hint{
-  margin-top:8px;
-  text-align:center;
-  font-size:.8rem;
-  color:#facc15;
+.modal-content{
+  background:#020617;
+  border:1px solid #38bdf8;
+  border-radius:14px;
+  padding:16px;
+  width:90%;
+  max-width:360px;
 }
 
 .map{
-  display:none;
+  display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:8px;
-  margin-top:12px;
 }
 
 .level-btn{
@@ -161,12 +142,42 @@ button:disabled{
   text-align:center;
   font-size:.75rem;
   border:1px solid #1e293b;
-  cursor:pointer;
 }
 
-.level-btn.locked{opacity:.3;pointer-events:none}
+.level-btn.locked{opacity:.35}
 .level-btn.active{border-color:#38bdf8}
-.stars{color:#facc15;font-size:.7rem}
+.stars{font-size:.7rem;color:#facc15}
+
+/* GRAFFITI WIN */
+.win-text{
+  position:fixed;
+  top:40%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(.5);
+  font-size:2.2rem;
+  font-weight:900;
+  letter-spacing:3px;
+  color:#22c55e;
+  text-align: content;
+  text-shadow:3px 3px #000,6px 6px #16a34a;
+  opacity:0;
+  animation:graffiti .9s ease forwards;
+}
+
+@keyframes graffiti{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}
+  60%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(3deg)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+
+.sound-btn{
+  background:none;
+  border:none;
+  font-size:1.1rem;
+  cursor:pointer;
+  color:#38bdf8;
+}
+.sound-btn.muted{opacity:.4}
 </style>
 </head>
 
@@ -176,9 +187,9 @@ button:disabled{
 
 <div class="info">
   <div id="level"></div>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div style="display:flex;align-items:center;gap:8px">
     <div id="moves"></div>
-    <button id="soundBtn" class="sound-btn" onclick="toggleSound()">🔊</button>
+    <button id="soundBtn" class="sound-btn">🔊</button>
   </div>
 </div>
 
@@ -187,47 +198,54 @@ button:disabled{
 <div class="controls">
   <button onclick="resetLevel()">Reset</button>
   <button id="undoBtn" onclick="undoMove()" disabled>Undo</button>
-  <button onclick="showHint()" style="display: none;">Hint</button>
   <button onclick="toggleMap()">Map</button>
 </div>
 
 <div class="hint" id="hint"></div>
-<div class="map" id="map"></div>
+
+<div class="modal" id="mapModal">
+  <div class="modal-content">
+    <div class="map" id="map"></div>
+    <button onclick="closeMap()">Close</button>
+  </div>
+</div>
+</div>
 
 <audio id="pourSound" preload="auto"><source src="sound/pour.mp3"></audio>
 <audio id="winSound" preload="auto"><source src="sound/win.mp3"></audio>
-</div>
 
 <script>
 const MAX=4;
-const COLORS=["red","blue","yellow","green","purple","orange","cyan","pink"];
-const COLOR_MAP={red:"#ef4444",blue:"#3b82f6",yellow:"#facc15",green:"#22c55e",purple:"#a855f7",orange:"#fb923c",cyan:"#22d3ee",pink:"#ec4899"};
+const COLORS=["red","blue","yellow","green","purple","orange"];
+const COLOR_MAP={red:"#ef4444",blue:"#3b82f6",yellow:"#facc15",green:"#22c55e",purple:"#a855f7",orange:"#fb923c"};
 
-let save=JSON.parse(localStorage.getItem("waterSortSave"))||{level:1,stars:{}};
-let soundOn=JSON.parse(localStorage.getItem("soundOn")??"true");
-let level=save.level,tubes=[],selected=null,moves=0,optimal=0,animating=false;
+let save=JSON.parse(localStorage.getItem("waterSortSave"))||{};
+save.level ??= 1;
+save.lastPlayed ??= save.level;
+save.stars ??= {};
+localStorage.setItem("waterSortSave",JSON.stringify(save));
+
+let soundOn=JSON.parse(localStorage.getItem("soundOn") ?? "true");
+
+let level=save.lastPlayed;
+let tubes=[],moves=0,optimal=0,selected=null,animating=false;
 let history=[];
 
 const board=document.getElementById("board");
 const levelEl=document.getElementById("level");
 const movesEl=document.getElementById("moves");
 const hintEl=document.getElementById("hint");
-const mapEl=document.getElementById("map");
+const map=document.getElementById("map");
+const mapModal=document.getElementById("mapModal");
 const undoBtn=document.getElementById("undoBtn");
 const soundBtn=document.getElementById("soundBtn");
 const pourSound=document.getElementById("pourSound");
 const winSound=document.getElementById("winSound");
 
 function playSound(a){
-  if(!a||!soundOn)return;
+  if(!soundOn||!a)return;
   a.currentTime=0;
   a.play().catch(()=>{});
-}
-
-function toggleSound(){
-  soundOn=!soundOn;
-  localStorage.setItem("soundOn",JSON.stringify(soundOn));
-  updateSoundUI();
 }
 
 function updateSoundUI(){
@@ -235,9 +253,11 @@ function updateSoundUI(){
   soundBtn.classList.toggle("muted",!soundOn);
 }
 
-function updateUndoUI(){
-  undoBtn.disabled=!history.length||animating;
-}
+soundBtn.onclick=()=>{
+  soundOn=!soundOn;
+  localStorage.setItem("soundOn",JSON.stringify(soundOn));
+  updateSoundUI();
+};
 
 function generateLevel(lvl){
   const count=Math.min(3+Math.floor(lvl/2),COLORS.length);
@@ -246,25 +266,27 @@ function generateLevel(lvl){
   pool.sort(()=>Math.random()-.5);
   const t=Array.from({length:count+2},()=>[]);
   pool.forEach((c,i)=>t[i%count].push(c));
-  optimal=Math.max(7,count*3);
+  optimal=count*3;
   return t;
 }
 
 function loadLevel(lvl){
   level=lvl;
+  save.lastPlayed=lvl;
+  localStorage.setItem("waterSortSave",JSON.stringify(save));
   tubes=generateLevel(level);
   moves=0;
   history=[];
   selected=null;
   hintEl.textContent="";
   render();
-  updateUndoUI();
 }
 
 function render(){
   board.innerHTML="";
   levelEl.textContent=`Level ${level}`;
-  movesEl.textContent=`Moves ${moves} / ${optimal}`;
+  movesEl.textContent=`Moves ${moves}/${optimal}`;
+  undoBtn.disabled=!history.length||animating;
   tubes.forEach((tube,i)=>{
     const el=document.createElement("div");
     el.className="tube"+(selected===i?" selected":"");
@@ -281,24 +303,17 @@ function render(){
 
 function selectTube(i){
   if(animating)return;
-  const els=document.querySelectorAll(".tube");
   if(selected===null){
     if(!tubes[i].length)return;
     selected=i;
-    els[i].classList.add("selected");
   }else{
-    const prev=selected;
-    if(selected!==i){
+    if(i!==selected){
       const snap=JSON.stringify(tubes);
-      if(pour(selected,i)){
-        history.push(snap);
-        moves++;
-        updateUndoUI();
-      }
+      if(pour(selected,i)) history.push(snap);
     }
     selected=null;
-    els[prev].classList.remove("selected");
   }
+  render();
 }
 
 function pour(a,b){
@@ -306,72 +321,63 @@ function pour(a,b){
   if(!A.length||B.length>=MAX)return false;
   const c=A[A.length-1];
   if(B.length&&B[B.length-1]!==c)return false;
+
   animating=true;
-  updateUndoUI();
   playSound(pourSound);
   setTimeout(()=>{
     while(A.length&&A[A.length-1]===c&&B.length<MAX)B.push(A.pop());
+    moves++;
     animating=false;
     render();
-    updateUndoUI();
     checkWin();
   },300);
   return true;
 }
 
 function undoMove(){
-  if(animating||!history.length)return;
+  if(!history.length||animating)return;
   tubes=JSON.parse(history.pop());
   moves=Math.max(0,moves-1);
   selected=null;
   render();
-  updateUndoUI();
 }
 
 function checkWin(){
   if(!tubes.every(t=>!t.length||(t.length===MAX&&t.every(c=>c===t[0]))))return;
+
+  const g=document.createElement("div");
+  g.className="win-text";
+  g.textContent="LEVEL COMPLETE!";
+  document.body.appendChild(g);
+
   playSound(winSound);
-  hintEl.textContent="🎉 Level Complete!";
-  setTimeout(()=>loadLevel(level+1),1200);
+
+  save.stars[level]=Math.max(save.stars[level]||0,1);
+  save.level=Math.max(save.level,level+1);
+  localStorage.setItem("waterSortSave",JSON.stringify(save));
+
+  setTimeout(()=>{
+    g.remove();
+    loadLevel(level+1);
+  },1200);
 }
 
 function resetLevel(){loadLevel(level)}
-function showHint(){hintEl.textContent=`Optimal solution ≈ ${optimal} moves.`}
+
 function toggleMap(){
-  if(mapEl.style.display==="grid"){
-    mapEl.style.display="none";
-  }else{
-    mapEl.style.display="grid";
-    renderMap();   // ✅ THIS WAS MISSING
-  }
-}
-
-
-function renderMap(){
-  mapEl.innerHTML="";
-  const maxLevel = Math.max(save.level, 20);
-
-  for(let i=1;i<=maxLevel;i++){
+  mapModal.style.display="flex";
+  map.innerHTML="";
+  for(let i=1;i<=Math.max(save.level,20);i++){
+    const locked=i>save.level;
     const b=document.createElement("div");
-    b.className="level-btn";
-
-    if(i>save.level) b.classList.add("locked");
-    if(i===level) b.classList.add("active");
-
-    b.innerHTML=`
-      ${i}
-      <div class="stars">${"★".repeat(save.stars[i]||0)}</div>
-    `;
-
-    b.onclick=()=>{
-      mapEl.style.display="none";
-      loadLevel(i);
-    };
-
-    mapEl.appendChild(b);
+    b.className="level-btn"+(locked?" locked":"")+(i===level?" active":"");
+    b.innerHTML=locked?`🔒`:`${i}<div class="stars">${"★".repeat(save.stars[i]||0)}</div>`;
+    if(!locked)b.onclick=()=>{closeMap();loadLevel(i)};
+    map.appendChild(b);
   }
 }
 
+function closeMap(){mapModal.style.display="none"}
 
 updateSoundUI();
 loadLevel(level);
