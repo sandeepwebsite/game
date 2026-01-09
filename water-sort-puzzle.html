@@ -353,7 +353,16 @@ function checkWin(){
 
   playSound(winSound);
 
-  save.stars[level]=Math.max(save.stars[level]||0,1);
+  let starsEarned = 1;
+
+  if (moves <= optimal) {
+    starsEarned = 3;
+  } else if (moves <= optimal + 2) {
+    starsEarned = 2;
+  }
+
+save.stars[level] = Math.max(save.stars[level] || 0, starsEarned);
+
   save.level=Math.max(save.level,level+1);
   localStorage.setItem("waterSortSave",JSON.stringify(save));
 
@@ -385,4 +394,5 @@ loadLevel(level);
 </script>
 </body>
 </html>
+
 
