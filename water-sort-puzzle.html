@@ -133,8 +133,32 @@ button:disabled{opacity:.4}
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:8px;
+max-height: 50vh;
+  overflow: auto;
+  scroll-behavior: smooth;
+}
+.map::-webkit-scrollbar {
+  width: 8px;
 }
 
+.map::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+.map::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 8px;
+}
+
+.map::-webkit-scrollbar-thumb:hover {
+  background-color: #38bdf8;
+}
+.closeMap{
+  position: relative;
+  display: flex;
+  float: right;
+  top: 5px;
+}
 .level-btn{
   padding:10px 0;
   border-radius:8px;
@@ -207,7 +231,7 @@ button:disabled{opacity:.4}
 <div class="modal" id="mapModal">
   <div class="modal-content">
     <div class="map" id="map"></div>
-    <button onclick="closeMap()">Close</button>
+    <button onclick="closeMap()" class="closeMap">Close</button>
   </div>
 </div>
 </div>
@@ -394,5 +418,6 @@ loadLevel(level);
 </script>
 </body>
 </html>
+
 
 
