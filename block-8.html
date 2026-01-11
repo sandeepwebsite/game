@@ -56,9 +56,16 @@ header{
 
 .cell{
   aspect-ratio:1;
+  position: relative;
+  /*overflow: visible;*/
   background:var(--cell);
   border-radius:6px;
+  box-shadow:
+    inset 2px 2px 4px rgba(255,255,255,.15),
+    inset -2px -2px 4px rgba(0,0,0,.4),
+    0 2px 4px rgba(0,0,0,.4);
 }
+
 
 .cell.glow{animation:glow .45s ease-out}
 
@@ -108,15 +115,19 @@ header{
   width:22px;
   height:22px;
   border-radius:4px;
+  box-shadow:
+    inset 2px 2px 3px rgba(255,255,255,.25),
+    inset -2px -2px 3px rgba(0,0,0,.45),
+    0 2px 3px rgba(0,0,0,.4);
 }
 
 .piece.dragging{
   position:fixed;
   z-index:1000;
   pointer-events:none;
-  transform:translate(-50%, -50%);
-  transition:transform .08s linear;
+  transform:translate(-50%, -110%) scale(1.1); /* 👈 moves piece above finger */
 }
+
 
 
 /* ---------- CONTROLS ---------- */
@@ -150,6 +161,27 @@ button:disabled{opacity:.4;box-shadow:none}
   align-items:center;
   justify-content:center;
 }
+
+
+.graffiti {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px; /* Size of the splash */
+  height: 100px;
+  margin-top: -50px;
+  margin-left: -50px;
+  z-index: 100;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: splat .4s ease-out forwards;
+}
+
+@keyframes splat {
+  0% { transform:scale(.3) rotate(0); opacity:1 }
+  100% { transform:scale(2) rotate(30deg); opacity:0 }
+}
+
 .hidden{display:none}
 
 .popup{
@@ -236,7 +268,11 @@ function drawBoard(){
   grid.forEach(v=>{
     const c=document.createElement("div");
     c.className="cell";
-    if(v){ c.style.background=v; c.style.color=v; }
+    if(v){
+      c.style.background = `linear-gradient(135deg, #fff3, ${v})`;
+      c.style.color = v;
+}
+
     boardEl.appendChild(c);
   });
 }
@@ -267,6 +303,24 @@ function newPieces(){
     piecesEl.appendChild(box);
   }
 }
+ /* ---------- GRAFFITY ---------- */
+
+function graffiti(cells) {
+  cells.forEach(i => {
+    const cell = boardEl.children[i];
+    // Use the color we stored in the grid before it gets cleared
+    const color = grid[i] || "#ffffff"; 
+
+    const g = document.createElement("div");
+    g.className = "graffiti";
+    g.style.background = `radial-gradient(circle, ${color} 0%, transparent 70%)`;
+    
+    cell.appendChild(g);
+    
+    // Remove the graffiti element after the animation finishes
+    setTimeout(() => g.remove(), 400);
+  });
+}
 
 /* ---------- DRAG ---------- */
 function enableDrag(piece){
@@ -288,8 +342,11 @@ function enableDrag(piece){
   piece.addEventListener("pointermove", e => {
     if (!dragging) return;
 
+    const LIFT = 40; // px above finger (tweak for comfort)
+
     piece.style.left = e.clientX - offsetX + "px";
-    piece.style.top  = e.clientY - offsetY + "px";
+    piece.style.top  = e.clientY - offsetY - LIFT + "px";
+
 
     const r = boardEl.getBoundingClientRect();
     const x = Math.floor((e.clientX - r.left) / (r.width / 8));
@@ -359,16 +416,45 @@ function tryPlace(piece,x,y){
   update();
 }
 
-function clearLines(){
-  let cleared=0;
-  for(let i=0;i<8;i++){
-    if(grid.slice(i*8,i*8+8).every(v=>v)){
-      grid.splice(i*8,8,...Array(8).fill(null));
-      cleared++;
+function clearLines() {
+  let clearedCells = [];
+
+  // Check Rows
+  for (let y = 0; y < 8; y++) {
+    let row = [];
+    for (let x = 0; x < 8; x++) {
+      let i = y * 8 + x;
+      if (grid[i]) row.push(i);
     }
+    if (row.length === 8) clearedCells.push(...row);
   }
-  if(cleared){ score+=cleared*10; play("clear"); }
+
+  // Check Columns
+  for (let x = 0; x < 8; x++) {
+    let col = [];
+    for (let y = 0; y < 8; y++) {
+      let i = y * 8 + x;
+      if (grid[i]) col.push(i);
+    }
+    if (col.length === 8) clearedCells.push(...col);
+  }
+
+  if (clearedCells.length === 0) return;
+
+  const uniqueCells = [...new Set(clearedCells)];
+
+  // 1. Trigger the visual effect while blocks are still there
+  graffiti(uniqueCells);
+  play("clear");
+
+  // 2. Wait a split second for the splash to start, then clear the data
+  setTimeout(() => {
+    uniqueCells.forEach(i => grid[i] = null);
+    score += uniqueCells.length + 10;
+    update(); // Redraws the board without the cleared blocks
+  }, 1500); 
 }
+
 
 function update(){
   scoreEl.textContent=score;
