@@ -66,6 +66,14 @@ header{
     0 2px 4px rgba(0,0,0,.4);
 }
 
+.cell.ghost {
+  opacity: 0.45;
+  filter: brightness(1.2);
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.35),
+    0 0 10px currentColor;
+}
+
 
 .cell.glow{animation:glow .45s ease-out}
 
@@ -370,22 +378,42 @@ function enableDrag(piece){
     tryPlace(piece, x, y);
     dragging = null;
     drawBoard();
+    clearGhost();
+  });
+}
+
+
+// --------------Shadow ghost--------------//
+function clearGhost() {
+  boardEl.querySelectorAll(".ghost").forEach(c => {
+    c.classList.remove("ghost");
+    c.style.background = "";
+    c.style.color = "";
   });
 }
 
 
 /* ---------- LOGIC ---------- */
-function preview(shape,x,y,color){
-  drawBoard();
-  shape.forEach((r,dy)=>r.forEach((v,dx)=>{
-    if(!v) return;
-    const cx=x+dx,cy=y+dy,i=cy*8+cx;
-    if(cx>=0&&cy>=0&&cx<8&&cy<8&&!grid[i]){
-      boardEl.children[i].style.background=color;
-      boardEl.children[i].style.opacity=.5;
-    }
+function preview(shape, x, y, color) {
+  clearGhost();
+
+  shape.forEach((r, dy) => r.forEach((v, dx) => {
+    if (!v) return;
+
+    const cx = x + dx;
+    const cy = y + dy;
+    if (cx < 0 || cy < 0 || cx >= 8 || cy >= 8) return;
+
+    const i = cy * 8 + cx;
+    if (grid[i]) return;
+
+    const cell = boardEl.children[i];
+    cell.classList.add("ghost");
+    cell.style.background = color;
+    cell.style.color = color;
   }));
 }
+
 
 function tryPlace(piece,x,y){
   if(gameEnded) return;
