@@ -1,7 +1,7 @@
 {
   "name": "Water Sort Puzzle",
   "short_name": "Water Sort",
-  "start_url": "./water-sort-puzzle.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617",
