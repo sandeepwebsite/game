@@ -1,0 +1,21 @@
+{
+  "name": "Water Sort Puzzle",
+  "short_name": "Water Sort",
+  "start_url": "./water-sort-puzzle.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/water-sort.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/water-sort.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
