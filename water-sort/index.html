@@ -898,14 +898,15 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js?v=" + GAME_VERSION)
       .then(reg => {
-        // Silent background update
-        setInterval(() => {
-          reg.update();
-        }, 60 * 60 * 1000); // every 1 hour
+        console.log("SW registered v" + GAME_VERSION);
+
+        // Optional: check for update every hour
+        setInterval(() => reg.update(), 60 * 60 * 1000);
       });
   });
 }
 </script>
+
 
 
 
