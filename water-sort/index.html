@@ -28,6 +28,10 @@ body {
     overflow-x: hidden;
 }
 
+h2{
+    color: white;
+}
+
 .bubble {
     position: absolute;
     border-radius: 50%;
@@ -37,7 +41,7 @@ body {
     z-index: -1; /* Keep them behind the tubes */
     animation: floatUp linear forwards;
 }
-
+    
 @keyframes floatUp {
     0% {
         transform: translateY(0) scale(1);
@@ -111,6 +115,7 @@ header {
     height: auto;
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5)); /* Adds a glow effect */
     transition: transform 0.3s ease;
+    cursor: pointer;
 }
 
 .logo:hover {
@@ -218,15 +223,23 @@ h1{text-align:center; color: var(--border); letter-spacing: 2px;}
 .layer::before {
     content: "";
     position: absolute;
-    top: -4px;
-    left: 0;
-    width: 100%;
-    height: 8px;
-    background: inherit; /* Matches the color of the layer */
-    border-radius: 50%; /* Creates the curved water top */
-    filter: brightness(1.2); /* Highlight the top of the water */
-    opacity: 0.9;
-    z-index: 2;
+    top: -6px;
+    left: -5%;
+    width: 110%;
+    height: 12px;
+
+    background: radial-gradient(
+        ellipse at center,
+        rgba(255,255,255,0.45) 0%,
+        rgba(255,255,255,0.25) 30%,
+        rgba(255,255,255,0.1) 55%,
+        transparent 70%
+    );
+
+    border-radius: 50%;
+    filter: blur(0.5px);
+    opacity: 0.85;
+    pointer-events: none;
 }
 
 .layer::after {
@@ -357,10 +370,51 @@ button{ flex:1; padding:12px; border-radius:12px; border:none; font-weight:700; 
 button:disabled{opacity:.3}
 .hint{text-align:center; font-size:.85rem; height: 20px; margin:10px 0; color: #fb923c;}
 
-.modal{position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index: 200;}
-.modal-content{background:#0f172a; border:2px solid #38bdf8; border-radius:15px; padding:20px; width:90%; max-width:380px;}
-.map{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-height: 50vh; overflow-y: auto;}
-.level-btn{padding:10px 0; border-radius:8px; background:#1e293b; text-align:center; border:1px solid #334155; color: white; display: flex; flex-direction: column; align-items: center;}
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+
+    /* animation setup */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.modal-content {
+    background: #0f172a;
+    border: 2px solid #38bdf8;
+    border-radius: 15px;
+    padding: 20px;
+    width: 90%;
+    max-width: 380px;
+
+    /* animation setup */
+    transform: scale(0.85) translateY(20px);
+    opacity: 0;
+    transition: 
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal.show .modal-content {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+
+.map{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-height: 50vh; overflow-y: auto;cursor: pointer;}
+.level-btn{padding:10px 0; border-radius:8px; background:#1e293b; text-align:center; border:1px solid #334155; color: white; display: flex; flex-direction: column; align-items: center;cursor: pointer;}
+
 .level-btn.active{border-color:#38bdf8;}
 .win-text{position:fixed; top:45%; left:50%; transform:translate(-50%,-50%); background: #0f172a; padding: 40px; border-radius: 25px; border: 3px solid var(--star-gold); text-align: center; z-index: 1000;}
 .stars-container {display: flex; gap: 10px; margin-top: 15px; font-size: 2.5rem;}
@@ -390,10 +444,15 @@ button:disabled{opacity:.3}
     <div id="board" class="board"></div>
     <div id="hintBox" class="hint"></div>
     <div class="controls">
-    <img src="images/reset.png" alt="Reset" class="icon-btn" onclick="resetLevel()">
-    <img src="images/undo.png" alt="Undo" class="icon-btn" id="undoBtn" onclick="undoMove()">
-    <img src="images/level-up.png" alt="Level Map" class="icon-btn" onclick="toggleMap()">
-</div>
+        <img src="images/reset.png" alt="Reset" class="icon-btn" 
+             onclick="triggerButtonBubbles(this); resetLevel();">
+        
+        <img src="images/undo.png" alt="Undo" class="icon-btn" id="undoBtn" 
+             onclick="triggerButtonBubbles(this); undoMove();">
+        
+        <img src="images/level-up.png" alt="Level Map" class="icon-btn" 
+             onclick="triggerButtonBubbles(this); toggleMap();">
+    </div>
 </div>
 
 <div id="mapModal" class="modal">
@@ -403,6 +462,51 @@ button:disabled{opacity:.3}
         <button onclick="closeMap()" style="width:100%; margin-top:20px; background:#ef4444; color:white">CLOSE</button>
     </div>
 </div>
+
+<div id="aboutModal" class="modal">
+    <div class="modal-content">
+        <h2 style="text-align:center;margin-top:0;color:#38bdf8">
+            About This Game
+        </h2>
+
+        <div style="text-align:center">
+            <img src="images/developer.png"
+                 style="width:90px;height:90px;border-radius:50%;
+                 border:2px solid #38bdf8;
+                 box-shadow:0 0 15px rgba(56,189,248,.5)">
+            
+            <h3 style="margin:10px 0 2px;color:white">
+                Sandeep Kumar
+            </h3>
+            <p style="margin:0;font-size:.85rem;color:#94a3b8">
+                Developed with 💙
+            </p>
+        </div>
+
+        <hr style="border:0;border-top:1px solid rgba(56,189,248,.2);margin:15px 0">
+
+        <div style="font-size:.85rem;color:#cbd5f5;>
+            <p><b>Game:</b> Water Sort Puzzle</p>
+            <p><b>Version:</b> 1.0.0</p>
+            <p><b>Engine:</b> HTML • CSS • JavaScript</p>
+            <p><b>Features:</b></p>
+            <ul style="padding-left:18px;margin:6px 0">
+                <li>Unendable Levels</li>
+                <li>Undo & smart difficulty</li>
+                <li>Star-based scoring</li>
+                <li>Offline progress saving</li>
+            </ul>
+        </div>
+
+        <button onclick="closeAbout()"
+            style="width:100%;margin-top:15px;
+            background:#ef4444;color:white">
+            CLOSE
+        </button>
+    </div>
+</div>
+
+
 <audio id="pourSound" preload="auto">
     <source src="sound/pour.mp3" type="audio/mpeg">
 </audio>
@@ -410,6 +514,7 @@ button:disabled{opacity:.3}
     <source src="sound/win.mp3" type="audio/mpeg">
 </audio>
 <script>
+
 const MAX = 4;
 const COLORS = ["red", "blue", "yellow", "green", "purple", "orange", "deepPink", "cyan", "lime", "white", "silver", "gold", "brown", "maroon", "navy", "olive", "teal", "indigo", "violet", "magenta", "coral", "crimson", "khaki", "plum"];
 const COLOR_MAP = { red: "#ef4444", blue: "#3b82f6", yellow: "#facc15", green: "#22c55e", purple: "#a855f7", orange: "#fb923c", deepPink: "#db2777", cyan: "#06b6d4", lime: "#84cc16", white: "#f8fafc", silver: "#94a3b8", gold: "#eab308", brown: "#78350f", maroon: "#991b1b", navy: "#1e3a8a", olive: "#3f6212", teal: "#0d9488", indigo: "#4338ca", violet: "#7c3aed", magenta: "#d946ef", coral: "#fb7185", crimson: "#be123c", khaki: "#fde047", plum: "#dda0dd" };
@@ -421,10 +526,53 @@ let soundOn = JSON.parse(localStorage.getItem("soundOn") ?? "true");
 const pourAudio = document.getElementById("pourSound");
 const winAudio = document.getElementById("winSound");
 
+// --- BFS SOLVER FOR MINIMUM MOVES ---
+function getMinMoves(initialTubes) {
+    const serialize = (state) => state.map(t => t.join(',')).sort().join('|');
+    let queue = [{ state: initialTubes, steps: 0 }];
+    let visited = new Set([serialize(initialTubes)]);
+    let iterations = 0;
+
+    while (queue.length > 0 && iterations < 3000) {
+        iterations++;
+        let { state, steps } = queue.shift();
+
+        if (state.every(t => t.length === 0 || (t.length === MAX && t.every(c => c === t[0])))) {
+            return steps;
+        }
+
+        for (let i = 0; i < state.length; i++) {
+            for (let j = 0; j < state.length; j++) {
+                if (i === j) continue;
+                if (canPour(state[i], state[j])) {
+                    let newState = state.map(t => [...t]);
+                    let color = newState[i][newState[i].length - 1];
+                    while (newState[i].length > 0 && newState[i][newState[i].length - 1] === color && newState[j].length < MAX) {
+                        newState[j].push(newState[i].pop());
+                    }
+                    let key = serialize(newState);
+                    if (!visited.has(key)) {
+                        visited.add(key);
+                        queue.push({ state: newState, steps: steps + 1 });
+                    }
+                }
+            }
+        }
+    }
+    return null; 
+}
+
+function canPour(from, to) {
+    if (from.length === 0) return false;
+    if (to.length === MAX) return false;
+    return to.length === 0 || from[from.length - 1] === to[to.length - 1];
+}
+
+// --- GAME LOGIC ---
 function playSfx(audio) {
     if (soundOn && audio) {
         audio.currentTime = 0;
-        audio.play().catch(e => console.log("Audio blocked by browser. Click page first."));
+        audio.play().catch(e => {});
     }
 }
 
@@ -435,6 +583,62 @@ function saveState() {
     localStorage.setItem("waterSortSave", JSON.stringify(save));
 }
 
+
+function getAiMinimum(initialTubes) {
+    // We sort the serialized state so that tubes [A, B] and [B, A] are treated as the same
+    const serialize = (state) => state.map(t => t.join(',')).sort().join('|');
+    
+    let queue = [{ state: initialTubes, steps: 0 }];
+    let visited = new Set([serialize(initialTubes)]);
+    
+    let iterations = 0;
+    const SAFETY_CAP = 4000; // Prevents long freezes on high levels
+
+    while (queue.length > 0 && iterations < SAFETY_CAP) {
+        iterations++;
+        let { state, steps } = queue.shift();
+
+        // Check for Win State
+        if (state.every(t => t.length === 0 || (t.length === MAX && t.every(c => c === t[0])))) {
+            return steps;
+        }
+
+        // Generate all possible valid moves
+        for (let i = 0; i < state.length; i++) {
+            for (let j = 0; j < state.length; j++) {
+                if (i === j) continue; // Can't pour into itself
+
+                if (canPour(state[i], state[j])) {
+                    let newState = state.map(t => [...t]);
+                    let color = newState[i][newState[i].length - 1];
+                    
+                    // Move the blocks
+                    while (newState[i].length > 0 && 
+                           newState[i][newState[i].length - 1] === color && 
+                           newState[j].length < MAX) {
+                        newState[j].push(newState[i].pop());
+                    }
+
+                    let key = serialize(newState);
+                    if (!visited.has(key)) {
+                        visited.add(key);
+                        queue.push({ state: newState, steps: steps + 1 });
+                    }
+                }
+            }
+        }
+    }
+    // Fallback if level is too complex: return a heuristic estimate
+    return Math.floor(initialTubes.filter(t => t.length > 0).length * 3.5);
+}
+
+function canPour(from, to) {
+    if (from.length === 0) return false;
+    if (to.length === MAX) return false;
+    return to.length === 0 || from[from.length - 1] === to[to.length - 1];
+}
+
+
 function generateLevel(lvl) {
     const tier = Math.floor(lvl / 50);
     const colorCount = Math.min(4 + tier, COLORS.length);
@@ -444,12 +648,11 @@ function generateLevel(lvl) {
     pool.sort(() => Math.random() - 0.5);
     const t = Array.from({ length: colorCount + emptyTubes }, () => []);
     pool.forEach((c, i) => t[i % colorCount].push(c));
-    optimal = colorCount * 4;
-    maxMoves = optimal * 2;
     return t;
 }
 
 function loadLevel(lvl) {
+    
     level = lvl;
     if (save.activeLevel === lvl && save.currentBoard) {
         tubes = JSON.parse(JSON.stringify(save.currentBoard));
@@ -460,97 +663,52 @@ function loadLevel(lvl) {
         moves = 0;
         history = [];
     }
-    const tier = Math.floor(level / 50);
-    const colorCount = Math.min(4 + tier, COLORS.length);
-    optimal = colorCount * 4;
-    maxMoves = optimal * 2;
+    
+    // Calculate Absolute Minimum for Star System
+    const minSteps = getMinMoves(tubes);
+    optimal = getAiMinimum(tubes);
+    
+    maxMoves = optimal; 
 
     document.getElementById("hintBox").textContent = (lvl > 1 && lvl % 50 === 0) ? "DIFFICULTY UP: New Color & Tube!" : "";
+    moves = 0;
+    history = [];
     saveState();
     render();
 }
 
-
-
-// Function to create a single bubble
-function createBubble(x, y, isAmbient = true) {
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    
-    // Randomize size
-    const size = Math.random() * (isAmbient ? 15 : 8) + 4 + 'px';
-    bubble.style.width = size;
-    bubble.style.height = size;
-    
-    // Position
-    bubble.style.left = x + '%';
-    bubble.style.top = y + '%';
-    
-    // Randomize speed
-    const duration = Math.random() * (isAmbient ? 10 : 3) + 4 + 's';
-    bubble.style.animationDuration = duration;
-    
-    document.body.appendChild(bubble);
-    
-    // Remove from DOM after animation finishes to save memory
-    setTimeout(() => {
-        bubble.remove();
-    }, parseFloat(duration) * 1000);
-}
-
-// Background ambient bubbles (run this once on load)
-function startAmbientParticles() {
-    setInterval(() => {
-        // Only create if tab is active to save battery
-        if (!document.hidden) {
-            createBubble(Math.random() * 100, 100);
-        }
-    }, 1500);
-}
-
-// Pouring burst effect
-function triggerPourParticles(tubeIndex) {
-    const tube = document.querySelectorAll('.tube')[tubeIndex];
-    const rect = tube.getBoundingClientRect();
-    const centerX = (rect.left + rect.width / 2) / window.innerWidth * 100;
-
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-            createBubble(centerX + (Math.random() * 4 - 2), 70, false);
-        }, i * 100);
-    }
-}
-
-
-
 function render() {
     const board = document.getElementById("board");
     board.innerHTML = "";
+    // Update the Move Display to show Current / Max
     document.getElementById("levelDisplay").textContent = `Level ${level}`;
     document.getElementById("moveDisplay").textContent = `Moves: ${moves} / ${maxMoves}`;
-    document.getElementById("undoBtn").disabled = history.length === 0;
     document.getElementById("soundBtn").textContent = soundOn ? "🔊" : "🔇";
 
-    tubes.forEach((tube, i) => {
-    const el = document.createElement("div");
-    el.className = "tube" + (selected === i ? " selected" : "");
-    el.onclick = () => selectTube(i);
-
-    for (let j = 0; j < MAX; j++) {
-        const l = document.createElement("div");
-        l.className = "layer";
-        if (tube[j]) {
-            l.style.backgroundColor = COLOR_MAP[tube[j]];
-            
-            // Only add the 'surface' effect to the top-most color layer
-            if (j === tube.length - 1) {
-                l.classList.add("top-layer");
-            }
-        }
-        el.appendChild(l);
+    // Disable Undo on Start or when history is empty
+    const undoBtn = document.getElementById("undoBtn");
+    if (history.length === 0) {
+        undoBtn.classList.add("disabled");
+    } else {
+        undoBtn.classList.remove("disabled");
     }
-    board.appendChild(el);
-});
+
+    tubes.forEach((tube, i) => {
+        const el = document.createElement("div");
+        el.className = "tube" + (selected === i ? " selected" : "");
+        el.onclick = () => selectTube(i);
+
+        for (let j = 0; j < MAX; j++) {
+            const l = document.createElement("div");
+            l.className = "layer";
+            if (tube[j]) {
+                l.style.backgroundColor = COLOR_MAP[tube[j]];
+                if (j === tube.length - 1) l.classList.add("top-layer");
+            }
+            el.appendChild(l);
+        }
+        board.appendChild(el);
+    });
 }
 
 function selectTube(i) {
@@ -571,32 +729,31 @@ function pour(a, b) {
     
     const color = A[A.length - 1];
     const snapshot = JSON.stringify(tubes);
-animating = true;
-    const tubeEls = document.querySelectorAll(".tube");
-    tubeEls[a].classList.add("pouring");
-    
-    // TRIGGER BUBBLES HERE
-    triggerPourParticles(b);
-    
-    playSfx(pourAudio); // Play pour sound
+    animating = true;
 
-    setTimeout(() => {
-        while (A.length && A[A.length - 1] === color && B.length < MAX) B.push(A.pop());
-        history.push(snapshot);
-        moves++;
-        animating = false;
-        document.querySelectorAll(".tube")[a].classList.remove("pouring");
-        
-        if (moves > maxMoves) {
-            alert("No more moves left!");
-            resetLevel();
-            return;
-        }
-        
-        saveState();
-        render();
-        checkWin();
-    }, 400);
+const tubeEls = document.querySelectorAll(".tube");
+const directionClass = b > a ? "pouring-right" : "pouring-left";
+tubeEls[a].classList.add(directionClass);
+
+triggerPourParticles(b);
+playSfx(pourAudio);
+
+setTimeout(() => {
+    while (A.length && A[A.length - 1] === color && B.length < MAX) {
+        B.push(A.pop());
+    }
+
+    history.push(snapshot);
+    moves++;
+    animating = false;
+
+    tubeEls[a].classList.remove("pouring-left", "pouring-right");
+
+    saveState();
+    render();
+    if (checkWin()) return;
+}, 400);
+
 }
 
 function undoMove() {
@@ -607,54 +764,116 @@ function undoMove() {
     render();
 }
 
-function resetLevel() { save.activeLevel = null; loadLevel(level); }
-
 function checkWin() {
-    if (!tubes.every(t => !t.length || (t.length === MAX && t.every(c => c === t[0])))) return;
-    
-    playSfx(winAudio); // Play win sound
+    if (!tubes.every(t => 
+        !t.length || (t.length === MAX && t.every(c => c === t[0]))
+    )) return false;
 
-    let earned = moves <= optimal ? 3 : (moves <= (optimal + 3) ? 2 : 1);
+    playSfx(winAudio);
+
+    let earned = 1;
+    if (moves <= optimal) earned = 3;
+    else if (moves <= Math.floor(optimal * 1.3)) earned = 2;
+
     save.stars[level] = Math.max(save.stars[level] || 0, earned);
+
     const winMsg = document.createElement("div");
     winMsg.className = "win-text";
-    winMsg.innerHTML = `<h2 style="color:#22c55e;margin:0">LEVEL COMPLETED!</h2>
+    winMsg.innerHTML = `
+        <h2 style="color:#22c55e;margin:0">LEVEL COMPLETED!</h2>
         <div class="stars-container">
             <span class="star ${earned >= 1 ? 'active' : ''}">★</span>
             <span class="star ${earned >= 2 ? 'active' : ''}">★</span>
             <span class="star ${earned >= 3 ? 'active' : ''}">★</span>
         </div>`;
     document.body.appendChild(winMsg);
+
     if (level === save.level) save.level++;
-    save.currentBoard = null; saveState();
-    setTimeout(() => { winMsg.remove(); loadLevel(level + 1); }, 2000);
+    save.currentBoard = null;
+    saveState();
+
+    setTimeout(() => {
+        winMsg.remove();
+        loadLevel(level + 1);
+    }, 2000);
+
+    return true;
 }
 
-document.getElementById("soundBtn").onclick = () => {
-    soundOn = !soundOn;
-    localStorage.setItem("soundOn", soundOn);
-    render();
-};
+
+function startAmbientParticles() {
+    setInterval(() => { if (!document.hidden) createBubble(Math.random() * 100, 100); }, 1500);
+}
+
+function createBubble() {}
+function createBubbleAtPoint() {}
+function triggerButtonBubbles() {}
+function triggerPourParticles() {}
+
+
+function resetLevel() { save.activeLevel = null; loadLevel(level); }
 
 function toggleMap() {
     const modal = document.getElementById("mapModal");
     const grid = document.getElementById("mapGrid");
+
     modal.style.display = "flex";
+
+    requestAnimationFrame(() => {
+        modal.classList.add("show");
+    });
+
     grid.innerHTML = "";
-    for (let i = 1; i <= Math.max(save.level, 20); i++) {
+    for (let i = 1; i <= Math.max(save.level, 50); i++) {
         const locked = i > save.level;
         const btn = document.createElement("div");
         btn.className = "level-btn" + (locked ? " locked" : "") + (i === level ? " active" : "");
         const s = save.stars[i] || 0;
-        btn.innerHTML = locked ? "🔒" : `<span>${i}</span><div style="color:#facc15;font-size:10px">${"★".repeat(s)}</div>`;
-        if (!locked) btn.onclick = () => { save.activeLevel = null; loadLevel(i); closeMap(); };
+        btn.innerHTML = locked
+            ? "🔒"
+            : `<span>${i}</span><div style="color:#facc15;font-size:10px">${"★".repeat(s)}</div>`;
+
+        if (!locked) btn.onclick = () => {
+            save.activeLevel = null;
+            loadLevel(i);
+            closeMap();
+        };
         grid.appendChild(btn);
     }
 }
-function closeMap() { document.getElementById("mapModal").style.display = "none"; }
 
+
+function closeMap() {
+    const modal = document.getElementById("mapModal");
+    modal.classList.remove("show");
+
+    setTimeout(() => {
+        modal.style.display = "none";
+    }, 350);
+}
+
+
+
+function toggleAbout() {
+    const modal = document.getElementById("aboutModal");
+    modal.style.display = "flex";
+    requestAnimationFrame(() => modal.classList.add("show"));
+}
+
+function closeAbout() {
+    const modal = document.getElementById("aboutModal");
+    modal.classList.remove("show");
+    setTimeout(() => modal.style.display = "none", 350);
+}
+
+
+
+
+// startAmbientParticles();
 loadLevel(save.lastPlayed || save.level);
+
 </script>
+
 <script>
     if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js")
