@@ -496,7 +496,7 @@ button:disabled{opacity:.3}
 
         <div style="font-size:.85rem;color:#cbd5f5;">
             <p><b>Game:</b> Water Sort Puzzle</p>
-            <p><b>Version:</b> 7.1.26</p>
+            <p><b>Version:</b> <span id="gameVersion"></span></p>
             <p><b>Engine:</b> HTML • CSS • JavaScript</p>
             <p><b>Features:</b></p>
             <ul style="padding-left:18px;margin:6px 0">
@@ -876,6 +876,10 @@ function closeAbout() {
 }
 
 
+document.addEventListener("DOMContentLoaded", () => {
+    const v = document.getElementById("gameVersion");
+    if (v) v.textContent = GAME_VERSION;
+});
 
 
 // startAmbientParticles();
@@ -886,15 +890,17 @@ loadLevel(save.lastPlayed || save.level);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then(reg => {
-      // 🔁 Check for updates silently
-      setInterval(() => {
-        reg.update();
-      }, 60 * 60 * 1000); // every 1 hour
-    });
+    navigator.serviceWorker.register("sw.js?v=" + GAME_VERSION)
+      .then(reg => {
+        // Silent background update
+        setInterval(() => {
+          reg.update();
+        }, 60 * 60 * 1000); // every 1 hour
+      });
   });
 }
 </script>
+
 
 
 </body>
