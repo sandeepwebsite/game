@@ -884,12 +884,18 @@ loadLevel(save.lastPlayed || save.level);
 </script>
 
 <script>
-    if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("Service Worker Registered"))
-    .catch(err => console.error("SW failed:", err));
-    }
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      // 🔁 Check for updates silently
+      setInterval(() => {
+        reg.update();
+      }, 60 * 60 * 1000); // every 1 hour
+    });
+  });
+}
 </script>
+
 
 </body>
 </html>
