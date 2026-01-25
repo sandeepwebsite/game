@@ -44,28 +44,39 @@ self.addEventListener("activate", event => {
   );
 });
 
-/* ---------- FETCH ---------- */
 self.addEventListener("fetch", event => {
-  const req = event.request;
 
-  // Always fresh HTML
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).catch(() => caches.match("./index.html"))
-    );
-    return;
-  }
+  // Ignore non-GET requests
+  if (event.request.method !== "GET") return;
 
-  // Cache-first for assets
   event.respondWith(
-    caches.match(req).then(cached => {
-      return cached || fetch(req).then(res => {
-        if (req.url.startsWith(self.location.origin)) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(req, clone));
+    caches.match(event.request).then(cached => {
+
+      if (cached) return cached;
+
+      return fetch(event.request).then(response => {
+
+        // ❌ DO NOT cache partial responses (206)
+        if (
+          !response ||
+          response.status !== 200 ||
+          response.type !== "basic"
+        ) {
+          return response;
         }
-        return res;
+
+        const responseClone = response.clone();
+
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+
+        return response;
       });
+
+    }).catch(() => {
+      // Optional offline fallback
     })
   );
 });
+
