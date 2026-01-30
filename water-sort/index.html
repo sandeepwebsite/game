@@ -447,7 +447,13 @@ button:disabled{opacity:.3}
     <div id="levelDisplay">Level 1</div>
     <div style="display:flex; align-items:center; gap:8px">
         <div id="moveDisplay">Moves: 0 / 0</div>
-        <button id="soundBtn" style="background:none; border:none; color:#38bdf8; font-size:1.2rem; cursor:pointer; padding:0">🔊</button>
+        <button id="soundBtn"
+            onclick="toggleSound()"
+            style="background:none;border:none;color:#38bdf8;
+                   font-size:1.2rem;cursor:pointer;padding:0">
+                🔊
+        </button>
+
     </div>
     </div>
     <div id="board" class="board"></div>
@@ -692,6 +698,22 @@ function loadLevel(lvl) {
     render();
 }
 
+    function toggleSound() {
+    soundOn = !soundOn;
+    localStorage.setItem("soundOn", JSON.stringify(soundOn));
+
+    // Give instant feedback
+    const btn = document.getElementById("soundBtn");
+    btn.textContent = soundOn ? "🔊" : "🔇";
+
+    // Optional click feedback sound
+    if (soundOn) {
+        pourAudio.currentTime = 0;
+        pourAudio.play().catch(() => {});
+    }
+}
+
+    
 function render() {
     const board = document.getElementById("board");
     board.innerHTML = "";
