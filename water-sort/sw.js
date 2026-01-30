@@ -3,7 +3,7 @@
    Silent Auto Update + Version Sync
 ================================== */
 
-const VERSION = "7.1.27"; // 🔁 MUST MATCH GAME_VERSION
+const VERSION = "1.1.28"; // 🔁 MUST MATCH GAME_VERSION
 const CACHE_NAME = `water-sort-${VERSION}`;
 
 const ASSETS = [
