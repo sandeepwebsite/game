@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bird Sort Game</title>
+<style>
+    :root {
+        --sky: #a2d2ff;
+        --ui: #2d6a4f;
+        --trunk-color: #432818;
+    }
+
+    html, body {
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+
+    body {
+        margin: 0; background: #1a1a1a;
+        font-family: 'Segoe UI', sans-serif;
+        display: flex; flex-direction: column; align-items: center;
+        height: 100vh; overflow: hidden; touch-action: manipulation;
+        padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: #000;
+    }
+
+
+
+    /* HEADER */
+    .header {
+        width: 100%;
+        max-width: 480px;
+        padding: 5px 0;
+        text-align: center;
+        /*background: rgba(255, 255, 255, 0.2);*/
+        /*backdrop-filter: blur(10px);*/
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        z-index: 10;
+    }
+    .header h1 { margin: 0; font-size: 24px; color: #1b4332; text-transform: uppercase; }
+    .stats-bar { display: inline-flex; gap: 15px; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; margin-top: 5px; font-weight: bold; font-size: 14px; }
+
+    /* VIEWPORT */
+    #game-viewport {
+        width: 100%;
+        max-width: 480px; flex: 1;
+        background: linear-gradient(to bottom, var(--sky) 0%, #e0f2f1 100%);
+        position: relative;
+        overflow-y: auto;
+        scrollbar-width: none;
+        background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 100%);
+        transition: background 3s ease;
+    }
+    #game-viewport::-webkit-scrollbar { display: none; }
+
+    
+    /* FIREFLY STYLING */
+.firefly {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #ffff00;
+    border-radius: 50%;
+    filter: blur(1px);
+    box-shadow: 0 0 10px 2px rgba(255, 255, 0, 0.8);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+}
+
+@keyframes firefly-glow {
+    0%, 100% { opacity: 0; transform: scale(0.5) translate(0, 0); }
+    50% { opacity: 1; transform: scale(1.2) translate(10px, -20px); }
+}
+
+/* THE TREE */
+#game-wrapper {
+    width: 100%; position: relative;
+    padding-top: 10px; padding-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.tree-trunk {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    width: 24px; background: linear-gradient(to right, #3d2616, #5d4037, #3d2616);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    border-radius: 0 0 10px 10px;
+    height: 0; /* Managed by JS */
+}
+
+/* BRANCHES Attached to Trunk */
+.branch {
+    position: absolute; width: 140px; height: 12px;
+    background: var(--trunk-color); cursor: pointer; z-index: 2;
+    transition: 0.2s;
+}
+/* Left branches attach their right side to trunk */
+.branch-left { right: 50%; border-radius: 15px 0 0 15px; }
+/* Right branches attach their left side to trunk */
+.branch-right { left: 50%; border-radius: 0 15px 15px 0; }
+
+.branch.selected { filter: brightness(1.5); box-shadow: 0 0 15px gold; }
+
+/* REALISTIC BIRDS */
+.bird-stack {
+    position: absolute; bottom: 12px; width: 100%;
+    display: flex; pointer-events: none;
+    /* Birds stack from the trunk OUTWARD to the tip */
+}
+.branch-left .bird-stack { flex-direction: row-reverse; padding-right: 5px; }
+.branch-right .bird-stack { flex-direction: row; padding-left: 5px; }
+
+.bird {
+    width: 32px; height: 28px; border-radius: 15px 15px 6px 6px;
+    position: relative; margin: 0 1px;
+    transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    box-shadow: inset -3px -3px 6px rgba(0,0,0,0.2);
+}
+.bird::before { /* Eye */
+    content: ''; position: absolute; top: 6px; width: 4px; height: 4px;
+    background: #000; border-radius: 50%; border: 1px solid #fff;
+}
+.bird::after { /* Beak */
+    content: ''; position: absolute; top: 9px; width: 0; height: 0;
+    border-top: 3px solid transparent; border-bottom: 3px solid transparent;
+}
+
+/* Face away from trunk */
+.branch-left .bird::before { left: 5px; }
+.branch-left .bird::after { left: -7px; border-right: 8px solid #ffca28; }
+.branch-right .bird::before { right: 5px; }
+.branch-right .bird::after { right: -7px; border-left: 8px solid #ffca28; }
+
+.bird.selected-bird { transform: translateY(-15px); }
+
+
+.leaf {
+    position: absolute;
+    width: 15px;
+    height: 10px;
+    background: #4caf50;
+    border-radius: 10px 0; /* Leaf shape */
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.8;
+}
+
+@keyframes fall {
+0% {
+    transform: translateY(-50px) translateX(0) rotate(0deg);
+    opacity: 0.8;
+}
+25% {
+    transform: translateY(25vh) translateX(30px) rotate(45deg);
+}
+50% {
+    transform: translateY(50vh) translateX(-30px) rotate(90deg);
+}
+75% {
+    transform: translateY(75vh) translateX(30px) rotate(135deg);
+}
+100% {
+    transform: translateY(105vh) translateX(0) rotate(180deg);
+    opacity: 0;
+}
+}
+
+
+/* UI */
+.ui-panel {
+    width: 100%; max-width: 480px; background: #fff;
+    /*padding: 10px 0 30px 0;*/
+    display: flex; flex-direction: column; align-items: center;
+    border-top: 4px solid var(--ui);
+}
+.ui-buttons { display: flex; gap: 8px; margin-top: 10px; }
+button { padding: 10px 16px; border: none; border-radius: 10px; background: var(--ui); color: white; font-weight: bold; cursor: pointer; }
+
+/* POPUP */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.box { background: #fff; padding: 25px; border-radius: 20px; text-align: center; width: 260px; }
+.star { font-size: 30px; color: #ccc; }
+.star.filled { color: gold; }
+
+
+/* MOBILE APP OPTIMIZATION */
+@media screen and (max-width: 480px) {
+    /* Full viewport and safe area handling */
+    html, body {
+        width: 100%;
+        height: 100%;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        background: #000;
+    }
+
+    /* Game viewport & wrapper centered */
+    #game-viewport,
+    .header,
+    .ui-panel {
+        margin: 0 auto;
+        width: 100%;
+        max-width: 430px;
+    }
+
+    /* Header tweaks for thumb reach */
+    .header {
+        padding: 8px 0 6px;
+    }
+    .header h1 {
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+    .stats-bar {
+        font-size: 13px;
+        padding: 4px 12px;
+    }
+
+    /* Branches - bigger touch targets */
+    .branch {
+        height: 16px;
+        cursor: pointer;
+    }
+    .branch::before {
+        content: '';
+        position: absolute;
+        inset: -12px; /* expand hitbox without changing visuals */
+    }
+
+    /* Birds - slightly bigger and responsive */
+    .bird {
+        width: 34px;
+        height: 30px;
+        transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .branch:active .bird {
+        transform: translateY(-10px) scale(0.95); /* pressed feedback */
+    }
+
+    /* Bottom UI panel like native toolbar */
+    .ui-panel {
+        padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+    }
+    .ui-buttons {
+        gap: 10px;
+    }
+    button {
+        min-width: 80px;
+        padding: 12px 18px;
+        font-size: 14px;
+    }
+
+    /* Disable accidental scroll / zoom */
+    #game-viewport {
+        touch-action: manipulation;
+        overscroll-behavior: contain;
+    }
+
+    /* Performance optimizations */
+    .bird,
+    .branch,
+    .firefly,
+    .leaf {
+        will-change: transform, opacity;
+    }
+}
+
+</style>
+</head>
+<body>
+<div id="game-viewport">
+    <div class="header">
+    <h1>Level <span id="lvl-num">1</span></h1>
+    <div class="stats-bar">
+        Moves: <span id="move-text">0</span> | Best: <span id="best-text">?</span>
+    </div>
+</div>
+    <div id="game-wrapper">
+        <div id="trunk" class="tree-trunk"></div>
+        <div id="branches-layer"></div>
+    </div>
+
+    <div id="win-popup" class="overlay">
+        <div class="box">
+            <h2 style="margin:0">Migration Clear!</h2>
+            <div id="stars-display" style="margin:15px 0;"></div>
+            <p id="win-stats" style="font-size:14px; color:#666"></p>
+            <button onclick="nextLevel()">Next Migration</button>
+        </div>
+    </div>
+
+    <div class="ui-panel">
+    <div class="ui-buttons">
+        <button onclick="undo()" style="background:#4a90e2">Undo</button>
+        <button onclick="reset()" style="background:#e74c3c">Reset</button>
+        <button id="mute-btn" onclick="toggleMute()" style="background:#555">🔊</button>
+    </div>
+</div>
+
+</div>
+
+
+
+<script>
+    // --- AUDIO ENGINE ---
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx, mainGain, isMuted = false;
+
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new AudioCtx();
+        mainGain = audioCtx.createGain();
+        mainGain.connect(audioCtx.destination);
+    }
+
+    function playSound(type) {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (isMuted) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.connect(g); g.connect(mainGain);
+
+        if (type === 'select') {
+            osc.frequency.setValueAtTime(800, now);
+            g.gain.setValueAtTime(0.1, now);
+            g.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(); osc.stop(now + 0.1);
+        } else if (type === 'move') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+            g.gain.setValueAtTime(0.1, now);
+            g.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'win') {
+            playSound('select'); setTimeout(() => playSound('select'), 100);
+        }
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
+        if (mainGain) mainGain.gain.setTargetAtTime(isMuted ? 0 : 1, audioCtx.currentTime, 0.02);
+    }
+
+
+    const TIMES = {
+DAY: { top: '#87ceeb', bottom: '#e0f2f1', fireflies: false },
+DUSK: { top: '#ff9e7d', bottom: '#42275a', fireflies: true },
+NIGHT: { top: '#1a1a2e', bottom: '#16213e', fireflies: true }
+};
+
+function updateEnvironment() {
+let state;
+if (moves < 8) state = TIMES.DAY;
+else if (moves < 15) state = TIMES.DUSK;
+else state = TIMES.NIGHT;
+
+// Update Sky Colors
+const root = document.documentElement;
+root.style.setProperty('--sky-top', state.top);
+root.style.setProperty('--sky-bottom', state.bottom);
+
+// Manage Fireflies
+if (state.fireflies) {
+    if (!window.fireflyInterval) {
+        window.fireflyInterval = setInterval(createFirefly, 800);
+    }
+} else {
+    clearInterval(window.fireflyInterval);
+    window.fireflyInterval = null;
+}
+}
+
+function createFirefly() {
+const container = document.getElementById('game-viewport');
+const firefly = document.createElement('div');
+firefly.className = 'firefly';
+
+const x = Math.random() * container.offsetWidth;
+const y = Math.random() * container.offsetHeight;
+
+firefly.style.left = x + 'px';
+firefly.style.top = y + 'px';
+firefly.style.animation = `firefly-glow ${2 + Math.random() * 2}s infinite ease-in-out`;
+
+container.appendChild(firefly);
+
+// Remove firefly after some time to keep DOM clean
+setTimeout(() => firefly.remove(), 4000);
+}
+
+
+    // --- GAME LOGIC ---
+    const COLORS = ['#e63946', '#457b9d', '#2a9d8f', '#e9c46a', '#8338ec', '#ff006e', '#fb5607', '#3a86ff'];
+    let level = parseInt(localStorage.getItem('bs_lvl')) || 1;
+    let branches = [], selected = null, history = [], moves = 0, minMoves = 0;
+
+    // BFS AI Solver
+    function getLeastMoves(startState) {
+        let queue = [{ state: JSON.stringify(startState), dist: 0 }];
+        let visited = new Set([queue[0].state]);
+        while (queue.length > 0 && queue.length < 2000) {
+            let { state, dist } = queue.shift();
+            let current = JSON.parse(state);
+            if (current.every(b => b.length === 0 || (b.length === 4 && b.every(c => c === b[0])))) return dist;
+            for (let i = 0; i < current.length; i++) {
+                for (let j = 0; j < current.length; j++) {
+                    if (i === j || current[i].length === 0) continue;
+                    let next = JSON.parse(state);
+                    let bird = next[i][next[i].length-1];
+                    if (next[j].length < 4 && (next[j].length === 0 || next[j][next[j].length-1] === bird)) {
+                        while(next[i].length > 0 && next[i][next[i].length-1] === bird && next[j].length < 4) next[j].push(next[i].pop());
+                        let sStr = JSON.stringify(next);
+                        if (!visited.has(sStr)) { visited.add(sStr); queue.push({ state: sStr, dist: dist + 1 }); }
+                    }
+                }
+            }
+        }
+        return startState.length;
+    }
+
+    function generate(lvl) {
+        const cCount = Math.min(2 + Math.floor(lvl / 3), COLORS.length);
+        let pool = [];
+        for (let i = 0; i < cCount; i++) for (let j = 0; j < 4; j++) pool.push(COLORS[i]);
+        pool.sort(() => Math.random() - 0.5);
+        let b = Array.from({ length: cCount + 2 }, () => []);
+        for (let i = 0; i < cCount; i++) while (b[i].length < 4) b[i].push(pool.pop());
+        return b;
+    }
+
+    function render() {
+        const box = document.getElementById('branches-layer');
+        const trunk = document.getElementById('trunk');
+        box.innerHTML = '';
+        document.getElementById('lvl-num').innerText = level;
+        document.getElementById('move-text').innerText = moves;
+
+        const spacing = 100;
+        const totalHeight = (branches.length * spacing) / 2 + 100;
+        document.getElementById('game-wrapper').style.height = totalHeight + 'px';
+        trunk.style.height = (totalHeight - 80) + 'px'; // Trunk stops at last branch
+
+        branches.forEach((b, i) => {
+            const isLeft = i % 2 === 0;
+            const d = document.createElement('div');
+            d.className = `branch ${isLeft ? 'branch-left' : 'branch-right'} ${selected === i ? 'selected' : ''}`;
+            d.style.top = (80 + Math.floor(i / 2) * spacing) + 'px';
+            d.onclick = () => clickBranch(i);
+
+            const stack = document.createElement('div');
+            stack.className = 'bird-stack';
+            b.forEach((color, j) => {
+                const bird = document.createElement('div');
+                bird.className = `bird ${selected === i && j === b.length - 1 ? 'selected-bird' : ''}`;
+                bird.style.backgroundColor = color;
+                stack.appendChild(bird);
+            });
+            d.appendChild(stack);
+            box.appendChild(d);
+        });
+    }
+
+    function clickBranch(i) {
+        if (selected === null) { 
+            if (branches[i].length) { selected = i; playSound('select'); }
+        } else { 
+            if (selected !== i) move(selected, i);
+            selected = null;
+        }
+        render();
+        checkWin();
+    }
+
+    function createLeaf() {
+const container = document.getElementById('game-viewport');
+const leaf = document.createElement('div');
+leaf.className = 'leaf';
+
+// Randomize starting position and leaf color
+const startX = Math.random() * container.offsetWidth;
+const duration = 3 + Math.random() * 4; // 3 to 7 seconds
+const colors = ['#4caf50', '#81c784', '#2e7d32', '#aed581'];
+
+leaf.style.left = startX + 'px';
+leaf.style.top = '-20px';
+leaf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+leaf.style.animation = `fall ${duration}s linear forwards`;
+
+container.appendChild(leaf);
+
+// Clean up leaf after animation
+setTimeout(() => {
+    leaf.remove();
+}, duration * 1000);
+}
+
+setInterval(() => {
+if (Math.random() > 0.7) createLeaf();
+}, 2000);
+
+    function move(a, b) {
+const A = branches[a], B = branches[b];
+if (B.length < 4 && (!B.length || B[B.length - 1] === A[A.length - 1])) {
+    playSound('move');
+    history.push(JSON.stringify(branches));
+    let color = A[A.length - 1];
+    while (A.length && A[A.length-1] === color && B.length < 4) B.push(A.pop());
+    moves++;
+    updateEnvironment();
+
+    // TRIGGER LEAF BURST if branch is now full and sorted
+    if (B.length === 4 && B.every(c => c === B[0])) {
+        for(let i=0; i<5; i++) setTimeout(createLeaf, i * 100);
+    }
+}
+}
+
+    function checkWin() {
+        if (branches.every(b => b.length === 0 || (b.length === 4 && b.every(c => c === b[0])))) {
+            playSound('win');
+            let stars = (moves <= minMoves) ? 3 : (moves <= minMoves + 4) ? 2 : 1;
+            let sHtml = '';
+            for(let i=0; i<3; i++) sHtml += `<span class="star ${i < stars ? 'filled' : ''}">★</span>`;
+            document.getElementById('stars-display').innerHTML = sHtml;
+            document.getElementById('win-stats').innerText = `Best: ${minMoves} | You: ${moves}`;
+            document.getElementById('win-popup').style.display = 'flex';
+        }
+    }
+
+    function nextLevel() {
+        document.getElementById('win-popup').style.display = 'none';
+        level++;
+        localStorage.setItem('bs_lvl', level);
+        start();
+    }
+
+    function start() {
+        history = []; moves = 0; selected = null;
+        branches = generate(level);
+        render();
+        minMoves = getLeastMoves(branches);
+        document.getElementById('best-text').innerText = minMoves;
+        document.getElementById('game-viewport').scrollTop = 0;
+        updateEnvironment();
+    }
+
+    function undo() { if (history.length) { branches = JSON.parse(history.pop()); moves--; render(); } }
+    function reset() { start(); }
+
+    start();
+</script>
+</body>
+</html>
