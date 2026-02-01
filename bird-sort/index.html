@@ -164,6 +164,27 @@
             50% { transform: translateY(-30px); }
         }
 
+
+
+        .flying-bird {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* Slower, smooth flight */
+            width: 36px;
+            height: 32px;
+        }
+
+        /* Wing flap animation during flight */
+        .flying-bird .bird-wing {
+            animation: flap 0.15s infinite alternate;
+        }
+
+        @keyframes flap {
+            from { transform: rotate(10deg) translateY(0); }
+            to { transform: rotate(-30deg) translateY(-2px); }
+        }
+
         /* Background transition for levels */
         #game-viewport.level-evening { --sky-top: #ff9a9e; --sky-bottom: #fecfef; }
         #game-viewport.level-night { --sky-top: #2c3e50; --sky-bottom: #000000; }
@@ -378,13 +399,68 @@
     }
 
     function move(a, b) {
-        const A = branches[a], B = branches[b];
-        if (B.length < 4 && (!B.length || B[B.length - 1] === A[A.length - 1])) {
-            playSound('move'); history.push(JSON.stringify(branches));
-            let color = A[A.length - 1]; while (A.length && A[A.length - 1] === color && B.length < 4) B.push(A.pop());
-            moves++;
-        }
+    const A = branches[a], B = branches[b];
+    if (B.length < 4 && (!B.length || B[B.length - 1] === A[A.length - 1])) {
+        const color = A[A.length - 1];
+        
+        // 1. Get Source Position
+        const sourceContainer = document.querySelectorAll('.branch-container')[a];
+        const sourceBirds = sourceContainer.querySelectorAll('.bird');
+        const movingBirdEl = sourceBirds[sourceBirds.length - 1];
+        const rectStart = movingBirdEl.getBoundingClientRect();
+
+        // 2. Logic Update
+        history.push(JSON.stringify(branches));
+        while (A.length && A[A.length - 1] === color && B.length < 4) B.push(A.pop());
+        moves++;
+        playSound('move');
+
+        // 3. Create Flying Animation
+        const flyer = movingBirdEl.cloneNode(true);
+        flyer.classList.add('flying-bird');
+        flyer.classList.remove('selected-bird');
+        flyer.style.top = rectStart.top + 'px';
+        flyer.style.left = rectStart.left + 'px';
+        flyer.style.backgroundColor = color;
+        document.body.appendChild(flyer);
+
+        // Hide original and re-render
+        render(); 
+        const allContainers = document.querySelectorAll('.branch-container');
+        const destContainer = allContainers[b];
+        
+        // Find where the bird SHOULD land
+        const destStack = destContainer.querySelector('.bird-stack');
+        // We temporarily add a hidden bird to find its coordinates
+        const tempBird = document.createElement('div');
+        tempBird.className = 'bird';
+        tempBird.style.visibility = 'hidden';
+        destStack.appendChild(tempBird);
+        const rectEnd = tempBird.getBoundingClientRect();
+        tempBird.remove();
+
+        // 4. Start Flight
+        requestAnimationFrame(() => {
+            flyer.style.top = rectEnd.top + 'px';
+            flyer.style.left = rectEnd.left + 'px';
+            // Face the direction of flight
+            flyer.style.transform = (rectEnd.left > rectStart.left) ? 'scaleX(1)' : 'scaleX(-1)';
+        });
+
+        // 5. Landing
+        setTimeout(() => {
+            flyer.remove();
+            checkWin();
+            // Trigger landing hop
+            const finalBirds = destContainer.querySelectorAll('.bird');
+            const landedBird = finalBirds[finalBirds.length - 1];
+            if (landedBird) {
+                landedBird.classList.add('hopping');
+                setTimeout(() => landedBird.classList.remove('hopping'), 400);
+            }
+        }, 600); // Matches the 0.6s CSS transition
     }
+}
 
     function checkWin() {
         if (branches.every(b => b.length === 0 || (b.length === 4 && b.every(c => c === b[0])))) {
