@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Line Drawing Puzzle</title>
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
+            --win: #22c55e; --fail: #ef4444; --text: #f8fafc;
+            --drawing: #f1c40f; /* The Yellow Line Color */
+        }
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden; touch-action: none;
+        }
+        .top-nav { position: absolute; top: 20px; display: flex; gap: 10px; align-items: center; width: 90%; max-width: 400px; justify-content: space-between; }
+        .btn-icon {
+            background: var(--card); border: 2px solid var(--accent); color: var(--accent);
+            padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;
+        }
+        #game-container {
+            background: var(--card); border-radius: 24px; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: 4px solid #334155; position: relative;
+        }
+        canvas { border-radius: 20px; display: block; }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal {
+            background: var(--card); padding: 30px; border-radius: 20px; text-align: center;
+            width: 85%; max-width: 350px; border: 2px solid var(--accent);
+        }
+        .level-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+            margin-top: 20px; max-height: 250px; overflow-y: auto; padding: 10px;
+        }
+        .level-node { background: #334155; padding: 10px 0; border-radius: 8px; cursor: pointer; text-align: center; color: #94a3b8; }
+        .level-node.unlocked { color: var(--text); background: #475569; }
+        .level-node.current { border: 2px solid var(--accent); color: var(--accent); font-weight: bold; }
+        .level-node.locked { cursor: not-allowed; opacity: 0.4; }
+        .action-btn {
+            background: var(--accent); color: var(--bg); border: none; padding: 12px 30px;
+            font-size: 1.1rem; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <button class="btn-icon" onclick="openLevelMap()">🗺️</button>
+        <span id="level-title" style="font-weight: 800;">Level 1</span>
+        <div>
+            <button class="btn-icon" id="mute-btn" onclick="toggleMute()">🔊</button>
+            <button class="btn-icon" onclick="initLevel()">🔄</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="360" height="380"></canvas>
+    </div>
+
+    <div id="result-overlay" class="overlay">
+        <div class="modal">
+            <h1 id="res-title">Success!</h1>
+            <button class="action-btn" id="res-btn" onclick="handleResult()">Next Level</button>
+        </div>
+    </div>
+
+    <div id="map-overlay" class="overlay">
+        <div class="modal">
+            <h2>Select Level</h2>
+            <div class="level-grid" id="level-grid"></div>
+            <button class="action-btn" style="background: #64748b" onclick="closeMap()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const levels = [];
+        function createLevels() {
+            levels.push({ nodes: [{x:180,y:80}, {x:300,y:300}, {x:60,y:300}], edges: [[0,1], [1,2], [2,0]] });
+            levels.push({ nodes: [{x:80,y:100}, {x:280,y:100}, {x:280,y:300}, {x:80,y:300}], edges: [[0,1], [1,2], [2,3], [3,0], [0,2]] });
+            levels.push({ nodes: [{x:180,y:60}, {x:280,y:160}, {x:80,y:160}, {x:280,y:320}, {x:80,y:320}], edges: [[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[1,4],[2,3]] });
+            for(let i=3; i<50; i++) {
+                let n = [], e = [], count = 4 + Math.floor(i/7);
+                for(let j=0; j<count; j++) {
+                    let angle = (j/count) * Math.PI * 2;
+                    n.push({x: 180 + (100 + (i%5)*5) * Math.cos(angle), y: 190 + (100 + (i%5)*5) * Math.sin(angle)});
+                    e.push([j, (j+1)%count]);
+                }
+                if(i%2===0) for(let j=0; j<count; j++) if(j%2===0) e.push([j, (j+2)%count]);
+                else { n.push({x: 180, y: 190}); for(let j=0; j<count; j++) if(j%3===0) e.push([j, count]); }
+                levels.push({nodes: n, edges: e});
+            }
+        }
+        createLevels();
+
+        let isMuted = localStorage.getItem('isMuted') === 'true';
+        let currentIdx = parseInt(localStorage.getItem('savedLevel')) || 0;
+        let unlockedLevel = parseInt(localStorage.getItem('unlockedLevel')) || 0;
+        
+        let playerPath = [], visitedEdges = [], isDrawing = false, lastNodeIdx = null, gameOver = false;
+        let mousePos = { x: 0, y: 0 };
+
+        function playTone(freq, type, duration) {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('isMuted', isMuted);
+            document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+        }
+
+        function initLevel() {
+            playerPath = []; visitedEdges = []; lastNodeIdx = null; gameOver = false; isDrawing = false;
+            document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
+            document.getElementById('level-title').innerText = `Level ${currentIdx + 1}`;
+            document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+            localStorage.setItem('savedLevel', currentIdx);
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const lv = levels[currentIdx];
+            
+            // 1. Draw Template (Gray Background Lines)
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+            lv.edges.forEach(e => {
+                ctx.beginPath(); ctx.moveTo(lv.nodes[e[0]].x, lv.nodes[e[0]].y);
+                ctx.lineTo(lv.nodes[e[1]].x, lv.nodes[e[1]].y); ctx.stroke();
+            });
+
+            // 2. Draw Active YELLOW Line (MUST come before Blue Path for better layering)
+            if (isDrawing && lastNodeIdx !== null && !gameOver) {
+                ctx.strokeStyle = '#f1c40f'; // Yellow
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(lv.nodes[lastNodeIdx].x, lv.nodes[lastNodeIdx].y);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.stroke();
+            }
+
+            // 3. Draw Blue/Red Fixed Path
+            if (playerPath.length > 0) {
+                ctx.strokeStyle = gameOver ? 'var(--fail)' : 'var(--accent)';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.moveTo(lv.nodes[playerPath[0]].x, lv.nodes[playerPath[0]].y);
+                for (let i = 1; i < playerPath.length; i++) {
+                    ctx.lineTo(lv.nodes[playerPath[i]].x, lv.nodes[playerPath[i]].y);
+                }
+                ctx.stroke();
+            }
+
+            // 4. Draw Nodes
+            lv.nodes.forEach((n, i) => {
+                ctx.beginPath(); ctx.arc(n.x, n.y, 14, 0, Math.PI*2);
+                ctx.fillStyle = (lastNodeIdx === i) ? 'var(--accent)' : '#0f172a';
+                ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            });
+        }
+
+        function triggerResult(isWin) {
+            isDrawing = false;
+            document.getElementById('result-overlay').style.display = 'flex';
+            const title = document.getElementById('res-title');
+            const btn = document.getElementById('res-btn');
+            
+            if (isWin) {
+                playTone(523, 'square', 0.2);
+                title.innerText = "Level Clear! 🎉";
+                title.style.color = "var(--win)";
+                btn.innerText = "Next Level";
+                if (currentIdx === unlockedLevel && unlockedLevel < 49) {
+                    unlockedLevel++;
+                    localStorage.setItem('unlockedLevel', unlockedLevel);
+                }
+            } else {
+                playTone(150, 'sawtooth', 0.4);
+                gameOver = true;
+                title.innerText = "Stuck! ❌";
+                title.style.color = "var(--fail)";
+                btn.innerText = "Replay";
+                draw();
+            }
+        }
+
+        function handleResult() {
+            const btnText = document.getElementById('res-btn').innerText;
+            if (btnText === "Next Level") {
+                currentIdx = Math.min(currentIdx + 1, 49);
+            }
+            initLevel();
+        }
+
+        function updatePos(e) {
+            const r = canvas.getBoundingClientRect();
+            const t = e.touches ? e.touches[0] : e;
+            mousePos.x = t.clientX - r.left;
+            mousePos.y = t.clientY - r.top;
+            if (isDrawing) draw(); // Forces re-draw to show yellow line moving
+        }
+
+        function onStart(e) {
+            if (gameOver) return;
+            const r = canvas.getBoundingClientRect();
+            const t = e.touches ? e.touches[0] : e;
+            const startX = t.clientX - r.left;
+            const startY = t.clientY - r.top;
+            
+            const lv = levels[currentIdx];
+            const idx = lv.nodes.findIndex(n => Math.hypot(n.x - startX, n.y - startY) < 25);
+            
+            if (idx !== -1) {
+                isDrawing = true;
+                playerPath = [idx];
+                lastNodeIdx = idx;
+                mousePos.x = startX;
+                mousePos.y = startY;
+                draw();
+            }
+        }
+
+        function onMove(e) {
+            updatePos(e);
+            if (!isDrawing || gameOver) return;
+            
+            const lv = levels[currentIdx];
+            const idx = lv.nodes.findIndex(n => Math.hypot(n.x - mousePos.x, n.y - mousePos.y) < 25);
+            
+            if (idx !== -1 && idx !== lastNodeIdx) {
+                const edgeIdx = lv.edges.findIndex(e => (e[0]===lastNodeIdx && e[1]===idx) || (e[0]===idx && e[1]===lastNodeIdx));
+                if (edgeIdx !== -1 && !visitedEdges.includes(edgeIdx)) {
+                    visitedEdges.push(edgeIdx);
+                    playerPath.push(idx);
+                    lastNodeIdx = idx;
+                    playTone(600, 'sine', 0.1);
+                    draw();
+                    
+                    if (visitedEdges.length === lv.edges.length) {
+                        triggerResult(true);
+                    } else {
+                        const hasMove = lv.edges.some((e, i) => (e[0]===idx || e[1]===idx) && !visitedEdges.includes(i));
+                        if (!hasMove) triggerResult(false);
+                    }
+                }
+            }
+        }
+
+        function openLevelMap() {
+            const grid = document.getElementById('level-grid'); grid.innerHTML = '';
+            for(let i=0; i<levels.length; i++) {
+                const div = document.createElement('div');
+                const isLocked = i > unlockedLevel;
+                div.className = `level-node ${i === currentIdx ? 'current' : ''} ${isLocked ? 'locked' : 'unlocked'}`;
+                div.innerText = isLocked ? "🔒" : i + 1;
+                if (!isLocked) div.onclick = () => { currentIdx = i; initLevel(); closeMap(); };
+                grid.appendChild(div);
+            }
+            document.getElementById('map-overlay').style.display = 'flex';
+        }
+        function closeMap() { document.getElementById('map-overlay').style.display = 'none'; }
+
+        // Event Listeners
+        canvas.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', () => { isDrawing = false; draw(); });
+        
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); });
+        window.addEventListener('touchend', () => { isDrawing = false; draw(); });
+
+        initLevel();
+    </script>
+</body>
+</html>
