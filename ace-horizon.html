@@ -70,7 +70,15 @@
         .fly-2 { transform: translate(0, -400px) scale(0) !important; opacity: 0; transition: 0.6s ease-in; }
         .fly-3 { transform: translate(400px, 0) scale(0) !important; opacity: 0; transition: 0.6s ease-in; }
 
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 600; align-items: center; justify-content: center; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 2000; /* Increased from 600 to 2000 */
+            align-items: center; 
+            justify-content: center; 
+        }
         .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; width: 320px; color: white; text-align: center; border: 1px solid #333; }
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin: 8px 0; border-radius: 10px; background: rgba(255,255,255,0.05); }
         .rank-winner { background: linear-gradient(45deg, #ffd70033, #ffd70011); border: 1px solid gold; box-shadow: 0 0 15px gold; }
@@ -79,7 +87,15 @@
         .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
         .bid-btn { width: 50px; height: 50px; border-radius: 50%; border: 1px solid #fff; background: none; color: white; font-weight: bold; font-size: 18px; cursor: pointer; }
 
-        .confetti { position: absolute; width: 8px; height: 8px; background: gold; z-index: 1000; pointer-events: none; animation: fall 3s linear forwards; }
+        .confetti { 
+            position: absolute; 
+            width: 6px; 
+            height: 6px; 
+            background: gold; 
+            z-index: 3000; /* Set higher than the modal (2000) */
+            pointer-events: none; 
+            animation: fall 3s linear forwards; 
+        }
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
@@ -341,14 +357,29 @@ function handleNextRound() {
 }
 
 function spawnConfetti() {
-    for(let i=0; i<50; i++) {
+    // Clear any old confetti first
+    document.querySelectorAll('.confetti').forEach(c => c.remove());
+
+    for(let i=0; i<60; i++) {
         const c = document.createElement('div');
         c.className = 'confetti';
+        // Randomize position across the whole screen
         c.style.left = Math.random() * 100 + 'vw';
-        c.style.backgroundColor = ['#ffd700', '#ffffff', '#ffeb3b'][Math.floor(Math.random()*3)];
+        c.style.top = '-10px';
+        
+        // Randomize colors
+        const colors = ['#ffd700', '#ffffff', '#ffeb3b', '#ff9800'];
+        c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Randomize animation speed and delay
+        c.style.animationDuration = (Math.random() * 2 + 2) + 's';
         c.style.animationDelay = Math.random() * 2 + 's';
+        
+        // Attach to body so it stays on top of everything
         document.body.appendChild(c);
-        setTimeout(() => c.remove(), 4000);
+        
+        // Clean up
+        setTimeout(() => c.remove(), 5000);
     }
 }
 
