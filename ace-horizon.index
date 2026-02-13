@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ace Horizon - Pro Edition</title>
+    <style>
+        :root { 
+            --card-w: 11vh; 
+            --card-h: 16vh; 
+            --board-bg: radial-gradient(circle, #2d5a27, #1a472a);
+            --accent: #ffeb3b;
+        }
+        
+        @media (min-aspect-ratio: 4/3) {
+            :root { --card-w: 13vh; --card-h: 19vh; }
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background: #000; margin: 0; height: 100vh; width: 100vw; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #board { position: relative; width: 100vw; height: 100vh; background: var(--board-bg); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        
+        /* UI CONTROLS */
+        .top-ui { position: absolute; top: 20px; width: 95%; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .circle-btn { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.7); color: white; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.2s; }
+        #hud { color: white; background: rgba(0,0,0,0.6); padding: 8px 25px; border-radius: 30px; font-size: 14px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); }
+
+        /* LABELS */
+        .player-label { 
+            position: absolute; background: rgba(0,0,0,0.85); color: white; 
+            padding: 8px 15px; border-radius: 30px; font-size: 14px; 
+            z-index: 5; border: 2px solid rgba(255,255,255,0.2); 
+            display: flex; flex-direction: row; align-items: center; gap: 10px;
+            transition: all 0.3s; white-space: nowrap;
+        }
+        .stat-divider { width: 1px; height: 15px; background: rgba(255,255,255,0.3); }
+        .stat-val { color: var(--accent); font-weight: bold; min-width: 35px; }
+
+        @keyframes pulse-active {
+            0% { box-shadow: 0 0 0 0 rgba(255, 235, 59, 0.7); border-color: var(--accent); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 235, 59, 0); border-color: var(--accent); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 235, 59, 0); border-color: var(--accent); }
+        }
+        .active-turn { animation: pulse-active 1.5s infinite; }
+
+        .label-0 { bottom: 22vh; left: 50%; transform: translateX(-50%); border-color: var(--accent); } 
+        .label-1 { left: 20px; top: 50%; transform: translateY(-50%); } 
+        .label-2 { top: 80px; left: 50%; transform: translateX(-50%); } 
+        .label-3 { right: 20px; top: 50%; transform: translateY(-50%); }
+
+        /* +1 ANIMATION */
+        .plus-one {
+            position: absolute; color: var(--accent); font-weight: bold; font-size: 24px;
+            pointer-events: none; z-index: 200; animation: floatUp 0.8s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+
+        /* CARDS */
+        .card, .played-card { 
+            width: var(--card-w); height: var(--card-h); 
+            background: #fff; border-radius: 8px; 
+            color: #111; display: flex; flex-direction: column; 
+            padding: 5px; box-shadow: 2px 2px 10px rgba(0,0,0,0.4); 
+            position: relative; border: 1px solid #ccc; overflow: hidden;
+        }
+        .card { margin-left: -5vh; transition: transform 0.2s; cursor: pointer; }
+        .card:hover { transform: translateY(-20px); z-index: 100 !important; border-color: var(--accent); }
+        .red { color: #d32f2f; }
+        .corner { font-size: 1.8vh; font-weight: bold; line-height: 1; }
+        .emoji-body { position: absolute; inset: 20% 5% 5% 5%; display: grid; align-items: center; justify-items: center; overflow: hidden; }
+        .grid-low { grid-template-columns: repeat(2, 1fr); font-size: 1.5vh; }
+        .grid-face { font-size: 6vh !important; }
+
+        #trick-zone { position: absolute; width: 300px; height: 200px; pointer-events: none; }
+        #hand-container { position: absolute; bottom: 15px; width: 100%; display: flex; justify-content: center; padding-left: 5vh; }
+        
+        /* Collection Animations - Smooth Fly to Labels */
+        .fly-0 { transform: translate(-50%, 40vh) scale(0.2) !important; opacity: 0; transition: 0.6s cubic-bezier(0.5, 0, 0.5, 1); }
+        .fly-1 { transform: translate(-45vw, 0) scale(0.2) !important; opacity: 0; transition: 0.6s cubic-bezier(0.5, 0, 0.5, 1); }
+        .fly-2 { transform: translate(-50%, -40vh) scale(0.2) !important; opacity: 0; transition: 0.6s cubic-bezier(0.5, 0, 0.5, 1); }
+        .fly-3 { transform: translate(45vw, 0) scale(0.2) !important; opacity: 0; transition: 0.6s cubic-bezier(0.5, 0, 0.5, 1); }
+
+        #bid-overlay { position: absolute; background: rgba(0,0,0,0.95); padding: 25px; border-radius: 20px; z-index: 200; text-align: center; color: white; border: 2px solid var(--accent); }
+        .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .bid-btn { width: 50px; height: 50px; border-radius: 50%; border: 1px solid #fff; background: none; color: white; cursor: pointer; font-weight: bold; font-size: 18px; }
+        .bid-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        #dealer-btn { position: absolute; width: 25px; height: 25px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; z-index: 20; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 600; align-items: center; justify-content: center; }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 20px; border: 2px solid var(--accent); width: 320px; color: white; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="board">
+    <div class="top-ui">
+        <button class="circle-btn" onclick="showLeaderboard()">🏆</button>
+        <div id="hud">ACE HORIZON</div>
+        <button id="mute-btn" class="circle-btn" onclick="toggleMute()">🔊</button>
+    </div>
+    
+    <div id="dealer-btn">D</div>
+    <div class="player-label label-0" id="l-0"><span>YOU</span></div>
+    <div class="player-label label-1" id="l-1"><span>Arjun</span></div>
+    <div class="player-label label-2" id="l-2"><span>Bikram</span></div>
+    <div class="player-label label-3" id="l-3"><span>Chitra</span></div>
+
+    <div id="bid-overlay">
+        <div style="font-size:18px; font-weight:bold; color:var(--accent)">PLACE YOUR BID</div>
+        <div class="bid-grid" id="bid-grid"></div>
+    </div>
+
+    <div id="trick-zone"></div>
+    <div id="hand-container"></div>
+</div>
+
+<div id="leader-modal" class="modal">
+    <div class="modal-content">
+        <h2 id="leader-title" style="color:var(--accent);">SCOREBOARD</h2>
+        <div id="leader-body" style="text-align: left;"></div>
+        <button id="next-round-btn" onclick="startNewRound()" style="display:none; width:100%; background:var(--accent); padding:12px; margin-top:15px; cursor:pointer; font-weight:bold; border:none; border-radius:8px;">NEXT ROUND</button>
+        <button onclick="closeLeaderboard()" style="background:transparent; color:#aaa; border:none; margin-top:10px; cursor:pointer;">Close</button>
+    </div>
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const suits = ['♠','♥','♦','♣'], values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+let gameState = { 
+    players: [], trickCards: [], currentSuit: null, 
+    currentPlayer: 0, dealerIdx: -1, roundCount: 0, 
+    maxRounds: 4, isProcessing: false, isBidding: true 
+};
+
+function init() {
+    const isMuted = localStorage.getItem('isMuted') === 'true';
+    document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+
+    gameState.players = [
+        {name: "YOU", score: 0, bid: 0, won: 0, hand: []},
+        {name: "Arjun", score: 0, bid: 0, won: 0, hand: []},
+        {name: "Bikram", score: 0, bid: 0, won: 0, hand: []},
+        {name: "Chitra", score: 0, bid: 0, won: 0, hand: []}
+    ];
+    const grid = document.getElementById('bid-grid');
+    for(let i=1; i<=8; i++) {
+        const b = document.createElement('button');
+        b.className = 'bid-btn'; b.innerText = i;
+        b.onclick = () => submitBid(i);
+        grid.appendChild(b);
+    }
+    startNewRound();
+}
+
+function updateHUD() {
+    document.getElementById('hud').innerText = `ROUND ${gameState.roundCount} / ${gameState.maxRounds}`;
+    updatePlayerLabels();
+}
+
+function updatePlayerLabels() {
+    gameState.players.forEach((p, i) => {
+        const label = document.getElementById(`l-${i}`);
+        const isCurrent = (gameState.currentPlayer === i && !gameState.isBidding);
+        const arrow = isCurrent ? `<span style="color:var(--accent); margin-right:5px">➤</span>` : "";
+        const statUI = p.bid > 0 ? `<div class="stat-divider"></div><div class="stat-val">${p.won}/${p.bid}</div>` : "";
+        label.innerHTML = `${arrow}<span>${p.name}</span>${statUI}`;
+        label.className = `player-label label-${i} ${isCurrent ? 'active-turn' : ''}`;
+    });
+}
+
+function startNewRound() {
+    gameState.roundCount++;
+    gameState.isBidding = true;
+    document.getElementById('leader-modal').style.display = 'none';
+    gameState.dealerIdx = (gameState.dealerIdx + 1) % 4;
+    
+    const btn = document.getElementById('dealer-btn');
+    const pos = [{ bottom: '18vh', left: '42%' }, { top: '50%', left: '150px' }, { top: '115px', left: '55%' }, { top: '50%', right: '150px' }];
+    const p = pos[gameState.dealerIdx];
+    Object.assign(btn.style, { bottom: p.bottom||'auto', top: p.top||'auto', left: p.left||'auto', right: p.right||'auto' });
+
+    let deck = [];
+    suits.forEach(s => values.forEach((v, i) => deck.push({s, v, p: i})));
+    deck.sort(() => Math.random() - 0.5);
+    gameState.players.forEach((p, i) => {
+        p.hand = sortHand(deck.slice(i*13, (i+1)*13));
+        p.won = 0; p.bid = 0;
+    });
+
+    document.getElementById('bid-overlay').style.display = 'block';
+    renderHand();
+    updateHUD();
+}
+
+function submitBid(val) {
+    gameState.players[0].bid = val;
+    for(let i=1; i<4; i++) gameState.players[i].bid = Math.floor(Math.random()*3) + 2;
+    document.getElementById('bid-overlay').style.display = 'none';
+    gameState.isBidding = false;
+    gameState.currentPlayer = (gameState.dealerIdx + 1) % 4;
+    updateHUD();
+    if(gameState.currentPlayer !== 0) cpuPlay();
+}
+
+function renderHand() {
+    const container = document.getElementById('hand-container');
+    container.innerHTML = '';
+    gameState.players[0].hand.forEach((card, idx) => {
+        const div = document.createElement('div');
+        div.className = `card ${card.s === '♥' || card.s === '♦' ? 'red' : 'spade'}`;
+        div.innerHTML = getCardHTML(card);
+        div.onclick = () => playerPlay(idx);
+        container.appendChild(div);
+    });
+}
+
+function getCardHTML(c) {
+    const isFace = isNaN(c.v);
+    const suitIcon = `<div style="font-size: 1.5vh">${c.s}</div>`;
+    let icons = isFace ? `<div class="grid-face">${c.v === 'A' ? c.s : c.v}</div>` : Array(parseInt(c.v)).fill(suitIcon).join('');
+    return `<div class="corner">${c.v}<br>${c.s}</div><div class="emoji-body ${isFace ? '' : 'grid-low'}">${icons}</div>`;
+}
+
+function playerPlay(idx) {
+    if(gameState.isBidding || gameState.isProcessing || gameState.currentPlayer !== 0) return;
+    let card = gameState.players[0].hand[idx];
+    if(gameState.currentSuit && gameState.players[0].hand.some(c => c.s === gameState.currentSuit) && card.s !== gameState.currentSuit) return;
+    gameState.isProcessing = true;
+    animateToCenter(0, card);
+    gameState.players[0].hand.splice(idx, 1);
+    renderHand();
+    checkNext();
+}
+
+function cpuPlay() {
+    let p = gameState.players[gameState.currentPlayer];
+    let playable = p.hand.filter(c => c.s === gameState.currentSuit);
+    if(playable.length === 0) playable = p.hand;
+    let card = playable[Math.floor(Math.random() * playable.length)];
+    setTimeout(() => {
+        animateToCenter(gameState.currentPlayer, card);
+        p.hand.splice(p.hand.indexOf(card), 1);
+        checkNext();
+    }, 700);
+}
+
+function animateToCenter(pIdx, card) {
+    if(!gameState.currentSuit) gameState.currentSuit = card.s;
+    gameState.trickCards.push({player: pIdx, card: card});
+    const div = document.createElement('div');
+    div.className = 'played-card' + (card.s === '♥' || card.s === '♦' ? ' red' : ' spade');
+    div.innerHTML = getCardHTML(card);
+    const start = [{top:'300px', left:'50%'}, {top:'50%', left:'-400px'}, {top:'-300px', left:'50%'}, {top:'50%', left:'400px'}][pIdx];
+    Object.assign(div.style, { position: 'absolute', top: start.top, left: start.left, transition: '0.4s' });
+    document.getElementById('trick-zone').appendChild(div);
+    setTimeout(() => {
+        const target = [{ t: '100px', l: '50%' }, { t: '50%', l: '80px' }, { t: '-20px', l: '50%' }, { t: '50%', l: '240px' }][pIdx];
+        div.style.top = target.t; div.style.left = target.l; div.style.transform = 'translateX(-50%) translateY(-50%)';
+    }, 50);
+}
+
+function checkNext() {
+    if(gameState.trickCards.length < 4) {
+        gameState.currentPlayer = (gameState.currentPlayer + 1) % 4;
+        updatePlayerLabels();
+        if(gameState.currentPlayer !== 0) cpuPlay(); else gameState.isProcessing = false;
+    } else { setTimeout(resolveTrick, 1000); }
+}
+
+function resolveTrick() {
+    let s = gameState.trickCards.filter(c => c.card.s === '♠');
+    let win = s.length > 0 ? s.reduce((a, b) => a.card.p > b.card.p ? a : b) : gameState.trickCards.filter(c => c.card.s === gameState.currentSuit).reduce((a, b) => a.card.p > b.card.p ? a : b);
+    
+    // FLY TO WINNER
+    document.querySelectorAll('.played-card').forEach(c => c.classList.add('fly-' + win.player));
+    
+    setTimeout(() => {
+        gameState.players[win.player].won++;
+        showPlusOne(win.player); // +1 Effect
+        document.getElementById('trick-zone').innerHTML = '';
+        gameState.currentPlayer = win.player;
+        gameState.trickCards = [];
+        gameState.currentSuit = null;
+        updateHUD();
+        if(gameState.players[0].hand.length === 0) finalizeRound();
+        else { gameState.isProcessing = false; if(gameState.currentPlayer !== 0) cpuPlay(); }
+    }, 600);
+}
+
+function showPlusOne(pIdx) {
+    const label = document.getElementById(`l-${pIdx}`);
+    const rect = label.getBoundingClientRect();
+    const plus = document.createElement('div');
+    plus.className = 'plus-one';
+    plus.innerText = '+1';
+    plus.style.left = (rect.left + rect.width / 2) + 'px';
+    plus.style.top = rect.top + 'px';
+    document.body.appendChild(plus);
+    setTimeout(() => plus.remove(), 800);
+    playTone(800, 'sine', 0.2, 0.1);
+}
+
+function finalizeRound() {
+    gameState.players.forEach(p => { p.score += (p.won >= p.bid) ? (p.bid + (p.won - p.bid) * 0.1) : -p.bid; });
+    showLeaderboard(true);
+}
+
+function showLeaderboard(isEnd) {
+    document.getElementById('leader-body').innerHTML = gameState.players.map(p => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #333;"><span>${p.name}</span><span>${p.score.toFixed(1)}</span></div>`).join('');
+    document.getElementById('leader-modal').style.display = 'flex';
+    if(isEnd) document.getElementById('next-round-btn').style.display = 'block';
+}
+
+function sortHand(h) { const o = {'♠':0, '♥':1, '♦':2, '♣':3}; return h.sort((a,b) => o[a.s] - o[b.s] || a.p - b.p); }
+function toggleMute() {
+    let m = !(localStorage.getItem('isMuted') === 'true');
+    localStorage.setItem('isMuted', m);
+    document.getElementById('mute-btn').innerText = m ? "🔇" : "🔊";
+}
+function playTone(f, t, d, v) {
+    if (localStorage.getItem('isMuted') === 'true') return;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = t; o.frequency.value = f; g.gain.value = v;
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + d);
+}
+function closeLeaderboard() { document.getElementById('leader-modal').style.display = 'none'; }
+window.onload = init;
+</script>
+</body>
+</html>
