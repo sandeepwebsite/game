@@ -2,328 +2,363 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameVerse Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GameVerse Pro - Universal</title>
 
 <style>
-/* ================= ROOT VARIABLES ================= */
 :root {
-  --bg: #0e1024;
-  --bg-card: rgba(255,255,255,0.08);
-  --text: #ffffff;
-  --muted: #b5b5c5;
-  --primary: #6c63ff;
-  --accent: #00f2ff;
+  --bg: #0b0d17;
+  --card-bg: #161a2e;
+  --primary: #6366f1;
+  --accent: #22d3ee;
+  --text-main: #ffffff;
+  --text-dim: #94a3b8;
+  --nav-bg: rgba(11, 13, 23, 0.95);
+  --skeleton: rgba(255, 255, 255, 0.05);
+  --container-max: 1200px;
 }
 
 body.light {
-  --bg: #f4f6ff;
-  --bg-card: rgba(0,0,0,0.06);
-  --text: #0e1024;
-  --muted: #555;
+  --bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-dim: #64748b;
+  --nav-bg: rgba(241, 245, 249, 0.95);
+  --skeleton: rgba(0, 0, 0, 0.05);
 }
 
-/* ================= GLOBAL ================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
-  background: linear-gradient(135deg, var(--bg), #1b1f3b);
-  color: var(--text);
-  min-height: 100vh;
-  transition: background 0.4s, color 0.4s;
-}
-
-/* ================= HEADER ================= */
-header {
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: -apple-system, system-ui, sans-serif;
+  padding-bottom: 110px;
+  transition: background 0.3s, color 0.3s;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.2rem 2rem;
-}
-
-.logo {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: var(--accent);
-}
-
-.toggle {
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-}
-
-/* ================= HERO ================= */
-.hero {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 2rem;
-  padding: 3rem 2rem;
+  flex-direction: column;
   align-items: center;
 }
 
-.hero h1 {
-  font-size: 3rem;
-  animation: slideIn 1s ease;
+/* ================= LAYOUT CONTAINER ================= */
+.app-container {
+  width: 100%;
+  max-width: var(--container-max);
+  padding: 0 1.5rem;
 }
 
-.hero p {
-  margin: 1rem 0;
-  color: var(--muted);
-  max-width: 480px;
-  animation: fadeIn 1.2s ease;
+/* ================= SKELETON ================= */
+.skeleton {
+  background: linear-gradient(90deg, var(--skeleton) 25%, rgba(150,150,150,0.1) 50%, var(--skeleton) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  color: transparent !important;
+}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* ================= HEADER & SEARCH ================= */
+.header { padding: 2rem 0 1rem; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 1.8rem; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+
+.search-area { 
+  padding: 1rem 0; 
+  position: sticky; 
+  top: 0; 
+  background: var(--bg); 
+  z-index: 100; 
+  width: 100%;
+  max-width: var(--container-max);
+}
+.search-input { 
+  width: 100%; 
+  padding: 14px 15px 14px 45px; 
+  border-radius: 16px; 
+  border: 1px solid rgba(128,128,128,0.2); 
+  background: var(--card-bg); 
+  color: var(--text-main); 
+  outline: none;
+  font-size: 1rem;
 }
 
-.btn {
-  display: inline-block;
-  padding: 0.8rem 2rem;
-  border-radius: 30px;
-  background: linear-gradient(45deg, var(--primary), var(--accent));
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  transition: transform 0.3s, box-shadow 0.3s;
+.filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 15px 0; scrollbar-width: none; width: 100%; }
+.chip { padding: 8px 22px; background: var(--card-bg); border-radius: 25px; font-size: 0.85rem; border: 1px solid rgba(128,128,128,0.2); cursor: pointer; color: var(--text-main); transition: 0.2s; }
+.chip:hover { border-color: var(--primary); }
+.chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ================= RECENT PLAY (ADAPTIVE) ================= */
+.recent-section { width: 100%; margin-bottom: 2rem; }
+.recent-card {
+  background: linear-gradient(135deg, var(--primary), #a855f7);
+  border-radius: 24px; padding: 1.5rem; display: flex; align-items: center; gap: 20px;
+  text-decoration: none; color: white; transition: 0.2s;
+  max-width: 500px; /* Limits size on desktop */
 }
 
-.btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+/* ================= RESPONSIVE GRID ================= */
+.game-grid { 
+  display: grid; 
+  gap: 20px; 
+  width: 100%;
+  /* Default Mobile: 2 columns */
+  grid-template-columns: repeat(2, 1fr); 
 }
 
-.hero-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 2rem;
-  backdrop-filter: blur(15px);
-  font-size: 5rem;
-  text-align: center;
-  animation: float 4s ease-in-out infinite;
+/* Tablet: 3 columns */
+@media (min-width: 768px) {
+  .game-grid { grid-template-columns: repeat(3, 1fr); }
+  .header { padding: 3rem 0 1.5rem; }
 }
 
-/* ================= DASHBOARD ================= */
-.dashboard {
-  padding: 2rem;
+/* Laptop/Desktop: 4 to 5 columns */
+@media (min-width: 1024px) {
+  .game-grid { grid-template-columns: repeat(5, 1fr); }
+  .logo { font-size: 2.2rem; }
 }
 
-.dashboard h2 {
-  margin-bottom: 1.5rem;
-  font-size: 2rem;
+.game-item { background: var(--card-bg); border-radius: 24px; border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; overflow: hidden; }
+.game-item:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.game-item a { display: block; padding: 1.5rem; text-decoration: none; color: inherit; }
+.play-count-box { font-size: 0.75rem; color: var(--accent); margin-top: 8px; font-weight: bold; }
+.game-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; display: block; }
+
+/* ================= MODALS ================= */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.3s; }
+.modal.show { visibility: visible; opacity: 1; }
+.modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 30px; padding: 2.5rem; color: var(--text-main); position: relative; }
+
+/* ================= NAVIGATION ================= */
+.bottom-nav { 
+  position: fixed; 
+  bottom: 20px; 
+  width: auto; 
+  min-width: 300px;
+  background: var(--nav-bg); 
+  display: flex; 
+  justify-content: space-around; 
+  padding: 0.8rem 2rem; 
+  border-radius: 50px;
+  border: 1px solid rgba(128,128,128,0.2); 
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  z-index: 1000; 
 }
+.nav-btn { background: none; border: none; font-size: 1.6rem; color: var(--text-dim); cursor: pointer; transition: 0.2s; }
+.nav-btn:hover { color: var(--primary); transform: scale(1.1); }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-}
-
-.stat {
-  background: var(--bg-card);
-  padding: 1.5rem;
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.stat:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
-}
-
-.stat h3 {
-  font-size: 1.4rem;
-}
-
-.stat span {
-  color: var(--accent);
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-/* ================= GAMES ================= */
-.games {
-  margin-top: 3rem;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.card {
-  background: var(--bg-card);
-  padding: 1.2rem;
-  border-radius: 14px;
-  backdrop-filter: blur(12px);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-}
-
-.card h4 {
-  margin-bottom: 0.4rem;
-}
-
-.card p {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-  .cards a.card {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  background: var(--bg-card);
-  padding: 1.2rem;
-  border-radius: 14px;
-  backdrop-filter: blur(12px);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.cards a.card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-}
-
-
-/* ================= FOOTER ================= */
-footer {
-  text-align: center;
-  padding: 2rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-/* ================= ANIMATIONS ================= */
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-50px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  .hero {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-
-  .hero h1 {
-    font-size: 2.3rem;
-  }
-}
+.hidden { display: none; }
 </style>
 </head>
-
 <body>
 
-<header>
-  <div class="logo">🎮 GameVerse</div>
-  <div class="toggle" onclick="toggleMode()">🌙 / ☀️</div>
-</header>
-
-<section class="hero">
-  <div>
-    <h1>Ultimate Gaming Dashboard</h1>
-    <p>Track your stats, explore trending games, and dive into next-gen gameplay.</p>
-    <a href="#" class="btn">Get Started</a>
+<div class="app-container">
+  <div class="header">
+    <div class="logo">🎮 GameVerse</div>
+    <div style="font-size: 0.9rem; color: var(--text-dim); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Universal Edition</div>
   </div>
-  <div class="hero-card">🕹️</div>
-</section>
 
-<section class="dashboard">
-  <h2>Your Stats</h2>
-  <div class="stats">
-    <div class="stat">
-      <h3>Games Played</h3>
-      <span>128</span>
+  <div class="search-area">
+    <div style="position: relative;">
+      <span style="position: absolute; left: 18px; top: 14px; opacity: 0.4; font-size: 1.2rem;">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search across all games..." onkeyup="runFilters()">
     </div>
-    <div class="stat">
-      <h3>Achievements</h3>
-      <span>54</span>
-    </div>
-    <div class="stat">
-      <h3>Online Friends</h3>
-      <span>32</span>
-    </div>
-    <div class="stat">
-      <h3>Hours Played</h3>
-      <span>980</span>
+    <div class="filter-scroll">
+      <div class="chip active" onclick="setCategory('all', this)">All Games</div>
+      <div class="chip" onclick="setCategory('puzzle', this)">Puzzles</div>
+      <div class="chip" onclick="setCategory('action', this)">Action</div>
+      <div class="chip" onclick="setCategory('race', this)">Racing</div>
     </div>
   </div>
 
-  <div class="games">
-    <h2>Trending Games</h2>
-    <div class="cards">
-      <a href="snake.html" class="card">
-        <h4>Snake</h4>
-        <p>Classic Snake Game</p>
-      </a>
-      <a href="snake2.html" class="card">
-        <h4>Snake 2</h4>
-        <p>Classic Snake Game</p>
-      </a>
-      <a href="space-impact.html" class="card">
-        <h4>Space Impact</h4>
-        <p>Hit the Enemy</p>
-      </a>
-      <a href="water-sort-puzzle.html" class="card">
-        <h4>Water Sort Puzzle</h4>
-        <p>Try to arrange watercolors into the bottles</p>
-      </a>
-      <a href="water-sort/index.html" class="card">
-        <h4>Water Sort Puzzle 2</h4>
-        <p>Try to arrange watercolors into the bottles</p>
-      </a>
-      <a href="block-8.html" class="card">
-        <h4>Block 8 Game</h4>
-        <p>Fill a row or column with the available blocks to score points!</p>
-      </a>
-      <a href="bird-sort" class="card">
-        <h4>Bird Sort</h4>
-        <p>Sort the birds and free them</p>
-      </a>
-    <a href="line-drawing" class="card">
-        <h4>One Line Drawing</h4>
-        <p>One line drawing Puzzle</p>
-      </a>
-      <a href="ace-horizon.html" class="card">
-        <h4>Ace Horizon</h4>
-        <p>Ace Horizon - Pro Edition</p></p>
+  <div class="recent-section" id="recentSection">
+    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; font-weight: 700; letter-spacing: 1px;">CONTINUE SESSIONS</p>
+    <a href="#" class="recent-card" id="lastPlayedLink">
+      <span id="lpIcon" style="font-size: 2.5rem;">🎮</span>
+      <div>
+        <h4 id="lpName" class="title-box" style="font-size: 1.2rem;">Ready to Play?</h4>
+        <span id="lpTime" style="font-size: 0.85rem; opacity: 0.8;">No history found</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="game-grid" id="gameGrid">
+    <div class="game-item" data-name="snake" data-cat="action" data-id="snake">
+      <a href="snake.html" onclick="trackPlay('snake', 'Snake', '🐍')">
+        <span class="icon-box" style="font-size: 2.5rem;">🐍</span>
+        <h4 class="title-box">Snake</h4>
+        <small class="game-desc">The retro classic reimagined.</small>
+        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
       </a>
     </div>
 
-  </div>
-</section>
+    <div class="game-item" data-name="space impact" data-cat="action" data-id="space-impact">
+      <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')">
+        <span class="icon-box" style="font-size: 2.5rem;">🚀</span>
+        <h4 class="title-box">Space Impact</h4>
+        <small class="game-desc">Battle through the stars.</small>
+        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+      </a>
+    </div>
 
-<footer>
-  © 2025 GameVerse. All rights reserved.
-</footer>
+    <div class="game-item" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-puzzle">
+      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-puzzle', 'Water Sort Puzzle', '🧪')">
+        <span class="icon-box" style="font-size: 2.5rem;">🧪</span>
+        <h4 class="title-box">Water Sort</h4>
+        <small class="game-desc">Master the chemistry of colors.</small>
+        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="ace horizon" data-cat="race" data-id="ace-horizon">
+      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🛩️')">
+        <span class="icon-box" style="font-size: 2.5rem;">🛩️</span>
+        <h4 class="title-box">Ace Horizon</h4>
+        <small class="game-desc">High-octane flight racing.</small>
+        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
+      <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8 Game', '🧱')">
+        <span class="icon-box" style="font-size: 2.5rem;">🧱</span>
+        <h4 class="title-box">Block 8</h4>
+        <small class="game-desc">Addictive block placement.</small>
+        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn" onclick="location.reload()" style="color: var(--primary);">🏠</button>
+  <button class="nav-btn" onclick="openLeaderboard()">🏆</button>
+  <button class="nav-btn" onclick="toggleModal('settingsModal', true)">⚙️</button>
+</nav>
+
+<div class="modal" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-bottom: 1.5rem;">🏆 Global Rankings</h2>
+    <div id="leaderboardList"></div>
+    <button onclick="toggleModal('leaderboardModal', false)" style="width: 100%; margin-top: 1.5rem; padding: 1rem; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">Got it</button>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal" onclick="toggleModal('settingsModal', false)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-bottom: 20px;">Control Center</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(128,128,128,0.2);">
+      <span>Mute All Audio</span>
+      <button id="muteBtn" onclick="toggleMute()" style="padding: 10px 25px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">OFF</button>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
+      <span>Display Mode</span>
+      <button onclick="toggleTheme()" style="padding: 10px 25px; border-radius: 12px; border: 1px solid var(--text-dim); background: none; color: var(--text-main); font-weight: bold; cursor: pointer;">Switch</button>
+    </div>
+    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 1rem; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">Close</button>
+  </div>
+</div>
 
 <script>
-function toggleMode() {
-  document.body.classList.toggle("light");
-}
-</script>
+let currentCategory = 'all';
 
+// Theme Persistence
+if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+
+function toggleTheme() {
+    document.body.classList.toggle('light');
+    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+}
+
+function trackPlay(id, name, icon) {
+  let count = parseInt(localStorage.getItem('plays_' + id) || 0);
+  localStorage.setItem('plays_' + id, count + 1);
+  localStorage.setItem('lastPlayedName', name);
+  localStorage.setItem('lastPlayedIcon', icon);
+  localStorage.setItem('lastPlayedTime', new Date().getTime());
+}
+
+function runFilters() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const items = document.querySelectorAll('.game-item');
+  document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
+  
+  items.forEach(item => {
+    const name = item.getAttribute('data-name').toLowerCase();
+    const cat = item.getAttribute('data-cat');
+    const matchesSearch = name.includes(query);
+    const matchesCat = (currentCategory === 'all' || cat === currentCategory);
+    item.classList.toggle('hidden', !(matchesSearch && matchesCat));
+  });
+}
+
+function setCategory(cat, el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentCategory = cat;
+  runFilters();
+}
+
+function updateUI() {
+  document.querySelectorAll('.game-item').forEach(item => {
+    const id = item.getAttribute('data-id');
+    item.querySelector('.count-val').textContent = localStorage.getItem('plays_' + id) || 0;
+  });
+
+  const name = localStorage.getItem('lastPlayedName');
+  if (name) {
+    document.getElementById('lpName').textContent = name;
+    document.getElementById('lpIcon').textContent = localStorage.getItem('lastPlayedIcon');
+    const time = localStorage.getItem('lastPlayedTime');
+    const diff = Math.floor((new Date().getTime() - time) / 60000);
+    document.getElementById('lpTime').textContent = diff < 1 ? "Just now" : `${diff}m ago`;
+    document.getElementById('lastPlayedLink').href = name.toLowerCase().includes('water') ? 'water-sort-puzzle.html' : name.toLowerCase().replace(' ', '-') + '.html';
+  }
+}
+
+function openLeaderboard() {
+  const list = document.getElementById('leaderboardList');
+  list.innerHTML = '';
+  const games = Array.from(document.querySelectorAll('.game-item')).map(item => ({
+    name: item.querySelector('h4').textContent,
+    icon: item.querySelector('.icon-box').textContent,
+    total: parseInt(item.querySelector('.count-val').textContent)
+  })).sort((a, b) => b.total - a.total);
+
+  games.forEach((g, i) => {
+    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:15px; background:rgba(128,128,128,0.1); margin-bottom:10px; border-radius:15px;">
+      <span style="font-weight:600;">${i+1}. ${g.icon} ${g.name}</span>
+      <span style="color:var(--accent); font-weight:800;">${g.total}</span>
+    </div>`;
+  });
+  toggleModal('leaderboardModal', true);
+}
+
+let isMuted = localStorage.getItem('isMuted') === 'true';
+function toggleMute() {
+  isMuted = !isMuted;
+  localStorage.setItem('isMuted', isMuted);
+  renderMute();
+}
+function renderMute() {
+  const btn = document.getElementById('muteBtn');
+  if(btn) {
+    btn.textContent = isMuted ? "ON" : "OFF";
+    btn.style.background = isMuted ? "#444" : "var(--primary)";
+  }
+}
+
+function toggleModal(id, show) { document.getElementById(id).classList.toggle('show', show); }
+
+window.onload = () => {
+  const elements = document.querySelectorAll('.title-box, .icon-box, .count-val, .search-input');
+  elements.forEach(el => el.classList.add('skeleton'));
+  setTimeout(() => {
+    elements.forEach(el => el.classList.remove('skeleton'));
+    updateUI();
+    renderMute();
+  }, 700);
+};
+
+setInterval(updateUI, 30000);
+</script>
 </body>
 </html>
