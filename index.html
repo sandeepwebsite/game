@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>GameVerse Pro - Universal</title>
+<title>GameVerse Pro</title>
 
 <style>
 :root {
@@ -40,12 +40,7 @@ body {
   align-items: center;
 }
 
-/* ================= LAYOUT CONTAINER ================= */
-.app-container {
-  width: 100%;
-  max-width: var(--container-max);
-  padding: 0 1.5rem;
-}
+.app-container { width: 100%; max-width: var(--container-max); padding: 0 1.5rem; }
 
 /* ================= SKELETON ================= */
 .skeleton {
@@ -57,95 +52,48 @@ body {
 }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-/* ================= HEADER & SEARCH ================= */
-.header { padding: 2rem 0 1rem; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+/* ================= UI COMPONENTS ================= */
+.header { padding: 2.5rem 0 1rem; width: 100%; display: flex; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.8rem; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
 
-.search-area { 
-  padding: 1rem 0; 
-  position: sticky; 
-  top: 0; 
-  background: var(--bg); 
-  z-index: 100; 
-  width: 100%;
-  max-width: var(--container-max);
-}
-.search-input { 
-  width: 100%; 
-  padding: 14px 15px 14px 45px; 
-  border-radius: 16px; 
-  border: 1px solid rgba(128,128,128,0.2); 
-  background: var(--card-bg); 
-  color: var(--text-main); 
-  outline: none;
-  font-size: 1rem;
-}
+.search-area { padding: 1rem 0; position: sticky; top: 0; background: var(--bg); z-index: 100; width: 100%; max-width: var(--container-max); }
+.search-input { width: 100%; padding: 14px 15px 14px 45px; border-radius: 16px; border: 1px solid rgba(128,128,128,0.2); background: var(--card-bg); color: var(--text-main); outline: none; }
 
 .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 15px 0; scrollbar-width: none; width: 100%; }
-.chip { padding: 8px 22px; background: var(--card-bg); border-radius: 25px; font-size: 0.85rem; border: 1px solid rgba(128,128,128,0.2); cursor: pointer; color: var(--text-main); transition: 0.2s; }
-.chip:hover { border-color: var(--primary); }
+.chip { padding: 8px 22px; background: var(--card-bg); border-radius: 25px; font-size: 0.85rem; border: 1px solid rgba(128,128,128,0.2); cursor: pointer; color: var(--text-main); white-space: nowrap; }
 .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-/* ================= RECENT PLAY (ADAPTIVE) ================= */
-.recent-section { width: 100%; margin-bottom: 2rem; }
-.recent-card {
-  background: linear-gradient(135deg, var(--primary), #a855f7);
-  border-radius: 24px; padding: 1.5rem; display: flex; align-items: center; gap: 20px;
-  text-decoration: none; color: white; transition: 0.2s;
-  max-width: 500px; /* Limits size on desktop */
-}
+.section-title { font-size: 0.8rem; color: var(--text-dim); margin: 1.5rem 0 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 
 /* ================= RESPONSIVE GRID ================= */
-.game-grid { 
-  display: grid; 
-  gap: 20px; 
-  width: 100%;
-  /* Default Mobile: 2 columns */
-  grid-template-columns: repeat(2, 1fr); 
-}
+.game-grid { display: grid; gap: 15px; width: 100%; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 768px) { .game-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+@media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(5, 1fr); } }
 
-/* Tablet: 3 columns */
-@media (min-width: 768px) {
-  .game-grid { grid-template-columns: repeat(3, 1fr); }
-  .header { padding: 3rem 0 1.5rem; }
-}
-
-/* Laptop/Desktop: 4 to 5 columns */
-@media (min-width: 1024px) {
-  .game-grid { grid-template-columns: repeat(5, 1fr); }
-  .logo { font-size: 2.2rem; }
-}
-
-.game-item { background: var(--card-bg); border-radius: 24px; border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; overflow: hidden; }
-.game-item:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.game-item { background: var(--card-bg); border-radius: 24px; border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; overflow: hidden; position: relative; }
+.game-item:hover { transform: translateY(-5px); border-color: var(--primary); }
 .game-item a { display: block; padding: 1.5rem; text-decoration: none; color: inherit; }
-.play-count-box { font-size: 0.75rem; color: var(--accent); margin-top: 8px; font-weight: bold; }
-.game-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; display: block; }
+.game-item:active { transform: scale(0.96); }
 
-/* ================= MODALS ================= */
+.play-count-box { font-size: 0.7rem; color: var(--accent); margin-top: 8px; font-weight: bold; }
+.game-desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; display: block; line-height: 1.2; }
+
+/* ================= RECENT PLAY ================= */
+.recent-card {
+  background: linear-gradient(135deg, var(--primary), #a855f7);
+  border-radius: 24px; padding: 1.5rem; display: flex; align-items: center; gap: 15px;
+  text-decoration: none; color: white; transition: 0.2s; max-width: 450px;
+}
+
+/* ================= MODALS & NAV ================= */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.3s; }
 .modal.show { visibility: visible; opacity: 1; }
-.modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 30px; padding: 2.5rem; color: var(--text-main); position: relative; }
+.modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 30px; padding: 2rem; color: var(--text-main); max-height: 80vh; overflow-y: auto; }
 
-/* ================= NAVIGATION ================= */
-.bottom-nav { 
-  position: fixed; 
-  bottom: 20px; 
-  width: auto; 
-  min-width: 300px;
-  background: var(--nav-bg); 
-  display: flex; 
-  justify-content: space-around; 
-  padding: 0.8rem 2rem; 
-  border-radius: 50px;
-  border: 1px solid rgba(128,128,128,0.2); 
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-  z-index: 1000; 
-}
-.nav-btn { background: none; border: none; font-size: 1.6rem; color: var(--text-dim); cursor: pointer; transition: 0.2s; }
-.nav-btn:hover { color: var(--primary); transform: scale(1.1); }
+.bottom-nav { position: fixed; bottom: 20px; width: auto; min-width: 280px; background: var(--nav-bg); display: flex; justify-content: space-around; padding: 0.8rem 2rem; border-radius: 50px; border: 1px solid rgba(128,128,128,0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.4); z-index: 1000; }
+.nav-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-dim); cursor: pointer; }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -153,78 +101,117 @@ body {
 <div class="app-container">
   <div class="header">
     <div class="logo">🎮 GameVerse</div>
-    <div style="font-size: 0.9rem; color: var(--text-dim); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Universal Edition</div>
+    <div id="dateDisplay" style="font-size: 0.8rem; color: var(--text-dim); font-weight: bold;">FEB 2026</div>
   </div>
 
   <div class="search-area">
     <div style="position: relative;">
-      <span style="position: absolute; left: 18px; top: 14px; opacity: 0.4; font-size: 1.2rem;">🔍</span>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search across all games..." onkeyup="runFilters()">
+      <span style="position: absolute; left: 18px; top: 14px; opacity: 0.4;">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search games..." onkeyup="runFilters()">
     </div>
     <div class="filter-scroll">
-      <div class="chip active" onclick="setCategory('all', this)">All Games</div>
-      <div class="chip" onclick="setCategory('puzzle', this)">Puzzles</div>
+      <div class="chip active" onclick="setCategory('all', this)">All</div>
+      <div class="chip" onclick="setCategory('puzzle', this)">Puzzle</div>
       <div class="chip" onclick="setCategory('action', this)">Action</div>
-      <div class="chip" onclick="setCategory('race', this)">Racing</div>
+      <div class="chip" onclick="setCategory('race', this)">Race</div>
     </div>
   </div>
 
   <div class="recent-section" id="recentSection">
-    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; font-weight: 700; letter-spacing: 1px;">CONTINUE SESSIONS</p>
+    <p class="section-title">Jump Back In</p>
     <a href="#" class="recent-card" id="lastPlayedLink">
-      <span id="lpIcon" style="font-size: 2.5rem;">🎮</span>
+      <span id="lpIcon" style="font-size: 2.2rem;">🎮</span>
       <div>
-        <h4 id="lpName" class="title-box" style="font-size: 1.2rem;">Ready to Play?</h4>
-        <span id="lpTime" style="font-size: 0.85rem; opacity: 0.8;">No history found</span>
+        <h4 id="lpName" class="title-box">Ready?</h4>
+        <span id="lpTime" style="font-size: 0.75rem; opacity: 0.9;">No history</span>
       </div>
     </a>
   </div>
 
+  <p class="section-title">Trending Games</p>
   <div class="game-grid" id="gameGrid">
+    
     <div class="game-item" data-name="snake" data-cat="action" data-id="snake">
       <a href="snake.html" onclick="trackPlay('snake', 'Snake', '🐍')">
-        <span class="icon-box" style="font-size: 2.5rem;">🐍</span>
+        <span class="icon-box" style="font-size: 2.2rem;">🐍</span>
         <h4 class="title-box">Snake</h4>
-        <small class="game-desc">The retro classic reimagined.</small>
-        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+        <small class="game-desc">Classic Snake Game</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="snake 2" data-cat="action" data-id="snake2">
+      <a href="snake2.html" onclick="trackPlay('snake2', 'Snake 2', '🐍')">
+        <span class="icon-box" style="font-size: 2.2rem;">🐍</span>
+        <h4 class="title-box">Snake 2</h4>
+        <small class="game-desc">Classic Snake Game</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
     <div class="game-item" data-name="space impact" data-cat="action" data-id="space-impact">
       <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')">
-        <span class="icon-box" style="font-size: 2.5rem;">🚀</span>
+        <span class="icon-box" style="font-size: 2.2rem;">🚀</span>
         <h4 class="title-box">Space Impact</h4>
-        <small class="game-desc">Battle through the stars.</small>
-        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+        <small class="game-desc">Hit the Enemy</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-puzzle">
-      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-puzzle', 'Water Sort Puzzle', '🧪')">
-        <span class="icon-box" style="font-size: 2.5rem;">🧪</span>
+    <div class="game-item" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
+      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')">
+        <span class="icon-box" style="font-size: 2.2rem;">🧪</span>
         <h4 class="title-box">Water Sort</h4>
-        <small class="game-desc">Master the chemistry of colors.</small>
-        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+        <small class="game-desc">Arrange watercolors</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="water sort puzzle 2" data-cat="puzzle" data-id="water-sort-2">
+      <a href="water-sort/index.html" onclick="trackPlay('water-sort-2', 'Water Sort 2', '🧪')">
+        <span class="icon-box" style="font-size: 2.2rem;">🧪</span>
+        <h4 class="title-box">Water Sort 2</h4>
+        <small class="game-desc">Advanced levels</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
+      <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')">
+        <span class="icon-box" style="font-size: 2.2rem;">🧱</span>
+        <h4 class="title-box">Block 8</h4>
+        <small class="game-desc">Fill rows for points</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="bird sort" data-cat="puzzle" data-id="bird-sort">
+      <a href="bird-sort" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')">
+        <span class="icon-box" style="font-size: 2.2rem;">🦜</span>
+        <h4 class="title-box">Bird Sort</h4>
+        <small class="game-desc">Sort and free birds</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
+      <a href="line-drawing" onclick="trackPlay('line-drawing', 'One Line', '✏️')">
+        <span class="icon-box" style="font-size: 2.2rem;">✏️</span>
+        <h4 class="title-box">One Line</h4>
+        <small class="game-desc">Drawing puzzle</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
     <div class="game-item" data-name="ace horizon" data-cat="race" data-id="ace-horizon">
       <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🛩️')">
-        <span class="icon-box" style="font-size: 2.5rem;">🛩️</span>
+        <span class="icon-box" style="font-size: 2.2rem;">🛩️</span>
         <h4 class="title-box">Ace Horizon</h4>
-        <small class="game-desc">High-octane flight racing.</small>
-        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
+        <small class="game-desc">Pro Racing Edition</small>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
-      <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8 Game', '🧱')">
-        <span class="icon-box" style="font-size: 2.5rem;">🧱</span>
-        <h4 class="title-box">Block 8</h4>
-        <small class="game-desc">Addictive block placement.</small>
-        <div class="play-count-box">⚡ <span class="count-val">0</span> Plays</div>
-      </a>
-    </div>
   </div>
 </div>
 
@@ -236,50 +223,51 @@ body {
 
 <div class="modal" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 1.5rem;">🏆 Global Rankings</h2>
+    <h2 style="margin-bottom: 1.5rem;">🏆 Global Leaderboard</h2>
     <div id="leaderboardList"></div>
-    <button onclick="toggleModal('leaderboardModal', false)" style="width: 100%; margin-top: 1.5rem; padding: 1rem; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">Got it</button>
   </div>
 </div>
 
 <div class="modal" id="settingsModal" onclick="toggleModal('settingsModal', false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 20px;">Control Center</h2>
+    <h2 style="margin-bottom: 20px;">Settings</h2>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(128,128,128,0.2);">
-      <span>Mute All Audio</span>
-      <button id="muteBtn" onclick="toggleMute()" style="padding: 10px 25px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">OFF</button>
+      <span>Mute Audio</span>
+      <button id="muteBtn" onclick="toggleMute()" style="padding: 8px 20px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold;">OFF</button>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
-      <span>Display Mode</span>
-      <button onclick="toggleTheme()" style="padding: 10px 25px; border-radius: 12px; border: 1px solid var(--text-dim); background: none; color: var(--text-main); font-weight: bold; cursor: pointer;">Switch</button>
+      <span>Theme</span>
+      <button onclick="toggleTheme()" style="padding: 8px 20px; border-radius: 10px; border: 1px solid var(--text-dim); background: none; color: var(--text-main); font-weight: bold;">Switch</button>
     </div>
-    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 1rem; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer;">Close</button>
+    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 15px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold;">Close</button>
   </div>
 </div>
 
 <script>
 let currentCategory = 'all';
 
-// Theme Persistence
+// Theme Load
 if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
-
 function toggleTheme() {
     document.body.classList.toggle('light');
     localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
 }
 
+// Track Play
 function trackPlay(id, name, icon) {
   let count = parseInt(localStorage.getItem('plays_' + id) || 0);
   localStorage.setItem('plays_' + id, count + 1);
   localStorage.setItem('lastPlayedName', name);
   localStorage.setItem('lastPlayedIcon', icon);
   localStorage.setItem('lastPlayedTime', new Date().getTime());
+  localStorage.setItem('lastPlayedID', id);
 }
 
+// Filter Logic
 function runFilters() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   const items = document.querySelectorAll('.game-item');
-  document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
+  document.getElementById('recentSection').classList.toggle('hidden', query.length > 0);
   
   items.forEach(item => {
     const name = item.getAttribute('data-name').toLowerCase();
@@ -297,12 +285,15 @@ function setCategory(cat, el) {
   runFilters();
 }
 
+// UI Refresh
 function updateUI() {
+  // Update Grid Counts
   document.querySelectorAll('.game-item').forEach(item => {
     const id = item.getAttribute('data-id');
     item.querySelector('.count-val').textContent = localStorage.getItem('plays_' + id) || 0;
   });
 
+  // Update Recent Section
   const name = localStorage.getItem('lastPlayedName');
   if (name) {
     document.getElementById('lpName').textContent = name;
@@ -310,34 +301,36 @@ function updateUI() {
     const time = localStorage.getItem('lastPlayedTime');
     const diff = Math.floor((new Date().getTime() - time) / 60000);
     document.getElementById('lpTime').textContent = diff < 1 ? "Just now" : `${diff}m ago`;
-    document.getElementById('lastPlayedLink').href = name.toLowerCase().includes('water') ? 'water-sort-puzzle.html' : name.toLowerCase().replace(' ', '-') + '.html';
+    
+    // Find the correct link from the grid
+    const id = localStorage.getItem('lastPlayedID');
+    const originalItem = document.querySelector(`.game-item[data-id="${id}"] a`);
+    if(originalItem) document.getElementById('lastPlayedLink').href = originalItem.getAttribute('href');
   }
 }
 
+// Dynamic Leaderboard
 function openLeaderboard() {
   const list = document.getElementById('leaderboardList');
   list.innerHTML = '';
-  const games = Array.from(document.querySelectorAll('.game-item')).map(item => ({
+  const games = Array.from(document.querySelectorAll('.game-grid .game-item')).map(item => ({
     name: item.querySelector('h4').textContent,
     icon: item.querySelector('.icon-box').textContent,
     total: parseInt(item.querySelector('.count-val').textContent)
   })).sort((a, b) => b.total - a.total);
 
   games.forEach((g, i) => {
-    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:15px; background:rgba(128,128,128,0.1); margin-bottom:10px; border-radius:15px;">
-      <span style="font-weight:600;">${i+1}. ${g.icon} ${g.name}</span>
-      <span style="color:var(--accent); font-weight:800;">${g.total}</span>
-    </div>`;
+    list.innerHTML += `
+      <div style="display:flex; justify-content:space-between; padding:15px; background:rgba(128,128,128,0.1); margin-bottom:10px; border-radius:15px;">
+        <span>${i+1}. ${g.icon} ${g.name}</span>
+        <span style="color:var(--accent); font-weight:bold;">${g.total}</span>
+      </div>`;
   });
   toggleModal('leaderboardModal', true);
 }
 
+// Mute
 let isMuted = localStorage.getItem('isMuted') === 'true';
-function toggleMute() {
-  isMuted = !isMuted;
-  localStorage.setItem('isMuted', isMuted);
-  renderMute();
-}
 function renderMute() {
   const btn = document.getElementById('muteBtn');
   if(btn) {
@@ -345,9 +338,15 @@ function renderMute() {
     btn.style.background = isMuted ? "#444" : "var(--primary)";
   }
 }
+function toggleMute() {
+  isMuted = !isMuted;
+  localStorage.setItem('isMuted', isMuted);
+  renderMute();
+}
 
 function toggleModal(id, show) { document.getElementById(id).classList.toggle('show', show); }
 
+// Start
 window.onload = () => {
   const elements = document.querySelectorAll('.title-box, .icon-box, .count-val, .search-input');
   elements.forEach(el => el.classList.add('skeleton'));
@@ -355,7 +354,7 @@ window.onload = () => {
     elements.forEach(el => el.classList.remove('skeleton'));
     updateUI();
     renderMute();
-  }, 700);
+  }, 800);
 };
 
 setInterval(updateUI, 30000);
