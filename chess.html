@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Grandmaster Pro</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #10b981;
+            --text: #f8fafc; --secondary: #334155; --danger: #ef4444;
+        }
+
+        html, body { 
+            height: 100%; margin: 0; padding: 0; 
+            background: var(--bg); color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .app-shell { 
+            display: flex; flex-direction: column; 
+            height: 100%; width: 100%; max-width: 450px; 
+            margin: 0 auto; position: relative;
+        }
+
+        .screen { flex: 1; display: none; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .screen.active { display: flex; }
+
+        #screen-home { justify-content: center; align-items: center; text-align: center; }
+        .main-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 30px; color: var(--accent); }
+
+        .board-wrapper {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            width: 100%; min-height: 0;
+        }
+
+        /* FIX: touch-action: none prevents the browser from intercepting drags as scrolls */
+        #myBoard { 
+            width: 90vw; max-width: 380px; 
+            border-radius: 8px; overflow: hidden; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            touch-action: none; 
+        }
+
+        .btn { width: 90%; padding: 18px; margin: 8px 0; border-radius: 15px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: var(--accent); color: #064e3b; }
+        .btn-secondary { background: var(--card); color: white; }
+
+        .board-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .icon-btn { background: var(--card); border: none; color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.2rem; }
+        .game-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 0; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98); display: none; z-index: 2000;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+        .level-item { aspect-ratio: 1; background: var(--secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+        .level-item.unlocked { background: var(--accent); color: #000; }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div id="screen-home" class="screen active">
+        <div style="font-size: 4rem;">♟️</div>
+        <div class="main-title">CHESS PRO</div>
+        <button class="btn btn-primary" onclick="initGame('ai')">🤖 VS COMPUTER</button>
+        <button class="btn btn-secondary" onclick="initGame('local')">👥 2 PLAYERS</button>
+        <button id="resume-btn" class="btn" style="display:none; background:#ca8a04; color:white;" onclick="resumeSavedGame()">🔄 RESUME PROGRESS</button>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div class="board-header">
+            <button class="icon-btn" onclick="openMap()">🗺️</button>
+            <div id="game-info" style="font-weight: 800; color: var(--accent);">LEVEL 1</div>
+            <button class="icon-btn" id="muteBtn">🔊</button>
+        </div>
+        <div id="status" style="text-align:center; padding:5px; font-weight:600; font-size:0.9rem;">White to move</div>
+        <div class="board-wrapper">
+            <div id="myBoard"></div>
+        </div>
+        <div class="game-footer">
+            <button class="btn" style="width:100%; margin:0; background:var(--secondary); color:white; padding:12px;" onclick="resetGame()">RESET</button>
+            <button class="btn" style="width:100%; margin:0; background:var(--accent); color:#000; padding:12px;" onclick="undoMove()">UNDO</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quitModal">
+        <h2>Quit Game?</h2>
+        <button class="btn btn-primary" onclick="confirmQuit()">QUIT & SAVE</button>
+        <button class="btn btn-secondary" onclick="$('#quitModal').hide()">RESUME</button>
+    </div>
+
+    <div class="modal-overlay" id="mapOverlay">
+        <div style="background:var(--card); padding:25px; border-radius:25px; width:80%; max-width:350px;">
+             <h3 style="margin:0">#Level Map</h3>
+             <div id="levelGrid" class="level-grid"></div>
+             <button class="btn btn-secondary" style="width:100%; margin-top:20px;" onclick="$('#mapOverlay').hide()">CLOSE</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <h1 id="resTitle" style="font-size: 3rem;"></h1>
+        <div id="modalButtons" style="display:flex; flex-direction:column; align-items:center; width:100%; gap:10px;"></div>
+    </div>
+</div>
+
+<script>
+    let board = null;
+    let game = new Chess();
+    let gameMode = 'ai';
+    let currentLevel = 1;
+    let maxLevel = parseInt(localStorage.getItem('chess_max_level')) || 1;
+    let isMuted = localStorage.getItem('chess_muted') === 'true';
+
+    // --- AUDIO ---
+    let audioCtx = null;
+    function playSfx(f) {
+        if (isMuted) return;
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        o.connect(g); g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+        o.start(); o.stop(audioCtx.currentTime + 0.1);
+    }
+
+    // --- NAVIGATION ---
+    window.history.pushState({page: 'home'}, 'home', ''); 
+    window.onpopstate = function() {
+        if ($('#screen-game').hasClass('active')) {
+            window.history.pushState({page: 'game'}, 'game', '');
+            $('#quitModal').css('display', 'flex');
+        }
+    };
+
+    function confirmQuit() {
+        saveGameState();
+        location.reload(); 
+    }
+
+    function initGame(mode) {
+        gameMode = mode;
+        $('.screen').removeClass('active');
+        $('#screen-home').hide();
+        $('#screen-game').addClass('active');
+        $('#game-info').text(mode === 'ai' ? `LEVEL ${currentLevel}` : "2 PLAYERS");
+        setTimeout(setupBoard, 100);
+    }
+
+    function setupBoard() {
+        // FIX: Manual listener to override passive intervention
+        const boardEl = document.getElementById('myBoard');
+        boardEl.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        boardEl.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+        if (!board) {
+            board = Chessboard('myBoard', {
+                draggable: true, position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                onDrop: (s, t) => {
+                    let m = game.move({ from: s, to: t, promotion: 'q' });
+                    if (!m) return 'snapback';
+                    playSfx(600);
+                    updateStatus();
+                    saveGameState();
+                    if (gameMode === 'ai' && !game.game_over()) setTimeout(makeAI, 400);
+                }
+            });
+        }
+        board.resize(); game.reset(); board.start(); updateStatus();
+    }
+
+    function makeAI() {
+        let moves = game.moves();
+        if (game.game_over()) return;
+        game.move(moves[Math.floor(Math.random() * moves.length)]);
+        board.position(game.fen());
+        playSfx(400);
+        updateStatus();
+        saveGameState();
+    }
+
+    function openMap() {
+        if (gameMode !== 'ai') return;
+        const grid = $('#levelGrid').empty();
+        for (let i = 1; i <= 12; i++) {
+            const unlocked = i <= maxLevel;
+            const item = $(`<div class="level-item ${unlocked ? 'unlocked' : 'locked'}">${unlocked ? i : '🔒'}</div>`);
+            if (unlocked) item.click(() => { currentLevel = i; $('#mapOverlay').hide(); initGame('ai'); });
+            grid.append(item);
+        }
+        $('#mapOverlay').css('display', 'flex');
+    }
+
+    function saveGameState() {
+        localStorage.setItem('chess_saved_game', JSON.stringify({
+            fen: game.fen(), level: currentLevel, mode: gameMode
+        }));
+    }
+
+    function updateStatus() {
+        $('#status').text(game.turn() === 'w' ? "White's Turn" : "Black's Turn");
+        if (game.game_over()) {
+            localStorage.removeItem('chess_saved_game');
+            showResultModal(game.turn() === 'b');
+        }
+    }
+
+    function showResultModal(isWinner) {
+        const modal = $('#resultModal').css('display', 'flex');
+        const btns = $('#modalButtons').empty();
+        $('#resTitle').text(isWinner ? "VICTORY" : "DEFEAT").css('color', isWinner ? 'var(--accent)' : 'var(--danger)');
+        
+        const btnText = gameMode === 'ai' ? (isWinner ? "NEXT LEVEL" : "TRY AGAIN") : "REMATCH";
+        btns.append($('<button class="btn btn-primary"></button>').text(btnText).click(() => {
+            if (isWinner && gameMode === 'ai') {
+                if (currentLevel === maxLevel) { maxLevel++; localStorage.setItem('chess_max_level', maxLevel); }
+                currentLevel++;
+            }
+            modal.hide(); resetGame();
+        }));
+        btns.append($('<button class="btn btn-secondary">MENU</button>').click(() => location.reload()));
+    }
+
+    function undoMove() {
+        game.undo(); if(gameMode==='ai') game.undo();
+        board.position(game.fen());
+        updateStatus();
+        saveGameState();
+    }
+
+    function resetGame() {
+        game.reset(); board.start();
+        localStorage.removeItem('chess_saved_game');
+        updateStatus();
+    }
+
+    $('#muteBtn').click(function() {
+        isMuted = !isMuted;
+        localStorage.setItem('chess_muted', isMuted);
+        $(this).text(isMuted ? '🔇' : '🔊');
+    });
+    if (isMuted) $('#muteBtn').text('🔇');
+
+    if (localStorage.getItem('chess_saved_game')) $('#resume-btn').show();
+
+    function resumeSavedGame() {
+        const data = JSON.parse(localStorage.getItem('chess_saved_game'));
+        currentLevel = data.level;
+        initGame(data.mode);
+        setTimeout(() => {
+            game.load(data.fen);
+            board.position(data.fen);
+            localStorage.removeItem('chess_saved_game');
+        }, 300);
+    }
+</script>
+</body>
+</html>
