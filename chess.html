@@ -25,7 +25,7 @@
             overflow: hidden;
         }
 
-        button{ cursor: pointer; }
+        button { cursor: pointer; }
         .app-shell { 
             display: flex; flex-direction: column; 
             height: 100%; width: 100%; max-width: 450px; 
@@ -49,17 +49,21 @@
         .board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; }
         #myBoard { width: 90vw; max-width: 380px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); touch-action: none; }
 
-        .btn { width: 90%; padding: 18px; margin: 8px 0; border-radius: 15px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn { width: 90%; padding: 18px; margin: 8px 0; border-radius: 15px; border: none; font-size: 1.1rem; font-weight: bold; }
         .btn-primary { background: var(--accent); color: #064e3b; }
         .btn-secondary { background: var(--card); color: white; }
 
         .board-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
         .icon-btn { background: var(--card); border: none; color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
         
+        /* Back Arrow Style */
+        .back-arrow { cursor: pointer; font-size: 2.2rem; color: var(--text); width: 45px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+        .back-arrow:hover { opacity: 0.7; }
+
         .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 10px; overflow-y: auto; }
-        .level-node { aspect-ratio: 1; border-radius: 15px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .level-node.unlocked { background: var(--card); border: 2px solid var(--accent); }
-        .level-node.current { background: var(--accent); color: #000; }
+        .level-node { aspect-ratio: 1; border-radius: 15px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+        .level-node.unlocked { background: var(--card); border: 2px solid var(--accent); color: white; cursor: pointer; }
+        .level-node.current { background: var(--accent); color: #000; cursor: pointer; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 3000; justify-content: center; align-items: center; }
         .native-modal { width: 80%; background: var(--card); border-radius: 25px; padding: 30px; text-align: center; }
@@ -78,9 +82,9 @@
     </div>
 
     <div id="screen-map" class="screen">
-        <div class="board-header">
-            <button class="icon-btn" onclick="navigate('screen-game')" style="cursor: pointer; font-size: 2rem; color: var(--text); width: 45px;">←</button>
-            <h2 style="margin:0">Level Map</h2>
+        <div class="board-header" style="padding: 10px 5px;">
+            <div class="back-arrow" onclick="navigate('screen-game')">←</div>
+            <h2 style="margin:0; flex: 1; text-align: center;">Level Map</h2>
             <div style="width:45px"></div>
         </div>
         <div class="level-grid" id="mapGrid"></div>
@@ -140,15 +144,13 @@
         osc.frequency.setValueAtTime(isSpecial ? 440 : 220, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    // --- NAVIGATION & BACK BUTTON ---
+    // --- NAVIGATION ---
     window.history.pushState({page: 'home'}, 'home', ''); 
-    window.onpopstate = function() {
+    window.onpopstate = () => {
         if ($('#screen-game').hasClass('active')) {
             window.history.pushState({page: 'game'}, 'game', ''); 
             $('#quitModal').css('display', 'flex');
@@ -157,15 +159,10 @@
 
     function navigate(screenId) {
         $('.screen').removeClass('active left');
-        const target = $(`#${screenId}`);
-        target.addClass('active');
-        target.prevAll('.screen').addClass('left');
+        $(`#${screenId}`).addClass('active').prevAll('.screen').addClass('left');
     }
 
-    function confirmQuit() {
-        saveGameState();
-        location.reload(); 
-    }
+    function confirmQuit() { saveGameState(); location.reload(); }
 
     // --- GAME LOGIC ---
     function initGame(mode) {
@@ -176,22 +173,21 @@
     }
 
     function updateHeader() {
-        const text = gameMode === 'ai' ? `LEVEL ${currentLevel}` : "2 PLAYERS";
-        $('#game-info').text(text);
+        $('#game-info').text(gameMode === 'ai' ? `LEVEL ${currentLevel}` : "2 PLAYERS");
     }
 
     function openMapMenu() {
         if (gameMode !== 'ai') return;
         const grid = $('#mapGrid').empty();
         for (let i = 1; i <= 15; i++) {
-            let type = (i < maxLevel) ? 'unlocked' : (i === maxLevel ? 'current' : 'locked');
-            let node = $(`<div class="level-node ${type}">${i <= maxLevel ? i : '🔒'}</div>`);
+            let status = (i < maxLevel) ? 'unlocked' : (i === maxLevel ? 'current' : 'locked');
+            let node = $(`<div class="level-node ${status}">${i <= maxLevel ? i : '🔒'}</div>`);
             if (i <= maxLevel) {
-                node.click(() => {
+                node.on('click', function() {
                     currentLevel = i;
                     updateHeader();
-                    navigate('screen-game');
                     resetGame();
+                    navigate('screen-game');
                 });
             }
             grid.append(node);
@@ -209,10 +205,7 @@
                 onDrop: (s, t) => {
                     let m = game.move({ from: s, to: t, promotion: 'q' });
                     if (!m) return 'snapback';
-                    
-                    // PLAY SOUND
-                    playMoveSound(game.in_check() || m.captured);
-                    
+                    playMoveSound(m.captured || game.in_check());
                     updateStatus();
                     saveGameState();
                     if (gameMode === 'ai' && !game.game_over()) setTimeout(makeAI, 450);
@@ -225,12 +218,9 @@
     function makeAI() {
         let moves = game.moves();
         if (game.game_over()) return;
-        let move = game.move(moves[Math.floor(Math.random() * moves.length)]);
+        let m = game.move(moves[Math.floor(Math.random() * moves.length)]);
         board.position(game.fen());
-        
-        // PLAY SOUND
-        playMoveSound(game.in_check() || move.captured);
-        
+        playMoveSound(m.captured || game.in_check());
         updateStatus();
         saveGameState();
     }
@@ -239,7 +229,7 @@
         let status = game.turn() === 'w' ? "White" : "Black";
         if (game.in_checkmate()) {
             $('#status').text("CHECKMATE!").css('color', 'var(--danger)');
-            playMoveSound(true); 
+            playMoveSound(true);
             localStorage.removeItem('chess_saved_game'); 
             setTimeout(() => showResultModal('win'), 600);
         } else if (game.in_draw()) {
@@ -271,27 +261,21 @@
             }
         }
 
-        const btnNextText = (userWon && gameMode === 'ai') ? "NEXT LEVEL" : "RETRY";
+        const btnText = (userWon && gameMode === 'ai') ? "NEXT LEVEL" : "RETRY";
         
-        btns.append($('<button class="btn btn-primary"></button>').text(btnNextText).click(() => {
-            if (userWon && gameMode === 'ai') {
-                currentLevel++; 
-            }
+        btns.append($('<button class="btn btn-primary"></button>').text(btnText).click(() => {
+            if (userWon && gameMode === 'ai') { currentLevel++; }
             modal.hide();
             updateHeader();
             resetGame();
         }));
 
-        btns.append($('<button class="btn btn-secondary">MAIN MENU</button>').click(() => {
-            location.reload(); 
-        }));
+        btns.append($('<button class="btn btn-secondary">MAIN MENU</button>').click(() => location.reload()));
     }
 
     function saveGameState() {
         localStorage.setItem('chess_saved_game', JSON.stringify({
-            fen: game.fen(),
-            level: currentLevel,
-            mode: gameMode
+            fen: game.fen(), level: currentLevel, mode: gameMode
         }));
     }
 
@@ -301,24 +285,16 @@
         currentLevel = data.level;
         gameMode = data.mode;
         initGame(gameMode);
-        setTimeout(() => {
-            game.load(data.fen);
-            board.position(data.fen);
-            updateStatus();
-        }, 500);
+        setTimeout(() => { game.load(data.fen); board.position(data.fen); updateStatus(); }, 500);
     }
 
-    function resetGame() {
-        game.reset(); board.start(); updateStatus();
+    function resetGame() { game.reset(); board.start(); updateStatus(); saveGameState(); }
+    function undoMove() { 
+        game.undo(); if(gameMode==='ai') game.undo(); 
+        board.position(game.fen()); updateStatus(); saveGameState();
     }
 
-    function undoMove() {
-        game.undo(); if(gameMode==='ai') game.undo();
-        board.position(game.fen());
-        updateStatus();
-        saveGameState();
-    }
-
+    // Mute/Unmute & Persistence
     if (isMuted) $('#muteBtn').text('🔇');
     $('#muteBtn').click(function() {
         isMuted = !isMuted;
