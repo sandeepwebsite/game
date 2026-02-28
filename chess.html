@@ -25,9 +25,7 @@
             overflow: hidden;
         }
 
-        button{
-            cursor: pointer;
-        }
+        button{ cursor: pointer; }
         .app-shell { 
             display: flex; flex-direction: column; 
             height: 100%; width: 100%; max-width: 450px; 
@@ -81,7 +79,7 @@
 
     <div id="screen-map" class="screen">
         <div class="board-header">
-            <button class="icon-btn" onclick="navigate('screen-game')"style="cursor: pointer; font-size: 2rem; color: var(--text); width: 45px;">←</button>
+            <button class="icon-btn" onclick="navigate('screen-game')" style="cursor: pointer; font-size: 2rem; color: var(--text); width: 45px;">←</button>
             <h2 style="margin:0">Level Map</h2>
             <div style="width:45px"></div>
         </div>
@@ -131,11 +129,28 @@
     let maxLevel = parseInt(localStorage.getItem('chess_max_level')) || 1;
     let isMuted = localStorage.getItem('chess_muted') === 'true';
 
+    // --- AUDIO LOGIC ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playMoveSound(isSpecial = false) {
+        if (isMuted) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = isSpecial ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(isSpecial ? 440 : 220, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
     // --- NAVIGATION & BACK BUTTON ---
     window.history.pushState({page: 'home'}, 'home', ''); 
     window.onpopstate = function() {
         if ($('#screen-game').hasClass('active')) {
-            window.history.pushState({page: 'game'}, 'game', ''); // Keep user on page
+            window.history.pushState({page: 'game'}, 'game', ''); 
             $('#quitModal').css('display', 'flex');
         }
     };
@@ -194,8 +209,12 @@
                 onDrop: (s, t) => {
                     let m = game.move({ from: s, to: t, promotion: 'q' });
                     if (!m) return 'snapback';
+                    
+                    // PLAY SOUND
+                    playMoveSound(game.in_check() || m.captured);
+                    
                     updateStatus();
-                    saveGameState(); // Auto-save on every move
+                    saveGameState();
                     if (gameMode === 'ai' && !game.game_over()) setTimeout(makeAI, 450);
                 }
             });
@@ -206,8 +225,12 @@
     function makeAI() {
         let moves = game.moves();
         if (game.game_over()) return;
-        game.move(moves[Math.floor(Math.random() * moves.length)]);
+        let move = game.move(moves[Math.floor(Math.random() * moves.length)]);
         board.position(game.fen());
+        
+        // PLAY SOUND
+        playMoveSound(game.in_check() || move.captured);
+        
         updateStatus();
         saveGameState();
     }
@@ -216,7 +239,8 @@
         let status = game.turn() === 'w' ? "White" : "Black";
         if (game.in_checkmate()) {
             $('#status').text("CHECKMATE!").css('color', 'var(--danger)');
-            localStorage.removeItem('chess_saved_game'); // Clear save on finish
+            playMoveSound(true); 
+            localStorage.removeItem('chess_saved_game'); 
             setTimeout(() => showResultModal('win'), 600);
         } else if (game.in_draw()) {
             $('#status').text("DRAW!").css('color', 'var(--gold)');
@@ -241,7 +265,6 @@
             $('#resTitle').css('color', userWon ? 'var(--accent)' : 'var(--danger)');
             $('#resIcon').text(userWon ? "🏆" : "💀");
             
-            // PROGRESSION LOGIC: Update maxLevel immediately
             if (userWon && gameMode === 'ai' && currentLevel === maxLevel) {
                 maxLevel++;
                 localStorage.setItem('chess_max_level', maxLevel);
@@ -252,7 +275,7 @@
         
         btns.append($('<button class="btn btn-primary"></button>').text(btnNextText).click(() => {
             if (userWon && gameMode === 'ai') {
-                currentLevel++; // Increment local currentLevel
+                currentLevel++; 
             }
             modal.hide();
             updateHeader();
@@ -260,7 +283,7 @@
         }));
 
         btns.append($('<button class="btn btn-secondary">MAIN MENU</button>').click(() => {
-            location.reload(); // Now safe because maxLevel was already saved above
+            location.reload(); 
         }));
     }
 
@@ -296,7 +319,6 @@
         saveGameState();
     }
 
-    // Initialize Mute and Resume Button
     if (isMuted) $('#muteBtn').text('🔇');
     $('#muteBtn').click(function() {
         isMuted = !isMuted;
