@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GameVerse Pro</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 -10 100 80%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
 
 <style>
+/* ================= GLOBAL VARIABLES ================= */
 :root {
   --bg: #0b0d17;
   --card-bg: #161a2e;
@@ -16,6 +18,8 @@
   --nav-bg: rgba(11, 13, 23, 0.95);
   --skeleton: rgba(255, 255, 255, 0.05);
   --container-max: 1200px;
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
 body.light {
@@ -27,71 +31,284 @@ body.light {
   --skeleton: rgba(0, 0, 0, 0.05);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* ================= RESET & BASE ================= */
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
 
 body {
   background-color: var(--bg);
   color: var(--text-main);
-  font-family: -apple-system, system-ui, sans-serif;
-  padding-bottom: 110px;
-  transition: background 0.3s, color 0.3s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-bottom: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
 }
 
-.app-container { width: 100%; max-width: var(--container-max); padding: 0 1.5rem; }
+.app-container { 
+  width: 100%; 
+  max-width: var(--container-max); 
+  padding: 0 1.5rem; 
+}
 
-/* ================= SKELETON ================= */
+/* ================= SKELETON ANIMATION ================= */
 .skeleton {
   background: linear-gradient(90deg, var(--skeleton) 25%, rgba(150,150,150,0.1) 50%, var(--skeleton) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 12px;
   color: transparent !important;
+  pointer-events: none;
 }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-/* ================= UI COMPONENTS ================= */
-.header { padding: 2.5rem 0 1rem; width: 100%; display: flex; justify-content: space-between; align-items: center; }
-.logo { font-size: 1.8rem; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-.search-area { padding: 1rem 0; position: sticky; top: 0; background: var(--bg); z-index: 100; width: 100%; max-width: var(--container-max); }
-.search-input { width: 100%; padding: 14px 15px 14px 45px; border-radius: 16px; border: 1px solid rgba(128,128,128,0.2); background: var(--card-bg); color: var(--text-main); outline: none; }
+/* ================= HEADER & SEARCH ================= */
+.header { 
+  padding: 3rem 0 1.5rem; 
+  width: 100%; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
 
-.filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 15px 0; scrollbar-width: none; width: 100%; }
-.chip { padding: 8px 22px; background: var(--card-bg); border-radius: 25px; font-size: 0.85rem; border: 1px solid rgba(128,128,128,0.2); cursor: pointer; color: var(--text-main); white-space: nowrap; }
-.chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+.logo { 
+  font-size: 2rem; 
+  font-weight: 900; 
+  color: var(--accent); 
+  letter-spacing: -1.5px; 
+  text-transform: lowercase;
+}
 
-.section-title { font-size: 0.8rem; color: var(--text-dim); margin: 1.5rem 0 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.search-area { 
+  padding: 1rem 0; 
+  position: sticky; 
+  top: 0; 
+  background: var(--bg); 
+  z-index: 100; 
+  width: 100%; 
+}
 
-/* ================= RESPONSIVE GRID ================= */
-.game-grid { display: grid; gap: 15px; width: 100%; grid-template-columns: repeat(2, 1fr); }
-@media (min-width: 768px) { .game-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-@media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(5, 1fr); } }
+.search-wrapper { position: relative; width: 100%; }
 
-.game-item { background: var(--card-bg); border-radius: 24px; border: 1px solid rgba(128,128,128,0.1); transition: 0.3s; overflow: hidden; position: relative; }
-.game-item:hover { transform: translateY(-5px); border-color: var(--primary); }
-.game-item a { display: block; padding: 1.5rem; text-decoration: none; color: inherit; }
-.game-item:active { transform: scale(0.96); }
+.search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.5;
+  font-size: 1.2rem;
+}
 
-.play-count-box { font-size: 0.7rem; color: var(--accent); margin-top: 8px; font-weight: bold; }
-.game-desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; display: block; line-height: 1.2; }
+.search-input { 
+  width: 100%; 
+  padding: 16px 20px 16px 50px; 
+  border-radius: 20px; 
+  border: 1px solid rgba(128,128,128,0.2); 
+  background: var(--card-bg); 
+  color: var(--text-main); 
+  outline: none; 
+  font-size: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
 
-/* ================= RECENT PLAY ================= */
+.search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
+/* ================= CATEGORY CHIPS ================= */
+.filter-scroll { 
+  display: flex; 
+  gap: 12px; 
+  overflow-x: auto; 
+  padding: 20px 0; 
+  scrollbar-width: none; 
+}
+.filter-scroll::-webkit-scrollbar { display: none; }
+
+.chip { 
+  padding: 10px 24px; 
+  background: var(--card-bg); 
+  border-radius: 30px; 
+  font-size: 0.9rem; 
+  font-weight: 600;
+  border: 1px solid rgba(128,128,128,0.2); 
+  cursor: pointer; 
+  white-space: nowrap;
+}
+
+.chip.active { 
+  background: var(--primary); 
+  color: white; 
+  border-color: var(--primary); 
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ================= RECENT SECTION ================= */
+.section-title { 
+  font-size: 0.85rem; 
+  color: var(--text-dim); 
+  margin: 2rem 0 15px; 
+  font-weight: 800; 
+  letter-spacing: 1.5px; 
+  text-transform: uppercase; 
+}
+
 .recent-card {
-  background: linear-gradient(135deg, var(--primary), #a855f7);
-  border-radius: 24px; padding: 1.5rem; display: flex; align-items: center; gap: 15px;
-  text-decoration: none; color: white; transition: 0.2s; max-width: 450px;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  border-radius: 28px; 
+  padding: 1.8rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 20px;
+  text-decoration: none; 
+  color: white; 
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+  margin-bottom: 10px;
 }
 
-/* ================= MODALS & NAV ================= */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.3s; }
-.modal.show { visibility: visible; opacity: 1; }
-.modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 30px; padding: 2rem; color: var(--text-main); max-height: 80vh; overflow-y: auto; }
+/* ================= POKI BENTO GRID ================= */
+.game-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); 
+  grid-auto-rows: 115px;
+  gap: 14px; 
+  width: 100%; 
+}
 
-.bottom-nav { position: fixed; bottom: 20px; width: auto; min-width: 280px; background: var(--nav-bg); display: flex; justify-content: space-around; padding: 0.8rem 2rem; border-radius: 50px; border: 1px solid rgba(128,128,128,0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.4); z-index: 1000; }
-.nav-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-dim); cursor: pointer; }
+@media (min-width: 768px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-auto-rows: 160px;
+    gap: 20px;
+  }
+}
+
+.game-item { 
+  background: var(--card-bg); 
+  border-radius: 26px; 
+  border: 1px solid rgba(128,128,128,0.1); 
+  position: relative; 
+  overflow: hidden;
+}
+
+/* Bento Sizing Classes */
+.game-item.featured { grid-column: span 2; grid-row: span 2; }
+.game-item.wide { grid-column: span 2; grid-row: span 1; }
+.game-item.tall { grid-column: span 1; grid-row: span 2; }
+
+.game-item:hover { 
+  transform: scale(1.05) translateY(-5px); 
+  border-color: var(--accent); 
+  z-index: 10; 
+  box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+}
+
+.game-item a { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  width: 100%; 
+  text-decoration: none; 
+  color: inherit; 
+  padding: 15px; 
+}
+
+.icon-box { font-size: 2.5rem; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.game-item.featured .icon-box { font-size: 5rem; }
+.game-item.wide .icon-box, .game-item.tall .icon-box { font-size: 3.5rem; }
+
+.game-item:hover .icon-box { transform: scale(1.2) rotate(5deg); }
+
+.title-box { font-size: 0.9rem; font-weight: 800; margin-top: 10px; text-align: center; line-height: 1.1; }
+.play-count-box { font-size: 0.7rem; color: var(--accent); margin-top: 6px; font-weight: 800; opacity: 0.9; }
+
+/* ================= MODALS ================= */
+.modal { 
+  position: fixed; 
+  top: 0; left: 0; 
+  width: 100%; height: 100%; 
+  background: rgba(0,0,0,0.85); 
+  backdrop-filter: blur(12px); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 2000; 
+  visibility: hidden; 
+  opacity: 0; 
+  transition: all 0.4s ease; 
+}
+
+.modal.show { visibility: visible; opacity: 1; }
+
+.modal-content { 
+  background: var(--card-bg); 
+  width: 92%; 
+  max-width: 480px; 
+  border-radius: 35px; 
+  padding: 2.5rem; 
+  color: var(--text-main); 
+  max-height: 85vh; 
+  overflow-y: auto; 
+  position: relative;
+  transform: translateY(30px);
+  transition: transform 0.4s ease;
+}
+
+.modal.show .modal-content { transform: translateY(0); }
+
+/* ================= BOTTOM NAV ================= */
+.bottom-nav { 
+  position: fixed; 
+  bottom: 25px; 
+  width: auto; 
+  min-width: 300px; 
+  background: var(--nav-bg); 
+  display: flex; 
+  justify-content: space-around; 
+  padding: 1rem 2.5rem; 
+  border-radius: 60px; 
+  border: 1px solid rgba(128,128,128,0.2); 
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+  z-index: 1000; 
+  backdrop-filter: blur(15px);
+}
+
+.nav-btn { 
+  background: none; 
+  border: none; 
+  font-size: 1.6rem; 
+  color: var(--text-dim); 
+  cursor: pointer; 
+  transition: 0.2s;
+}
+
+.nav-btn:hover { color: var(--primary); transform: scale(1.2); }
+.nav-btn.active { color: var(--primary); }
+
+/* ================= UTILITIES ================= */
+.btn-danger { 
+  background: var(--danger); 
+  color: white; 
+  width: 100%; 
+  margin-top: 20px; 
+  padding: 16px; 
+  border-radius: 18px; 
+  border: none; 
+  font-weight: 800; 
+  cursor: pointer; 
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 
 .hidden { display: none !important; }
 </style>
@@ -101,122 +318,104 @@ body {
 <div class="app-container">
   <div class="header">
     <div class="logo">🎮 GameVerse</div>
-    <div id="dateDisplay" style="font-size: 0.8rem; color: var(--text-dim); font-weight: bold;">FEB 2026</div>
+    <div id="dateDisplay" style="font-size: 0.9rem; color: var(--text-dim); font-weight: 900; text-transform: uppercase;">March 2026</div>
   </div>
 
   <div class="search-area">
-    <div style="position: relative;">
-      <span style="position: absolute; left: 18px; top: 14px; opacity: 0.4;">🔍</span>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search games..." onkeyup="runFilters()">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search for games..." onkeyup="runFilters()">
     </div>
     <div class="filter-scroll">
-      <div class="chip active" onclick="setCategory('all', this)">All</div>
-      <div class="chip" onclick="setCategory('puzzle', this)">Puzzle</div>
+      <div class="chip active" onclick="setCategory('all', this)">All Games</div>
+      <div class="chip" onclick="setCategory('puzzle', this)">Puzzles</div>
       <div class="chip" onclick="setCategory('action', this)">Action</div>
-      <div class="chip" onclick="setCategory('race', this)">Race</div>
+      <div class="chip" onclick="setCategory('race', this)">Racing</div>
     </div>
   </div>
 
   <div class="recent-section" id="recentSection">
     <p class="section-title">Jump Back In</p>
     <a href="#" class="recent-card" id="lastPlayedLink">
-      <span id="lpIcon" style="font-size: 2.2rem;">🎮</span>
+      <span id="lpIcon" style="font-size: 2.8rem;">🎮</span>
       <div>
-        <h4 id="lpName" class="title-box">Ready?</h4>
-        <span id="lpTime" style="font-size: 0.75rem; opacity: 0.9;">No history</span>
+        <h4 id="lpName" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 2px;">Ready to play?</h4>
+        <span id="lpTime" style="font-size: 0.75rem; font-weight: 700; opacity: 0.9; text-transform: uppercase;">No recent history</span>
       </div>
     </a>
   </div>
 
-  <p class="section-title">Trending Games</p>
+  <p class="section-title">Trending Now</p>
   <div class="game-grid" id="gameGrid">
     
-    <div class="game-item" data-name="snake" data-cat="action" data-id="snake">
-      <a href="snake.html" onclick="trackPlay('snake', 'Snake', '🐍')">
-        <span class="icon-box" style="font-size: 2.2rem;">🐍</span>
-        <h4 class="title-box">Snake</h4>
-        <small class="game-desc">Classic Snake Game</small>
+    <div class="game-item featured" data-name="snake pro" data-cat="action" data-id="snake">
+      <a href="snake.html" onclick="trackPlay('snake', 'Snake Pro', '🐍')">
+        <span class="icon-box">🐍</span>
+        <h4 class="title-box">Snake Pro</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="snake 2" data-cat="action" data-id="snake2">
-      <a href="snake2.html" onclick="trackPlay('snake2', 'Snake 2', '🐍')">
-        <span class="icon-box" style="font-size: 2.2rem;">🐍</span>
-        <h4 class="title-box">Snake 2</h4>
-        <small class="game-desc">Classic Snake Game</small>
+    <div class="game-item tall" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
+      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')">
+        <span class="icon-box">🧪</span>
+        <h4 class="title-box">Water Sort</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
     <div class="game-item" data-name="space impact" data-cat="action" data-id="space-impact">
       <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')">
-        <span class="icon-box" style="font-size: 2.2rem;">🚀</span>
-        <h4 class="title-box">Space Impact</h4>
-        <small class="game-desc">Hit the Enemy</small>
+        <span class="icon-box">🚀</span>
+        <h4 class="title-box">Space</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
-      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')">
-        <span class="icon-box" style="font-size: 2.2rem;">🧪</span>
-        <h4 class="title-box">Water Sort</h4>
-        <small class="game-desc">Arrange watercolors</small>
+    <div class="game-item" data-name="ace of spades" data-cat="puzzle" data-id="ace-spades">
+      <a href="ace.html" onclick="trackPlay('ace-spades', 'Ace Spades', '🂡')">
+        <span class="icon-box">🂡</span>
+        <h4 class="title-box">Ace Spades</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="water sort puzzle 2" data-cat="puzzle" data-id="water-sort-2">
-      <a href="water-sort/index.html" onclick="trackPlay('water-sort-2', 'Water Sort 2', '🧪')">
-        <span class="icon-box" style="font-size: 2.2rem;">🧪</span>
-        <h4 class="title-box">Water Sort 2</h4>
-        <small class="game-desc">Advanced levels</small>
+    <div class="game-item wide" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
+      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🛩️')">
+        <span class="icon-box">🛩️</span>
+        <h4 class="title-box">Ace Horizon Pro</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
     <div class="game-item" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
       <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')">
-        <span class="icon-box" style="font-size: 2.2rem;">🧱</span>
+        <span class="icon-box">🧱</span>
         <h4 class="title-box">Block 8</h4>
-        <small class="game-desc">Fill rows for points</small>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
-    <div class="game-item" data-name="bird sort" data-cat="puzzle" data-id="bird-sort">
-      <a href="bird-sort" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')">
-        <span class="icon-box" style="font-size: 2.2rem;">🦜</span>
+    <div class="game-item tall" data-name="chess grandmaster" data-cat="puzzle" data-id="chess">
+      <a href="chess.html" onclick="trackPlay('chess', 'Chess Pro', '♟')">
+        <span class="icon-box">♟</span>
+        <h4 class="title-box">Chess Pro</h4>
+        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
+      </a>
+    </div>
+
+    <div class="game-item" data-name="bird sort puzzle" data-cat="puzzle" data-id="bird-sort">
+      <a href="bird-sort.html" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')">
+        <span class="icon-box">🦜</span>
         <h4 class="title-box">Bird Sort</h4>
-        <small class="game-desc">Sort and free birds</small>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
 
     <div class="game-item" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
-      <a href="line-drawing" onclick="trackPlay('line-drawing', 'One Line', '✏️')">
-        <span class="icon-box" style="font-size: 2.2rem;">✏️</span>
+      <a href="line-drawing.html" onclick="trackPlay('line-drawing', 'One Line', '✏️')">
+        <span class="icon-box">✏️</span>
         <h4 class="title-box">One Line</h4>
-        <small class="game-desc">Drawing puzzle</small>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="ace horizon" data-cat="race" data-id="ace-horizon">
-      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🛩️')">
-        <span class="icon-box" style="font-size: 2.2rem;">🛩️</span>
-        <h4 class="title-box">Ace Horizon</h4>
-        <small class="game-desc">Pro Racing Edition</small>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="ace horizon" data-cat="race" data-id="ace-horizon">
-      <a href="chess.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '♟')">
-        <span class="icon-box" style="font-size: 2.2rem;">♟</span>
-        <h4 class="title-box">Grandmaster Pro</h4>
-        <small class="game-desc">Master the board, one level at a time</small>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
     </div>
@@ -225,65 +424,105 @@ body {
 </div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn" onclick="location.reload()" style="color: var(--primary);">🏠</button>
-  <button class="nav-btn" onclick="openLeaderboard()">🏆</button>
-  <button class="nav-btn" onclick="toggleModal('settingsModal', true)">⚙️</button>
+  <button class="nav-btn" onclick="location.reload()" title="Home">🏠</button>
+  <button class="nav-btn" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
+  <button class="nav-btn" onclick="toggleModal('settingsModal', true)" title="Settings">⚙️</button>
 </nav>
 
 <div class="modal" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 1.5rem;">🏆 Global Leaderboard</h2>
+    <h2 style="margin-bottom: 25px; font-weight: 900;">🏆 Global Ranking</h2>
     <div id="leaderboardList"></div>
+    <button onclick="toggleModal('leaderboardModal', false)" style="width: 100%; margin-top: 1rem; padding: 15px; border: none; background: #333; color: white; border-radius: 15px; font-weight: 700;">Dismiss</button>
   </div>
 </div>
 
 <div class="modal" id="settingsModal" onclick="toggleModal('settingsModal', false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 20px;">Settings</h2>
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(128,128,128,0.2);">
-      <span>Mute Audio</span>
-      <button id="muteBtn" onclick="toggleMute()" style="padding: 8px 20px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold;">OFF</button>
+    <h2 style="margin-bottom: 25px; font-weight: 900;">App Settings</h2>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(128,128,128,0.15);">
+      <span style="font-weight: 700;">Audio Feedback</span>
+      <button id="muteBtn" onclick="toggleMute()" style="padding: 10px 24px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 800; min-width: 80px;">OFF</button>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
-      <span>Theme</span>
-      <button onclick="toggleTheme()" style="padding: 8px 20px; border-radius: 10px; border: 1px solid var(--text-dim); background: none; color: var(--text-main); font-weight: bold;">Switch</button>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(128,128,128,0.15);">
+      <span style="font-weight: 700;">Visual Theme</span>
+      <button onclick="toggleTheme()" style="padding: 10px 24px; border-radius: 14px; border: 1.5px solid var(--text-dim); background: none; color: var(--text-main); font-weight: 800;">SWITCH</button>
     </div>
-    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 15px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold;">Close</button>
+    
+    <div style="margin-top: 30px; background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 20px;">
+      <p style="font-size: 0.75rem; color: var(--danger); font-weight: 900; margin-bottom: 5px;">DANGER ZONE</p>
+      <button class="btn-danger" onclick="resetAllData()">Wipe All Progress</button>
+    </div>
+    
+    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 900;">CLOSE</button>
   </div>
 </div>
 
 <script>
+// ================= INITIALIZATION & STATE =================
 let currentCategory = 'all';
+let isMuted = localStorage.getItem('isMuted') === 'true';
 
-// Theme Load
+// Theme Persistence
 if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
-function toggleTheme() {
-    document.body.classList.toggle('light');
-    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+
+// ================= DATE & TIME LOGIC =================
+function formatLastPlayed() {
+  const ts = localStorage.getItem('lastPlayedTime');
+  if (!ts) return "No history yet";
+  
+  const date = new Date(parseInt(ts));
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  
+  let hours = date.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Handle 12-hour format logic
+  const mins = date.getMinutes().toString().padStart(2, '0');
+  
+  return `${days[date.getDay()]} ${hours}:${mins} ${ampm}`;
 }
 
-// Track Play
+// ================= DATA STORAGE =================
 function trackPlay(id, name, icon) {
+  // Update play counts
   let count = parseInt(localStorage.getItem('plays_' + id) || 0);
   localStorage.setItem('plays_' + id, count + 1);
+  
+  // Update "Last Played" metadata
   localStorage.setItem('lastPlayedName', name);
   localStorage.setItem('lastPlayedIcon', icon);
   localStorage.setItem('lastPlayedTime', new Date().getTime());
   localStorage.setItem('lastPlayedID', id);
 }
 
-// Filter Logic
+function resetAllData() {
+  if(confirm("CRITICAL: This will permanently delete all high scores and local history. Continue?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+// ================= FILTERING & SEARCH =================
 function runFilters() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   const items = document.querySelectorAll('.game-item');
-  document.getElementById('recentSection').classList.toggle('hidden', query.length > 0);
+  
+  // Hide recent section if searching
+  document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
   
   items.forEach(item => {
     const name = item.getAttribute('data-name').toLowerCase();
     const cat = item.getAttribute('data-cat');
     const matchesSearch = name.includes(query);
     const matchesCat = (currentCategory === 'all' || cat === currentCategory);
-    item.classList.toggle('hidden', !(matchesSearch && matchesCat));
+    
+    if (matchesSearch && matchesCat) {
+      item.classList.remove('hidden');
+    } else {
+      item.classList.add('hidden');
+    }
   });
 }
 
@@ -294,52 +533,57 @@ function setCategory(cat, el) {
   runFilters();
 }
 
-// UI Refresh
+// ================= UI RENDERING =================
 function updateUI() {
-  // Update Grid Counts
+  // Update grid play counts
   document.querySelectorAll('.game-item').forEach(item => {
     const id = item.getAttribute('data-id');
-    item.querySelector('.count-val').textContent = localStorage.getItem('plays_' + id) || 0;
+    const val = localStorage.getItem('plays_' + id) || 0;
+    const countEl = item.querySelector('.count-val');
+    if(countEl) countEl.textContent = val;
   });
 
-  // Update Recent Section
-  const name = localStorage.getItem('lastPlayedName');
-  if (name) {
-    document.getElementById('lpName').textContent = name;
-    document.getElementById('lpIcon').textContent = localStorage.getItem('lastPlayedIcon');
-    const time = localStorage.getItem('lastPlayedTime');
-    const diff = Math.floor((new Date().getTime() - time) / 60000);
-    document.getElementById('lpTime').textContent = diff < 1 ? "Just now" : `${diff}m ago`;
-    
-    // Find the correct link from the grid
-    const id = localStorage.getItem('lastPlayedID');
-    const originalItem = document.querySelector(`.game-item[data-id="${id}"] a`);
-    if(originalItem) document.getElementById('lastPlayedLink').href = originalItem.getAttribute('href');
+  // Update "Jump Back In" card
+  const lastID = localStorage.getItem('lastPlayedID');
+  if (lastID) {
+    const source = document.querySelector(`.game-item[data-id="${lastID}"] a`);
+    if(source) {
+      document.getElementById('lastPlayedLink').href = source.getAttribute('href');
+      document.getElementById('lpName').textContent = localStorage.getItem('lastPlayedName');
+      document.getElementById('lpIcon').textContent = localStorage.getItem('lastPlayedIcon');
+      document.getElementById('lpTime').textContent = formatLastPlayed();
+    }
   }
 }
 
-// Dynamic Leaderboard
 function openLeaderboard() {
   const list = document.getElementById('leaderboardList');
   list.innerHTML = '';
+  
+  // Gather and sort scores
   const games = Array.from(document.querySelectorAll('.game-grid .game-item')).map(item => ({
     name: item.querySelector('h4').textContent,
     icon: item.querySelector('.icon-box').textContent,
-    total: parseInt(item.querySelector('.count-val').textContent)
+    total: parseInt(localStorage.getItem('plays_' + item.getAttribute('data-id')) || 0)
   })).sort((a, b) => b.total - a.total);
 
   games.forEach((g, i) => {
+    const color = i < 3 ? 'var(--accent)' : 'var(--text-dim)';
     list.innerHTML += `
-      <div style="display:flex; justify-content:space-between; padding:15px; background:rgba(128,128,128,0.1); margin-bottom:10px; border-radius:15px;">
-        <span>${i+1}. ${g.icon} ${g.name}</span>
-        <span style="color:var(--accent); font-weight:bold;">${g.total}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:18px; background:rgba(128,128,128,0.08); margin-bottom:12px; border-radius:20px;">
+        <span style="font-weight: 800;"><span style="color:${color}; margin-right:10px;">#${i+1}</span> ${g.icon} ${g.name}</span>
+        <span style="color:var(--primary); font-weight:900;">${g.total} PLAYS</span>
       </div>`;
   });
   toggleModal('leaderboardModal', true);
 }
 
-// Mute
-let isMuted = localStorage.getItem('isMuted') === 'true';
+// ================= SETTINGS LOGIC =================
+function toggleTheme() {
+    document.body.classList.toggle('light');
+    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+}
+
 function renderMute() {
   const btn = document.getElementById('muteBtn');
   if(btn) {
@@ -347,26 +591,32 @@ function renderMute() {
     btn.style.background = isMuted ? "#444" : "var(--primary)";
   }
 }
+
 function toggleMute() {
   isMuted = !isMuted;
   localStorage.setItem('isMuted', isMuted);
   renderMute();
 }
 
-function toggleModal(id, show) { document.getElementById(id).classList.toggle('show', show); }
+function toggleModal(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
 
-// Start
+// ================= STARTUP =================
 window.onload = () => {
-  const elements = document.querySelectorAll('.title-box, .icon-box, .count-val, .search-input');
-  elements.forEach(el => el.classList.add('skeleton'));
+  // Apply skeleton loading
+  const targets = document.querySelectorAll('.title-box, .icon-box, .play-count-box, .search-input');
+  targets.forEach(el => el.classList.add('skeleton'));
+  
   setTimeout(() => {
-    elements.forEach(el => el.classList.remove('skeleton'));
+    targets.forEach(el => el.classList.remove('skeleton'));
     updateUI();
     renderMute();
-  }, 800);
+  }, 1000);
 };
 
-setInterval(updateUI, 30000);
+// Continuous background update
+setInterval(updateUI, 10000);
 </script>
 </body>
 </html>
