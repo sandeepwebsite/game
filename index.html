@@ -372,17 +372,17 @@ body {
       </a>
     </div>
 
-    <div class="game-item" data-name="ace of spades" data-cat="puzzle" data-id="ace-spades">
+    <!-- <div class="game-item" data-name="ace of spades" data-cat="puzzle" data-id="ace-spades">
       <a href="ace.html" onclick="trackPlay('ace-spades', 'Ace Spades', '🂡')">
         <span class="icon-box">🂡</span>
         <h4 class="title-box">Ace Spades</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
-    </div>
+    </div> -->
 
     <div class="game-item wide" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
-      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🛩️')">
-        <span class="icon-box">🛩️</span>
+      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🂡')">
+        <span class="icon-box">🂡</span>
         <h4 class="title-box">Ace Horizon Pro</h4>
         <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
       </a>
@@ -442,7 +442,7 @@ body {
     <h2 style="margin-bottom: 25px; font-weight: 900;">App Settings</h2>
     
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(128,128,128,0.15);">
-      <span style="font-weight: 700;">Audio Feedback</span>
+      <span style="font-weight: 700;">Sound</span>
       <button id="muteBtn" onclick="toggleMute()" style="padding: 10px 24px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 800; min-width: 80px;">OFF</button>
     </div>
 
@@ -453,7 +453,7 @@ body {
     
     <div style="margin-top: 30px; background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 20px;">
       <p style="font-size: 0.75rem; color: var(--danger); font-weight: 900; margin-bottom: 5px;">DANGER ZONE</p>
-      <button class="btn-danger" onclick="resetAllData()">Wipe All Progress</button>
+      <button class="btn-danger" onclick="resetAllData()">Reset All Progress</button>
     </div>
     
     <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 900;">CLOSE</button>
