@@ -12,12 +12,11 @@
             --cell: #334155;
             --btn: #334155;
             --accent: #fbbf24;
-            --success: #22c55e;
         }
 
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             -webkit-user-select: none;
             user-select: none;
             touch-action: none;
@@ -40,11 +39,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            filter: blur(10px); /* Blurred until start */
-            transition: filter 0.5s ease;
         }
-
-        .app.active { filter: blur(0); }
 
         header {
             display: flex;
@@ -70,12 +65,7 @@
             position: relative;
             background: var(--cell);
             border-radius: 4px;
-            transform: scale(0);
         }
-
-        .cell.pop { animation: cellPop 0.4s ease-out forwards; }
-
-        @keyframes cellPop { to { transform: scale(1); } }
 
         .falling-block {
             position: absolute;
@@ -88,30 +78,55 @@
 
         @keyframes slowFall {
             0% { transform: translateY(0) scale(1); opacity: 1; }
-            20% { transform: translateY(-5px) scale(1.1); opacity: 1; }
-            100% { transform: translateY(500px) scale(0.3) rotate(20deg); opacity: 0; }
+            20% { transform: translateY(-5px) scale(1.05); opacity: 1; }
+            100% { transform: translateY(500px) scale(0.3) rotate(15deg); opacity: 0; }
         }
 
         .combo-text {
             position: absolute;
-            left: 50%; top: 50%;
+            left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
-            font-size: 3rem; font-weight: 900;
+            font-size: 3rem;
+            font-weight: 900;
             color: var(--accent);
             text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
-            z-index: 100; pointer-events: none;
+            z-index: 100;
+            pointer-events: none;
             animation: comboPop 1s ease-out forwards;
+        }
+
+        /* GRAFFITI STYLE FOR HIGH SCORE */
+        .highscore-graffiti {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 2.5rem;
+            color: #f87171;
+            text-transform: uppercase;
+            transform: rotate(-10deg);
+            text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 5px 5px 15px rgba(0,0,0,0.5);
+            margin: 15px 0;
+            animation: graffitiPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes graffitiPop {
+            0% { transform: scale(0) rotate(0deg); }
+            100% { transform: scale(1) rotate(-10deg); }
         }
 
         @keyframes comboPop {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -120%) scale(0.8); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -70%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -100%) scale(0.8); opacity: 0; }
         }
 
         .confetti {
-            position: fixed; width: 8px; height: 8px; z-index: 1000;
-            pointer-events: none; animation: confettiFall 1.5s ease-out forwards;
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            z-index: 1000;
+            pointer-events: none;
+            animation: confettiFall 1.5s ease-out forwards;
         }
 
         @keyframes confettiFall {
@@ -119,90 +134,77 @@
             100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
         }
 
-        .graffiti-tag {
-            font-size: 4rem; font-weight: 900; color: #f43f5e;
-            text-transform: uppercase; font-style: italic;
-            text-shadow: 4px 4px 0px #fff, 8px 8px 0px #000;
-            margin-bottom: 20px; display: block;
-            animation: graffitiScale 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes graffitiScale {
-            0% { transform: scale(0) rotate(-30deg); opacity: 0; }
-            100% { transform: scale(1) rotate(-5deg); opacity: 1; }
-        }
-
         .cell.ghost {
-            opacity: 0.3; outline: 2px solid rgba(255,255,255,0.5); outline-offset: -3px;
+            opacity: 0.3;
+            outline: 2px solid rgba(255,255,255,0.5);
+            outline-offset: -3px;
         }
 
         .pieces {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 10px; margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .piece-box {
-            background: var(--panel); border-radius: 12px;
-            padding: 10px; display: flex; justify-content: center;
-            align-items: center; min-height: 110px;
-            opacity: 0; transform: translateY(20px);
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 110px;
         }
 
-        .piece-box.show {
-            animation: slideUp 0.5s ease-out forwards;
+        .piece {
+            display: grid;
+            gap: 3px;
         }
 
-        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
-
-        .piece { display: grid; gap: 3px; }
         .piece div {
-            width: 22px; height: 22px; border-radius: 3px;
+            width: 18px;
+            height: 22px;
+            border-radius: 3px;
             box-shadow: inset 1px 1px 2px rgba(255,255,255,0.2);
         }
 
         .piece.dragging {
-            position: fixed; z-index: 9999; pointer-events: none;
-            transform: translate(-50%, -140px) scale(1.1);
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translate(-50%, -140px) scale(1.2);
             filter: drop-shadow(0 30px 20px rgba(0,0,0,0.8));
         }
 
         .controls {
             display: flex;
             justify-content: space-between;
-            padding-bottom: 10px; /* Slight padding from bottom */
             margin-top: 5px;
+            padding-bottom: 20px;
         }
 
         button {
-            padding: 12px 20px; border-radius: 10px; border: none;
-            color: white; font-weight: bold; background: var(--btn);
-            box-shadow: 0 4px 0px #111; cursor: pointer;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            background: var(--btn);
+            box-shadow: 0 4px 0px #111;
+            cursor: pointer;
         }
 
         button:active { transform: translateY(2px); box-shadow: 0 2px 0px #111; }
-        button:disabled { opacity: 0.3; cursor: default; }
+        button:disabled { opacity: 0.3; }
 
-        .overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            display: flex; align-items: center; justify-content: center; z-index: 10000; 
-        }
-        .hidden { display: none !important; }
-        .popup { background: var(--panel); padding: 40px; border-radius: 30px; text-align: center; width: 85%; max-width: 350px; border: 2px solid #334155; }
-        
-        #startModal h1 { font-size: 3rem; margin: 0; color: var(--accent); text-shadow: 3px 3px 0 #000; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .hidden { display: none; }
+        .popup { background: var(--panel); padding: 30px; border-radius: 24px; text-align: center; width: 85%; max-width: 320px; }
     </style>
   </head>
   <body>
-
-    <div class="overlay" id="startModal">
-        <div class="popup">
-            <h1>BLOCKS</h1>
-            <p style="margin-bottom:30px; opacity:0.8">Match lines to survive!</p>
-            <button onclick="startGame()" style="background:var(--success); width:100%; padding:18px; font-size:1.2rem">START GAME</button>
-        </div>
-    </div>
-
-    <div class="app" id="gameApp">
+    <div class="app">
       <header>
         <div>Score: <span id="score">0</span></div>
         <div>Best: <span id="high">0</span></div>
@@ -215,12 +217,20 @@
       </div>
     </div>
 
+    <div class="overlay" id="startModal">
+        <div class="popup">
+          <h1 style="color:var(--accent); margin-top:0">BLOCKS 8</h1>
+          <p style="color:#94a3b8">Drag blocks to clear lines.<br>Click a block to rotate it.</p>
+          <button onclick="startGame()" style="background:#3b82f6; width:100%; padding:15px; margin-top:10px; font-size:1.2rem">START GAME</button>
+        </div>
+      </div>
+
     <div class="overlay hidden" id="gameOver">
       <div class="popup">
         <div id="graffitiContainer"></div>
-        <h1 id="gameOverTitle">GAME OVER</h1>
-        <p>Score: <span id="finalScore" style="font-size:1.5rem"></span></p>
-        <button onclick="resetGame()" style="background:var(--success); width:100%; padding:15px; margin-top:10px">PLAY AGAIN</button>
+        <h1 id="gameOverTitle" style="color:#fb7185; margin:0">GAME OVER</h1>
+        <p>Final Score: <span id="finalScore" style="font-size:1.5rem; font-weight:bold"></span></p>
+        <button onclick="resetGame()" style="background:#22c55e; width:100%; padding:15px; margin-top:10px">PLAY AGAIN</button>
       </div>
     </div>
 
@@ -230,70 +240,95 @@
       const scoreEl = document.getElementById("score");
       const highEl = document.getElementById("high");
       const undoBtn = document.getElementById("undo");
+      const overlay = document.getElementById("gameOver");
       const startModal = document.getElementById("startModal");
-      const gameOverModal = document.getElementById("gameOver");
       const muteBtn = document.getElementById("mute");
 
       let grid = Array(64).fill(null);
       let score = 0;
       let history = null;
       let dragging = null;
-      let gameEnded = false;
+      let gameEnded = true; // Start as true until "Start Game" is clicked
       let startX = 0, startY = 0;
       let isDragging = false;
 
-      // Audio & Persistence
       let muted = localStorage.getItem("blocks8_muted") === "true";
       muteBtn.textContent = muted ? "🔇" : "🔊";
+
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-      const shapes = [
-        {s:[[1]], c:"#22c55e"}, {s:[[1,1]], c:"#38bdf8"}, 
-        {s:[[1,1,1]], c:"#a78bfa"}, {s:[[1,1],[1,1]], c:"#facc15"},
-        {s:[[1,1,1],[0,1,0]], c:"#fb7185"}, {s:[[1,0],[1,1]], c:"#fb923c"},
-        {s:[[1,1,1,1]], c:"#60a5fa"}
-      ];
-
       function playSound(type) {
-        if (muted || audioCtx.state === 'suspended') return;
+        if (muted) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
         if (type === 'place') {
-          osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-          gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.frequency.setValueAtTime(200, now);
+          osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(); osc.stop(now + 0.1);
         } else if (type === 'clear') {
-          osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
-          gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(); osc.stop(now + 0.3);
         } else if (type === 'gameover') {
-          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(50, now + 0.6);
-          gain.gain.setValueAtTime(0.1, now);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+          gain.gain.setValueAtTime(0.2, now);
+          osc.start(); osc.stop(now + 0.5);
         }
-        osc.start(); osc.stop(now + 0.6);
       }
+
+      const shapes = [
+        // 1x1 to 1x4
+        {s:[[1]], c:"#22c55e"}, 
+        {s:[[1,1]], c:"#38bdf8"}, 
+        {s:[[1,1,1]], c:"#a78bfa"}, 
+        {s:[[1,1,1,1]], c:"#60a5fa"},
+        {s:[[1,1,1,1,1]], c:"#3b82f6"}, // Long 5-piece
+
+        // Squares
+        {s:[[1,1],[1,1]], c:"#facc15"}, 
+        // {s:[[1,1,1],[1,1,1],[1,1,1]], c:"#eab308"}, // Big 3x3 Square
+
+        // L and J Shapes
+        {s:[[1,0],[1,0],[1,1]], c:"#fb923c"}, // L-shape
+        {s:[[0,1],[0,1],[1,1]], c:"#f97316"}, // J-shape
+        {s:[[1,1,1],[1,0,0]], c:"#f43f5e"},
+
+        // T and Plus Shapes
+        {s:[[1,1,1],[0,1,0]], c:"#fb7185"}, 
+        {s:[[0,1,0],[1,1,1],[0,1,0]], c:"#d946ef"}, // Plus sign
+
+        // Stairs / Z Shapes
+        {s:[[1,1,0],[0,1,1]], c:"#10b981"}, 
+        {s:[[0,1,1],[1,1,0]], c:"#4ade80"},
+
+        // Large Tricky Shapes
+        {s:[[1,1,1],[1,1,1]], c:"#8b5cf6"}, // 3x2 Block
+        {s:[[1,0,1],[1,1,1]], c:"#6366f1"}  // U-shape
+      ];
 
       function getHigh() { return parseInt(localStorage.getItem("blocks8High")) || 0; }
       highEl.textContent = getHigh();
 
       function startGame() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        startModal.classList.add("hidden");
-        document.getElementById("gameApp").classList.add("active");
-        resetGame();
+          startModal.classList.add("hidden");
+          gameEnded = false;
+          resetGame();
       }
 
-      function initBoard(isInitial = false) {
+      function drawBoard() {
         boardEl.innerHTML = "";
         grid.forEach((v, i) => {
           const c = document.createElement("div");
           c.className = "cell";
-          if (isInitial) {
-            c.classList.add("pop");
-            c.style.animationDelay = (i * 0.008) + "s";
-          } else {
-            c.style.transform = "scale(1)";
-          }
           if(v) {
             c.style.background = `linear-gradient(135deg, #fff4, ${v})`;
             c.style.boxShadow = "inset 2px 2px 4px rgba(255,255,255,0.2)";
@@ -305,15 +340,19 @@
       function enableDrag(piece) {
         piece.onpointerdown = e => {
           if (gameEnded) return;
-          dragging = piece; startX = e.clientX; startY = e.clientY;
-          isDragging = false; piece.setPointerCapture(e.pointerId);
+          dragging = piece;
+          startX = e.clientX; startY = e.clientY;
+          isDragging = false;
+          piece.setPointerCapture(e.pointerId);
         };
         piece.onpointermove = e => {
           if (!dragging) return;
           const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
           if (dist > 10) {
-            isDragging = true; dragging.classList.add("dragging");
-            dragging.style.left = e.clientX + "px"; dragging.style.top = e.clientY + "px";
+            isDragging = true;
+            dragging.classList.add("dragging");
+            dragging.style.left = e.clientX + "px";
+            dragging.style.top = e.clientY + "px";
             const r = boardEl.getBoundingClientRect();
             preview(dragging.shape, Math.floor((e.clientX - r.left) / (r.width / 8)), Math.floor((e.clientY - 140 - r.top) / (r.height / 8)));
           }
@@ -328,20 +367,27 @@
             tryPlace(dragging, Math.floor((e.clientX - r.left) / (r.width / 8)), Math.floor((e.clientY - 140 - r.top) / (r.height / 8)));
             dragging.classList.remove("dragging");
           }
-          dragging = null; isDragging = false; clearGhost();
+          dragging = null; isDragging = false;
+          clearGhost();
         };
       }
 
       function renderPieceBlocks(p) {
         p.innerHTML = "";
         p.style.gridTemplateColumns = `repeat(${p.shape[0].length}, 1fr)`;
+        
+        // Logic to keep cells square and consistent
+        const cellSize = p.shape.length > 3 || p.shape[0].length > 3 ? "16px" : "22px";
+        
         p.shape.flat().forEach(v => {
-          const d = document.createElement("div");
-          d.style.visibility = v ? "visible" : "hidden";
-          d.style.background = p.color;
-          p.appendChild(d);
+            const d = document.createElement("div");
+            d.style.visibility = v ? "visible" : "hidden";
+            d.style.background = p.color;
+            d.style.width = cellSize;
+            d.style.height = cellSize;
+            p.appendChild(d);
         });
-      }
+    }
 
       function preview(shape, x, y) {
         clearGhost();
@@ -354,7 +400,8 @@
       function clearGhost() { document.querySelectorAll(".ghost").forEach(c => c.classList.remove("ghost")); }
 
       function tryPlace(p, x, y) {
-        let cells = []; let canPlace = true;
+        let cells = [];
+        let canPlace = true;
         p.shape.forEach((row, dy) => row.forEach((v, dx) => {
           const cx = x + dx, cy = y + dy, i = cy * 8 + cx;
           if (v) {
@@ -362,20 +409,23 @@
             cells.push(i);
           }
         }));
-        if (!canPlace) { initBoard(); return; }
+        if (!canPlace) { drawBoard(); return; }
 
         playSound('place');
-        history = [...grid]; undoBtn.disabled = false;
+        history = [...grid];
+        undoBtn.disabled = false;
+        
         cells.forEach(i => grid[i] = p.color);
         score += cells.length;
         p.parentElement.innerHTML = ""; 
+        
         const linesCleared = clearLines();
         
         if (linesCleared) {
             playSound('clear');
-            setTimeout(() => { initBoard(); update(); }, 800);
+            setTimeout(() => { drawBoard(); update(); }, 800);
         } else {
-            initBoard(); update();
+            drawBoard(); update();
         }
       }
 
@@ -394,8 +444,10 @@
 
         if (rows.length + cols.length >= 2) {
             const txt = document.createElement("div");
-            txt.className = "combo-text"; txt.textContent = "COMBO!";
-            boardEl.appendChild(txt); setTimeout(() => txt.remove(), 1000);
+            txt.className = "combo-text";
+            txt.textContent = "COMBO!";
+            boardEl.appendChild(txt);
+            setTimeout(() => txt.remove(), 1000);
         }
 
         if (toClear.size > 0) {
@@ -403,22 +455,26 @@
           toClear.forEach(i => {
             const cell = boardEl.children[i];
             const fall = document.createElement("div");
-            fall.className = "falling-block"; fall.style.background = grid[i];
-            cell.appendChild(fall); grid[i] = null;
+            fall.className = "falling-block";
+            fall.style.background = grid[i];
+            cell.appendChild(fall);
+            grid[i] = null;
           });
           return true;
         }
         return false;
       }
 
-      function spawnConfetti() {
-        for(let i=0; i<40; i++) {
+      function spawnConfetti(isBig) {
+        const count = isBig ? 80 : 30;
+        for(let i=0; i<count; i++) {
           const c = document.createElement("div");
           c.className = "confetti";
           c.style.background = shapes[Math.floor(Math.random()*shapes.length)].c;
-          c.style.left = "50%"; c.style.top = "50%";
+          c.style.left = isBig ? (Math.random() * 100 + "%") : "50%"; 
+          c.style.top = isBig ? "-10%" : "20%";
           c.style.setProperty("--dx", (Math.random() - 0.5) * 600 + "px");
-          c.style.setProperty("--dy", (Math.random() * 600) + 200 + "px");
+          c.style.setProperty("--dy", (Math.random() * 500) + 300 + "px");
           document.body.appendChild(c);
           setTimeout(() => c.remove(), 1500);
         }
@@ -439,23 +495,32 @@
           }
           return false;
         });
+
         if (!canMove) {
-          gameEnded = true; playSound('gameover');
-          const oldBest = getHigh();
-          document.getElementById("finalScore").textContent = score;
-          const grafCont = document.getElementById("graffitiContainer");
-          grafCont.innerHTML = "";
+          gameEnded = true; 
+          playSound('gameover');
           
-          if (score > oldBest && score > 0) {
+          const oldHigh = getHigh();
+          const graffitiContainer = document.getElementById("graffitiContainer");
+          const gameOverTitle = document.getElementById("gameOverTitle");
+          graffitiContainer.innerHTML = "";
+
+          if (score > oldHigh && score > 0) {
               localStorage.setItem("blocks8High", score);
               highEl.textContent = score;
-              grafCont.innerHTML = `<span class="graffiti-tag">New Best!</span>`;
-              spawnConfetti();
-              document.getElementById("gameOverTitle").style.display = "none";
+              // Add Graffiti
+              const g = document.createElement("div");
+              g.className = "highscore-graffiti";
+              g.textContent = "NEW BEST!";
+              graffitiContainer.appendChild(g);
+              gameOverTitle.style.display = "none";
+              spawnConfetti(true);
           } else {
-              document.getElementById("gameOverTitle").style.display = "block";
+              gameOverTitle.style.display = "block";
           }
-          gameOverModal.classList.remove("hidden");
+
+          overlay.classList.remove("hidden");
+          document.getElementById("finalScore").textContent = score;
         }
       }
 
@@ -467,13 +532,12 @@
         }));
       }
 
-      function newPieces(isInitial = false) {
+      function newPieces() {
         piecesEl.innerHTML = "";
         for(let i=0; i<3; i++) {
           const data = shapes[Math.floor(Math.random() * shapes.length)];
           const box = document.createElement("div");
-          box.className = "piece-box show"; 
-          box.style.animationDelay = (isInitial ? (0.6 + i*0.1) : 0) + "s";
+          box.className = "piece-box";
           const p = document.createElement("div");
           p.className = "piece"; p.shape = data.s; p.color = data.c;
           renderPieceBlocks(p); enableDrag(p);
@@ -490,17 +554,25 @@
       undoBtn.onclick = () => {
         if (!history) return;
         grid = [...history]; history = null; undoBtn.disabled = true;
-        initBoard();
+        drawBoard();
       };
 
       function resetGame() {
-        grid = Array(64).fill(null); score = 0; gameEnded = false;
-        gameOverModal.classList.add("hidden"); 
-        initBoard(true); newPieces(true); update();
-      }
+        // 1. Wipe the board and reset score
+        grid = Array(64).fill(null); 
+        score = 0; 
+        gameEnded = false;
 
-      // Pre-initialize empty visual board before start
-      initBoard(false);
+        // 2. CLEAR THE HISTORY & DISABLE UNDO (The Fix)
+        history = null; 
+        undoBtn.disabled = true;
+
+        // 3. Update UI
+        overlay.classList.add("hidden"); 
+        scoreEl.textContent = "0";
+        newPieces(); 
+        drawBoard();
+      }
     </script>
   </body>
 </html>
