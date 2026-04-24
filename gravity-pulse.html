@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GRAVITY PULSE - BALANCED</title>
+    <style>
+        :root { --neon: #0ff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        
+        #game-ui {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            pointer-events: none; z-index: 10;
+        }
+
+        #score-container {
+            display: flex; justify-content: space-between; width: 90%;
+            margin-top: 20px; color: var(--neon); font-weight: bold; font-size: 1.2rem;
+        }
+
+        #menu {
+            pointer-events: auto; background: rgba(0,0,0,0.9);
+            padding: 30px; border: 2px solid var(--neon);
+            text-align: center; margin-top: 25vh; box-shadow: 0 0 20px var(--neon);
+        }
+
+        h1 { color: var(--neon); margin: 0; letter-spacing: 4px; font-size: 2.5rem; }
+        
+        #btn-start {
+            margin-top: 20px; background: transparent; color: #fff;
+            border: 2px solid #fff; padding: 10px 30px; cursor: pointer;
+            font-size: 1rem; transition: 0.3s;
+        }
+        #btn-start:hover { background: var(--neon); border-color: var(--neon); color: #000; }
+
+        #mute-toggle {
+            position: absolute; bottom: 20px; left: 20px; pointer-events: auto;
+            color: #555; cursor: pointer; font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body onclick="handleInput()" onkeydown="if(event.code==='Space') handleInput()">
+
+    <div id="game-ui">
+        <div id="score-container">
+            <div>BEST: <span id="high-score">0</span></div>
+            <div id="current-score">0</div>
+        </div>
+
+        <div id="menu">
+            <h1 id="title">GRAVITY PULSE</h1>
+            <p style="color: #666;">TAP TO FLIP GRAVITY</p>
+            <button id="btn-start" onclick="startGame(event)">INITIALIZE</button>
+        </div>
+
+        <div id="mute-toggle" onclick="toggleMute(event)">SOUND: ON</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('current-score');
+        const highEl = document.getElementById('high-score');
+        const muteEl = document.getElementById('mute-toggle');
+        const menu = document.getElementById('menu');
+
+        let score = 0;
+        let highScore = localStorage.getItem('gravPulseHigh') || 0;
+        let isMuted = localStorage.getItem('gravMute') === 'true';
+        let gameActive = false;
+        let hue = 180;
+
+        let player = {
+            x: 100, y: 0, r: 12, 
+            targetY: 0, 
+            gravity: 1, 
+            speed: 0.12 // Smoothness of the ball movement
+        };
+
+        let obstacles = [];
+        const baseObstacleSpeed = 4; // Much slower starting speed
+        const speedIncrement = 0.08; // How much it speeds up per point
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(f, type, d, v=0.1) {
+            if (isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + d);
+        }
+
+        highEl.innerText = highScore;
+        updateMuteUI();
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.y = canvas.height - 50;
+            player.targetY = canvas.height - 50;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function toggleMute(e) {
+            e.stopPropagation();
+            isMuted = !isMuted;
+            localStorage.setItem('gravMute', isMuted);
+            updateMuteUI();
+        }
+
+        function updateMuteUI() {
+            muteEl.innerText = isMuted ? "SOUND: OFF" : "SOUND: ON";
+            muteEl.style.color = isMuted ? "#f0f" : "#0ff";
+        }
+
+        function handleInput() {
+            if (!gameActive) return;
+            player.gravity *= -1;
+            player.targetY = player.gravity === 1 ? canvas.height - 50 : 50;
+            playTone(200, 'sine', 0.2);
+        }
+
+        function startGame(e) {
+            e.stopPropagation();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            score = 0;
+            obstacles = [];
+            gameActive = true;
+            menu.style.display = 'none';
+            scoreEl.innerText = "0";
+            loop();
+        }
+
+        function spawnObstacle() {
+            const isTop = Math.random() > 0.5;
+            // The speed is calculated based on current score
+            const currentSpeed = baseObstacleSpeed + (score * speedIncrement);
+            
+            obstacles.push({
+                x: canvas.width + 50,
+                y: isTop ? 0 : canvas.height - 60,
+                w: 30,
+                h: 60,
+                speed: currentSpeed
+            });
+        }
+
+        function gameOver() {
+            gameActive = false;
+            playTone(100, 'sawtooth', 0.4, 0.2);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('gravPulseHigh', highScore);
+                highEl.innerText = highScore;
+            }
+            menu.style.display = 'block';
+            document.getElementById('title').innerText = "SCORE: " + score;
+        }
+
+        let lastSpawn = 0;
+        function loop(timestamp) {
+            if (!gameActive) return;
+
+            hue = (hue + 0.5) % 360;
+            const color = `hsl(${hue}, 100%, 50%)`;
+            document.documentElement.style.setProperty('--neon', color);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, 40); ctx.lineTo(canvas.width, 40);
+            ctx.moveTo(0, canvas.height - 40); ctx.lineTo(canvas.width, canvas.height - 40);
+            ctx.stroke();
+
+            player.y += (player.targetY - player.y) * player.speed;
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+            ctx.fill();
+
+            // Controlled Spawning: Spawn based on time/score so it's not random clumps
+            let spawnInterval = Math.max(800, 1500 - (score * 20)); 
+            if (timestamp - lastSpawn > spawnInterval) {
+                spawnObstacle();
+                lastSpawn = timestamp;
+            }
+
+            obstacles.forEach((obs, i) => {
+                obs.x -= obs.speed;
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+
+                if (player.x + player.r > obs.x && 
+                    player.x - player.r < obs.x + obs.w &&
+                    player.y + player.r > obs.y && 
+                    player.y - player.r < obs.y + obs.h) {
+                    gameOver();
+                }
+
+                if (obs.x < -50) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    scoreEl.innerText = score;
+                    playTone(600 + (score * 2), 'sine', 0.05, 0.05);
+                }
+            });
+
+            requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>
