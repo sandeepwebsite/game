@@ -65,11 +65,20 @@
 
         #container { width: 100%; height: 100%; overflow: hidden; }
         
+        /* Score Popup Animation */
         .popup { 
             position: absolute; color: var(--text); font-weight: bold; pointer-events: none; 
             animation: floatUp 0.8s ease-out forwards; z-index: 100; font-size: 20px;
+            text-shadow: 2px 2px 0 white;
         }
-        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(1.5); opacity: 0; } }
+
+        button {
+            background: var(--text); color: white; border: none; padding: 10px 25px;
+            border-radius: 15px; font-family: inherit; font-size: 16px; cursor: pointer;
+            margin-top: 10px; box-shadow: 0 4px 0 #d63031;
+        }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #d63031; }
     </style>
 </head>
 <body>
@@ -108,7 +117,6 @@
             { label: '🍉', radius: 125, score: 1024, color: '#2ecc71' }
         ];
 
-        // --- Logic & State ---
         const wrapper = document.getElementById('game-wrapper');
         const WIDTH = wrapper.clientWidth;
         const HEIGHT = wrapper.clientHeight;
@@ -123,9 +131,8 @@
         let currentLvl = Math.floor(Math.random() * 3);
         let nextLvl = Math.floor(Math.random() * 3);
         let mouseX = WIDTH / 2, canDrop = true, isGameOver = false;
-        let particles = [], dangerTicks = 0, combo = 0;
+        let particles = [], dangerTicks = 0;
 
-        // --- UI Setup ---
         const evoBar = document.getElementById('evolution-bar');
         EMOJIS.forEach((e, i) => {
             const s = document.createElement('span');
@@ -136,7 +143,6 @@
         });
         document.getElementById('next-emoji-text').innerText = EMOJIS[nextLvl].label;
 
-        // --- Audio ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(freq, type, dur) {
             if (isMuted) return;
@@ -152,7 +158,6 @@
             osc.start(); osc.stop(audioCtx.currentTime + dur);
         }
 
-        // --- Physics ---
         const engine = Engine.create();
         const render = Render.create({
             element: document.getElementById('container'),
@@ -183,7 +188,6 @@
             }
         }
 
-        // --- Input ---
         const handleInput = (e) => {
             if(isGameOver) return;
             const r = render.canvas.getBoundingClientRect();
@@ -213,7 +217,6 @@
             localStorage.setItem('emoji-mute-setting', isMuted);
         };
 
-        // --- Events ---
         Events.on(engine, 'collisionStart', (e) => {
             e.pairs.forEach(p => {
                 const { bodyA, bodyB } = p;
@@ -227,6 +230,15 @@
                         playSfx(300 + (lvl * 50), 'triangle', 0.3);
                         createSplash(mid.x, mid.y, EMOJIS[lvl].color);
                         if(lvl > 4) { wrapper.classList.add('shake'); setTimeout(()=>wrapper.classList.remove('shake'),200); }
+
+                        // --- Score Popup ---
+                        const popup = document.createElement('div');
+                        popup.className = 'popup';
+                        popup.style.left = mid.x + 'px';
+                        popup.style.top = mid.y + 'px';
+                        popup.innerText = `+${EMOJIS[lvl].score}`;
+                        wrapper.appendChild(popup);
+                        setTimeout(() => popup.remove(), 800);
 
                         score += EMOJIS[lvl].score;
                         document.getElementById('score').innerText = score;
@@ -246,16 +258,43 @@
             if(overLine) {
                 dangerTicks++;
                 document.getElementById('danger-line').style.display = 'block';
-                if(dangerTicks > 200) { isGameOver = true; alert("Game Over! Score: " + score); location.reload(); }
+                if(dangerTicks > 200 && !isGameOver) { 
+                    isGameOver = true; 
+                    showGameOver();
+                }
             } else {
                 dangerTicks = 0; document.getElementById('danger-line').style.display = 'none';
             }
         });
 
+        function showGameOver() {
+            setTimeout(() => {
+                const over = document.createElement('div');
+                over.innerHTML = `
+                    <div style="
+                        position:fixed;
+                        top:50%; left:50%;
+                        transform:translate(-50%,-50%);
+                        background:white;
+                        padding:30px;
+                        border-radius:25px;
+                        text-align:center;
+                        box-shadow:0 15px 40px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        border: 5px solid var(--panel);
+                        min-width: 200px;
+                    ">
+                        <h2 style="margin-top:0;">Game Over</h2>
+                        <p style="font-size: 20px;">Score: <strong>${score}</strong></p>
+                        <button onclick="location.reload()">Restart</button>
+                    </div>
+                `;
+                document.body.appendChild(over);
+            }, 300);
+        }
+
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
-            
-            // Particles
             particles.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life -= 0.02;
                 if(p.life <= 0) particles.splice(i, 1);
@@ -264,7 +303,6 @@
             });
             ctx.globalAlpha = 1;
 
-            // Guideline & Active Emoji
             if(canDrop && !isGameOver) {
                 ctx.setLineDash([5, 10]); ctx.strokeStyle = "#ffe0e9"; ctx.beginPath();
                 ctx.moveTo(mouseX, 60); ctx.lineTo(mouseX, HEIGHT); ctx.stroke();
@@ -274,7 +312,6 @@
                 ctx.fillText(EMOJIS[currentLvl].label, mouseX, 40);
             }
 
-            // Fruits
             Composite.allBodies(engine.world).forEach(b => {
                 if(b.render.label) {
                     ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
