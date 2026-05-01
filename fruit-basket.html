@@ -65,7 +65,6 @@
 
         #container { width: 100%; height: 100%; overflow: hidden; }
         
-        /* Score Popup Animation */
         .popup { 
             position: absolute; color: var(--text); font-weight: bold; pointer-events: none; 
             animation: floatUp 0.8s ease-out forwards; z-index: 100; font-size: 20px;
@@ -78,7 +77,6 @@
             border-radius: 15px; font-family: inherit; font-size: 16px; cursor: pointer;
             margin-top: 10px; box-shadow: 0 4px 0 #d63031;
         }
-        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #d63031; }
     </style>
 </head>
 <body>
@@ -165,10 +163,15 @@
             options: { width: WIDTH, height: HEIGHT, wireframes: false, background: 'transparent' }
         });
 
-        const ground = Bodies.rectangle(WIDTH/2, HEIGHT + 20, WIDTH, 40, { isStatic: true, friction: 0.2 });
-        const leftWall = Bodies.rectangle(-20, HEIGHT/2, 40, HEIGHT, { isStatic: true });
-        const rightWall = Bodies.rectangle(WIDTH + 20, HEIGHT/2, 40, HEIGHT, { isStatic: true });
-        Composite.add(engine.world, [ground, leftWall, rightWall]);
+        // WALLS & GROUND FIX: Ensuring no overlap and low friction so fruits slide
+        const wallOpt = { isStatic: true, friction: 0.05, restitution: 0.2 };
+        Composite.add(engine.world, [
+            // Ground (exactly at the visual bottom)
+            Bodies.rectangle(WIDTH/2, HEIGHT + 10, WIDTH, 20, wallOpt),
+            // Left & Right walls (shifted outside so they don't block the visual sides)
+            Bodies.rectangle(-10, HEIGHT/2, 20, HEIGHT, wallOpt),
+            Bodies.rectangle(WIDTH + 10, HEIGHT/2, 20, HEIGHT, wallOpt)
+        ]);
 
         function createEmoji(x, y, lvl) {
             const d = EMOJIS[lvl];
@@ -190,14 +193,22 @@
 
         const handleInput = (e) => {
             if(isGameOver) return;
+            if (e.cancelable) e.preventDefault();
+
             const r = render.canvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            mouseX = Math.max(25, Math.min(WIDTH - 25, cx - r.left));
+            let clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+            
+            const relativeX = clientX - r.left;
+            const padding = EMOJIS[currentLvl].radius + 5;
+            mouseX = Math.max(padding, Math.min(WIDTH - padding, relativeX));
         };
 
         render.canvas.addEventListener('mousemove', handleInput);
-        render.canvas.addEventListener('touchstart', (e) => handleInput(e));
-        render.canvas.addEventListener('pointerup', () => {
+        render.canvas.addEventListener('touchmove', handleInput, { passive: false });
+        render.canvas.addEventListener('touchstart', handleInput, { passive: false });
+
+        render.canvas.addEventListener('pointerup', (e) => {
+            if(e.target.id === 'mute-btn') return;
             if(!canDrop || isGameOver) return;
             canDrop = false;
             playSfx(150, 'sine', 0.2);
@@ -231,7 +242,6 @@
                         createSplash(mid.x, mid.y, EMOJIS[lvl].color);
                         if(lvl > 4) { wrapper.classList.add('shake'); setTimeout(()=>wrapper.classList.remove('shake'),200); }
 
-                        // --- Score Popup ---
                         const popup = document.createElement('div');
                         popup.className = 'popup';
                         popup.style.left = mid.x + 'px';
@@ -260,38 +270,16 @@
                 document.getElementById('danger-line').style.display = 'block';
                 if(dangerTicks > 200 && !isGameOver) { 
                     isGameOver = true; 
-                    showGameOver();
+                    setTimeout(() => {
+                        const over = document.createElement('div');
+                        over.innerHTML = `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:25px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,0.3);z-index:1000;border:5px solid var(--panel);min-width:200px;"><h2>Game Over</h2><p style="font-size: 20px;">Score: <strong>${score}</strong></p><button onclick="location.reload()">Restart</button></div>`;
+                        document.body.appendChild(over);
+                    }, 300);
                 }
             } else {
                 dangerTicks = 0; document.getElementById('danger-line').style.display = 'none';
             }
         });
-
-        function showGameOver() {
-            setTimeout(() => {
-                const over = document.createElement('div');
-                over.innerHTML = `
-                    <div style="
-                        position:fixed;
-                        top:50%; left:50%;
-                        transform:translate(-50%,-50%);
-                        background:white;
-                        padding:30px;
-                        border-radius:25px;
-                        text-align:center;
-                        box-shadow:0 15px 40px rgba(0,0,0,0.3);
-                        z-index: 1000;
-                        border: 5px solid var(--panel);
-                        min-width: 200px;
-                    ">
-                        <h2 style="margin-top:0;">Game Over</h2>
-                        <p style="font-size: 20px;">Score: <strong>${score}</strong></p>
-                        <button onclick="location.reload()">Restart</button>
-                    </div>
-                `;
-                document.body.appendChild(over);
-            }, 300);
-        }
 
         Events.on(render, 'afterRender', () => {
             const ctx = render.context;
@@ -306,7 +294,6 @@
             if(canDrop && !isGameOver) {
                 ctx.setLineDash([5, 10]); ctx.strokeStyle = "#ffe0e9"; ctx.beginPath();
                 ctx.moveTo(mouseX, 60); ctx.lineTo(mouseX, HEIGHT); ctx.stroke();
-                
                 ctx.font = `${EMOJIS[currentLvl].radius*1.6}px serif`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(EMOJIS[currentLvl].label, mouseX, 40);
