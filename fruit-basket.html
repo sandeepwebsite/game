@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fruit Basket</title>
+    <style>
+        :root { 
+            --bg: #fff5f8; 
+            --panel: #ffe0e9; 
+            --text: #ff4d8d; 
+            --basket-rim: #5d4037;
+            --basket-side: #795548;
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            font-family: 'Comic Sans MS', cursive, sans-serif; 
+            touch-action: none; 
+            overflow: hidden; 
+            color: var(--text);
+            height: 100vh;
+        }
+
+        #ui { 
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px; 
+            margin-bottom: 10px;
+            z-index: 10; 
+        }
+
+        .stat-box, #mute-btn { 
+            background: white; 
+            padding: 8px 15px; 
+            border-radius: 20px; 
+            border: 3px solid var(--panel); 
+            box-shadow: 0 4px 0 var(--panel);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #mute-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--panel); }
+
+        #game-wrapper { 
+            position: relative; 
+            width: 90vw;
+            max-width: 380px;
+            height: 70vh;
+            background: #fff; 
+            border-left: 10px solid var(--basket-side);
+            border-right: 10px solid var(--basket-side);
+            border-bottom: 15px solid var(--basket-rim);
+            border-radius: 0 0 30px 30px;
+            /* Added margin-bottom to create 10px gap from the floor */
+            margin-bottom: 10px; 
+            box-shadow: 
+                inset 0 -10px 20px rgba(0,0,0,0.05), 
+                0 15px 0 #3e2723,
+                0 20px 40px rgba(255, 77, 141, 0.15); 
+        }
+
+        #container { width: 100%; height: 100%; overflow: hidden; }
+        canvas { display: block; }
+
+        .popup { 
+            position: absolute; 
+            color: var(--text); 
+            font-weight: bold; 
+            pointer-events: none; 
+            animation: floatUp 0.8s ease-out forwards; 
+            font-size: 20px; 
+            z-index: 100; 
+        }
+
+        @keyframes floatUp { 
+            0% { transform: translateY(0) scale(1); opacity: 1; } 
+            100% { transform: translateY(-60px) scale(1.5); opacity: 0; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div class="stat-box">Score: <strong id="score">0</strong></div>
+        <div class="stat-box">Best: <strong id="best">0</strong></div>
+        <div class="stat-box">Next: <span id="next-emoji"></span></div>
+        <div id="mute-btn">🔊</div>
+    </div>
+
+    <div id="game-wrapper">
+        <div id="container"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        const { Engine, Render, Runner, Bodies, Composite, Events, Vector } = Matter;
+
+        // --- 1. CONFIGURATION ---
+        const EMOJIS = [
+            { label: '🍒', radius: 16, score: 2, color: '#ff4d4d' },
+            { label: '🍓', radius: 24, score: 4, color: '#ff6b6b' },
+            { label: '🍇', radius: 34, score: 8, color: '#a29bfe' },
+            { label: '🍊', radius: 46, score: 16, color: '#fdcb6e' },
+            { label: '🍎', radius: 58, score: 32, color: '#d63031' },
+            { label: '🍐', radius: 70, score: 64, color: '#55efc4' },
+            { label: '🍑', radius: 82, score: 128, color: '#fab1a0' },
+            { label: '🍍', radius: 96, score: 256, color: '#f1c40f' },
+            { label: '🍈', radius: 110, score: 512, color: '#81ecec' },
+            { label: '🍉', radius: 130, score: 1024, color: '#2ecc71' }
+        ];
+
+        const wrapper = document.getElementById('game-wrapper');
+        const WIDTH = wrapper.clientWidth;
+        const HEIGHT = wrapper.clientHeight;
+        
+        let score = 0;
+        let highscore = localStorage.getItem('emoji-merge-best') || 0;
+        document.getElementById('best').innerText = highscore;
+
+        // Mute State & Local Storage
+        let isMuted = localStorage.getItem('emoji-mute-setting') === 'true';
+        const muteBtn = document.getElementById('mute-btn');
+        muteBtn.innerText = isMuted ? '🔇' : '🔊';
+
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            muteBtn.innerText = isMuted ? '🔇' : '🔊';
+            localStorage.setItem('emoji-mute-setting', isMuted);
+        });
+
+        let nextLvl = Math.floor(Math.random() * 3);
+        let currentLvl = Math.floor(Math.random() * 3);
+        let mouseX = WIDTH / 2;
+        let canDrop = true;
+        let particles = [];
+
+        // --- 2. AUDIO SYSTEM ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(freq, type, dur) {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + dur);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        // --- 3. PHYSICS ENGINE ---
+        const engine = Engine.create();
+        const render = Render.create({
+            element: document.getElementById('container'),
+            engine: engine,
+            options: { width: WIDTH, height: HEIGHT, wireframes: false, background: 'transparent' }
+        });
+
+        const wallOpt = { isStatic: true, render: { visible: false }, friction: 0.1 };
+        Composite.add(engine.world, [
+            Bodies.rectangle(WIDTH/2, HEIGHT + 20, WIDTH, 40, wallOpt), 
+            Bodies.rectangle(-20, HEIGHT/2, 40, HEIGHT, wallOpt),      
+            Bodies.rectangle(WIDTH + 20, HEIGHT/2, 40, HEIGHT, wallOpt) 
+        ]);
+
+        // --- 4. GAME FUNCTIONS ---
+        function createEmoji(x, y, lvl) {
+            const d = EMOJIS[lvl];
+            return Bodies.circle(x, y, d.radius, {
+                label: `lvl_${lvl}`, restitution: 0.3, friction: 0.1,
+                render: { label: d.label, size: d.radius * 1.6, color: d.color }
+            });
+        }
+
+        function createPopup(x, y, val) {
+            const p = document.createElement('div');
+            p.className = 'popup';
+            p.innerText = `+${val}`;
+            p.style.left = `${x}px`; p.style.top = `${y}px`;
+            wrapper.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+
+        function createSplash(x, y, color) {
+            for(let i=0; i<10; i++) {
+                particles.push({
+                    x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8,
+                    life: 1.0, color
+                });
+            }
+        }
+
+        const handleInput = (e) => {
+            const r = render.canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            mouseX = Math.max(30, Math.min(WIDTH - 30, cx - r.left));
+        };
+
+        render.canvas.addEventListener('mousemove', handleInput);
+        render.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleInput(e); }, {passive: false});
+        render.canvas.addEventListener('pointerup', (e) => {
+            if (e.target.id === 'mute-btn') return; // Don't drop when clicking mute
+            if(!canDrop) return;
+            canDrop = false;
+            playSfx(150, 'sine', 0.2);
+            Composite.add(engine.world, createEmoji(mouseX, 40, currentLvl));
+            
+            currentLvl = nextLvl;
+            nextLvl = Math.floor(Math.random() * 3);
+            document.getElementById('next-emoji').innerText = EMOJIS[nextLvl].label;
+            setTimeout(() => canDrop = true, 600);
+        });
+
+        // --- 5. EVENTS ---
+        Events.on(engine, 'collisionStart', (e) => {
+            e.pairs.forEach(p => {
+                const { bodyA, bodyB } = p;
+                if(bodyA.label === bodyB.label && bodyA.label.startsWith('lvl_')) {
+                    const lvl = parseInt(bodyA.label.split('_')[1]);
+                    if(lvl < EMOJIS.length - 1) {
+                        const mid = Vector.div(Vector.add(bodyA.position, bodyB.position), 2);
+                        Composite.remove(engine.world, [bodyA, bodyB]);
+                        Composite.add(engine.world, createEmoji(mid.x, mid.y, lvl + 1));
+                        
+                        playSfx(300 + (lvl * 80), 'triangle', 0.3);
+                        createPopup(mid.x, mid.y, EMOJIS[lvl].score);
+                        createSplash(mid.x, mid.y, EMOJIS[lvl].color);
+                        
+                        score += EMOJIS[lvl].score;
+                        document.getElementById('score').innerText = score;
+                        if(score > highscore) {
+                            highscore = score;
+                            localStorage.setItem('emoji-merge-best', highscore);
+                            document.getElementById('best').innerText = highscore;
+                        }
+                    }
+                }
+            });
+        });
+
+        Events.on(render, 'afterRender', () => {
+            const ctx = render.context;
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                if(p.life <= 0) particles.splice(i, 1);
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            ctx.setLineDash([5, 10]); ctx.strokeStyle = "#ffe0e9"; ctx.beginPath();
+            ctx.moveTo(mouseX, 60); ctx.lineTo(mouseX, HEIGHT); ctx.stroke();
+
+            if(canDrop) {
+                ctx.font = `${EMOJIS[currentLvl].radius*1.6}px serif`;
+                ctx.textAlign = 'center'; ctx.fillText(EMOJIS[currentLvl].label, mouseX, 45);
+            }
+
+            Composite.allBodies(engine.world).forEach(b => {
+                if(b.render.label) {
+                    ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
+                    ctx.font = `${b.render.size}px serif`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(b.render.label, 0, 0); ctx.restore();
+                }
+            });
+        });
+
+        Render.run(render);
+        Runner.run(runner = Runner.create(), engine);
+        document.getElementById('next-emoji').innerText = EMOJIS[nextLvl].label;
+    </script>
+</body>
+</html>
