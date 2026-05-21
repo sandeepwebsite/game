@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CyberRunner // Neo-Tokyo</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght=400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
         :root {
             --neon-cyan: #00f3ff;
@@ -23,9 +23,12 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            /* Box-sizing normalization for cleaner element calculation */
             box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         *, *:before, *:after {
@@ -34,13 +37,10 @@
 
         #game-container {
             position: relative;
-            width: 100%;
-            max-width: 800px;
-            min-height: 100vh;
-            border: 2px solid var(--neon-cyan);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            width: 100vw;
+            height: 100vh;
             background: var(--dark-bg);
-            margin: 10px;
+            overflow: hidden;
         }
 
         canvas {
@@ -49,12 +49,12 @@
             height: 100%;
         }
 
-        /* HUD Styling */
+        /* --- Fluid HUD Layout --- */
         #hud {
             position: absolute;
-            top: 15px;
-            left: 20px;
-            right: 20px;
+            top: env(safe-area-inset-top, 16px);
+            left: max(16px, env(safe-area-inset-left));
+            right: max(16px, env(safe-area-inset-right));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -62,19 +62,23 @@
             z-index: 10;
         }
 
+        /* Dynamically scales text down to a crisp 16px on tiny phones */
         #score-container {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 4vw, 1.4rem);
             color: var(--neon-cyan);
             text-shadow: 0 0 8px var(--neon-cyan);
             letter-spacing: 2px;
+            font-weight: 700;
         }
 
         .cyber-btn {
             background: transparent;
-            border: 1px solid var(--neon-pink);
+            border: 2px solid var(--neon-pink);
             color: var(--neon-pink);
             font-family: 'Orbitron', sans-serif;
-            padding: 5px 10px;
+            font-weight: 700;
+            padding: 6px 12px;
+            font-size: clamp(0.75rem, 3vw, 0.9rem);
             cursor: pointer;
             pointer-events: auto;
             text-shadow: 0 0 5px var(--neon-pink);
@@ -82,26 +86,21 @@
             transition: all 0.2s;
         }
 
-        .cyber-btn:hover {
-            background: var(--neon-pink);
-            color: #000;
-        }
-
-        /* UI Overlay Screen */
+        /* --- Fluid UI Overlay Screens --- */
         #overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(13, 14, 21, 0.85);
+            background: rgba(13, 14, 21, 0.92);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 20;
             transition: opacity 0.3s ease;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
         }
 
@@ -110,22 +109,24 @@
             pointer-events: none;
         }
 
+        /* Clamped title prevents breaking or line-wrapping on narrow mobile ports */
         #overlay-title {
-            font-size: 3.5rem;
+            font-size: clamp(1.8rem, 8vw, 3.2rem);
             color: var(--neon-cyan);
             text-shadow: 0 0 15px var(--neon-cyan);
-            margin: 0 0 10px 0;
-            letter-spacing: 4px;
-            word-wrap: break-word;
-            max-width: 100%;
+            margin: 0 0 12px 0;
+            letter-spacing: 2px;
+            font-weight: 700;
+            line-height: 1.2;
         }
 
         #overlay-subtitle {
-            color: #888;
-            margin: 0 0 25px 0;
-            font-size: 0.9rem;
+            color: #aaa;
+            margin: 0 0 30px 0;
+            font-size: clamp(0.8rem, 3.5vw, 1.05rem);
             letter-spacing: 1px;
             line-height: 1.4;
+            max-width: 90%;
         }
 
         .cyber-btn-large {
@@ -133,69 +134,31 @@
             border: 2px solid var(--neon-cyan);
             color: var(--neon-cyan);
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            padding: 12px 30px;
+            font-size: clamp(0.95rem, 4.5vw, 1.25rem);
+            font-weight: 700;
+            padding: 14px 32px;
             cursor: pointer;
             text-shadow: 0 0 8px var(--neon-cyan);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
             clip-path: polygon(0 0, 85% 0, 100% 30%, 100% 100%, 15% 100%, 0 70%);
             transition: all 0.2s;
-        }
-
-        .cyber-btn-large:hover {
-            background: var(--neon-cyan);
-            color: #000;
-        }
-
-        /* -----------------------------------------------------------------
-           MOBILE RESPONSIVENESS & SCALING
-        ----------------------------------------------------------------- */
-        @media (max-width: 768px) {
-            #game-container {
-                height: auto;
-                aspect-ratio: 2 / 1; /* Maintains canvas dimensions adaptively */
-                margin: 5px;
-            }
-
-            #score-container {
-                font-size: 1rem;
-            }
-
-            #overlay-title {
-                font-size: 1.8rem; /* Scaled down drastically to fit mobile views */
-                letter-spacing: 2px;
-                margin-bottom: 8px;
-            }
-
-            #overlay-subtitle {
-                font-size: 0.75rem;
-                margin-bottom: 15px;
-            }
-
-            .cyber-btn-large {
-                font-size: 0.9rem;
-                padding: 10px 20px;
-            }
         }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <!-- Neon HUD -->
         <div id="hud">
             <div id="score-container">SCORE: <span id="score-val">00000</span></div>
             <button id="mute-btn" class="cyber-btn">MUTE</button>
         </div>
 
-        <!-- Canvas for High-Performance Rendering -->
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <canvas id="gameCanvas"></canvas>
 
-        <!-- Start / Game Over Overlay -->
         <div id="overlay" class="overlay-visible">
             <h1 id="overlay-title">CYBER_RUNNER</h1>
-            <p id="overlay-subtitle">TAP SPACE, UP ARROW, OR CLICK TO START</p>
-            <button id="start-btn" class="cyber-btn-large">INITIALIZE SYSTEM</button>
+            <p id="overlay-subtitle">TAP ANYWHERE ON THE SCREEN TO JUMP</p>
+            <button id="start-btn" class="cyber-btn-large">INITIALIZE ENGINE</button>
         </div>
     </div>
 
@@ -203,7 +166,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // UI Elements
         const scoreVal = document.getElementById('score-val');
         const overlay = document.getElementById('overlay');
         const overlayTitle = document.getElementById('overlay-title');
@@ -211,39 +173,55 @@
         const startBtn = document.getElementById('start-btn');
         const muteBtn = document.getElementById('mute-btn');
 
-        // Audio Context Setup
         let audioCtx = null;
         let isMuted = localStorage.getItem('gameMuted') === 'true';
         updateMuteButtonUI();
 
-        // Game State Engine Variables
         let gameRunning = false;
         let score = 0;
-        let gameSpeed = 6;
-        const baseSpeed = 6;
-        const maxSpeed = 14;
+        let gameSpeed = 5;
+        let baseSpeed = 5;
+        let maxSpeed = 15;
         let obstacles = [];
         let particles = [];
         let frameCount = 0;
 
-        // Physics Config
-        const GRAVITY = 0.6;
-        const FLOOR_Y = 340;
-
-        // Entities
+        let FLOOR_Y = 0;
+        let GRAVITY = 0;
+        
         const player = {
-            x: 80,
-            y: FLOOR_Y - 40,
-            width: 25,
-            height: 40,
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
             vy: 0,
-            jumpForce: -12,
+            jumpForce: 0,
             isGrounded: false,
             color: '#ff007f', 
             trail: []
         };
 
-        // --- Event Listeners ---
+        function resizeCanvasToViewport() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            FLOOR_Y = canvas.height * 0.75; 
+            
+            player.width = Math.max(32, canvas.width * 0.045);
+            player.height = player.width * 1.4; 
+            player.x = Math.max(35, canvas.width * 0.12);
+            
+            GRAVITY = canvas.height * 0.0013;
+            player.jumpForce = -(canvas.height * 0.033);
+
+            if (!gameRunning) {
+                player.y = FLOOR_Y - player.height;
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvasToViewport);
+        resizeCanvasToViewport();
+
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.code === 'ArrowUp') {
                 e.preventDefault();
@@ -251,12 +229,14 @@
             }
         });
 
-        canvas.addEventListener('touchstart', (e) => {
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
             e.preventDefault();
             triggerJump();
-        });
+        }, { passive: false });
         
-        canvas.addEventListener('click', (e) => {
+        window.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
             e.preventDefault();
             triggerJump();
         });
@@ -271,19 +251,20 @@
             toggleMute();
         });
 
-        // --- Core Game Functions ---
-
         function startGame() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
             
-            // Reset States
             score = 0;
+            baseSpeed = Math.max(5, canvas.width * 0.008);
+            maxSpeed = baseSpeed * 2.2;
             gameSpeed = baseSpeed;
             obstacles = [];
             particles = [];
             frameCount = 0;
+            
+            resizeCanvasToViewport();
             player.y = FLOOR_Y - player.height;
             player.vy = 0;
             player.trail = [];
@@ -316,11 +297,10 @@
                 player.vy = player.jumpForce;
                 player.isGrounded = false;
                 playTone(440, 0.08, 'square'); 
-                spawnParticles(player.x + player.width/2, player.y + player.height, '#00f3ff', 8);
+                spawnParticles(player.x + player.width/2, player.y + player.height, '#00f3ff', 10);
             }
         }
 
-        // --- Audio Engine ---
         function playTone(frequency, duration, type = 'sine') {
             if (isMuted || !audioCtx) return;
             try {
@@ -360,46 +340,117 @@
             }
         }
 
-        // --- Particle Engine ---
         function spawnParticles(x, y, color, count) {
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: x,
                     y: y,
-                    vx: (Math.random() - 0.5) * 4 - (gameSpeed * 0.2),
-                    vy: (Math.random() - 0.5) * 4,
-                    size: Math.random() * 3 + 1,
+                    vx: (Math.random() - 0.5) * 6 - (gameSpeed * 0.15),
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 4 + 1,
                     alpha: 1,
                     color: color
                 });
             }
         }
 
-        // --- Main Engine Loop ---
+        function drawCyberRunner(ctx, x, y, width, height, frame, color, isGrounded) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(2.2, width * 0.08); 
+            ctx.fillStyle = color;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            let phase = isGrounded ? Math.sin(frame * 0.22) : 0.4;
+
+            ctx.beginPath();
+            ctx.arc(width * 0.55, height * 0.15, width * 0.16, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = Math.max(1.2, width * 0.04);
+            ctx.beginPath();
+            ctx.moveTo(width * 0.55 + (width * 0.06), height * 0.15 - 2);
+            ctx.lineTo(width * 0.55 + (width * 0.16), height * 0.15 + 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(2.2, width * 0.08);
+
+            let neckX = width * 0.5;
+            let neckY = height * 0.28;
+            let hipX = width * 0.3;
+            let hipY = height * 0.62;
+            
+            ctx.beginPath();
+            ctx.moveTo(neckX, neckY);
+            ctx.lineTo(hipX, hipY);
+            ctx.stroke();
+
+            let knee1X = hipX + (width * 0.1) + (phase * (width * 0.22));
+            let knee1Y = hipY + (height * 0.18);
+            let foot1X = hipX - (width * 0.15) + (phase * (width * 0.3));
+            let foot1Y = height;
+            
+            ctx.beginPath();
+            ctx.moveTo(hipX, hipY);
+            ctx.lineTo(knee1X, knee1Y);
+            ctx.lineTo(foot1X, foot1Y);
+            ctx.stroke();
+
+            let knee2X = hipX + (width * 0.35) - (phase * (width * 0.22));
+            let knee2Y = hipY + (height * 0.16) + (isGrounded ? 0 : -3);
+            let foot2X = hipX + (width * 0.45) - (phase * (width * 0.3));
+            let foot2Y = isGrounded ? height : height - (height * 0.08);
+            
+            ctx.beginPath();
+            ctx.moveTo(hipX, hipY);
+            ctx.lineTo(knee2X, knee2Y);
+            ctx.lineTo(foot2X, foot2Y);
+            ctx.stroke();
+
+            let shoulderX = neckX - 2;
+            let shoulderY = neckY + 2;
+            let elbowX = shoulderX - (width * 0.25) - (phase * (width * 0.12));
+            let elbowY = shoulderY + (height * 0.14);
+            let handX = shoulderX + (width * 0.25) + (phase * (width * 0.15));
+            let handY = elbowY - (phase * 4);
+
+            ctx.beginPath();
+            ctx.moveTo(shoulderX, shoulderY);
+            ctx.lineTo(elbowX, elbowY);
+            ctx.lineTo(handX, handY);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
         function animate() {
             if (!gameRunning) return;
             frameCount++;
             
-            // Clear Canvas
             ctx.fillStyle = '#0d0e15';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Difficulty Curve Setup
-            gameSpeed = Math.min(baseSpeed + (frameCount / 1000), maxSpeed);
-            score += gameSpeed * 0.02;
+            gameSpeed = Math.min(baseSpeed + (frameCount / 800), maxSpeed);
+            score += gameSpeed * 0.015;
             scoreVal.innerText = String(Math.floor(score)).padStart(5, '0');
 
-            // 1. Draw Grid Background Lines
-            ctx.strokeStyle = 'rgba(0, 243, 255, 0.05)';
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.04)';
             ctx.lineWidth = 1;
-            for(let i = 0; i < canvas.width; i += 40) {
+            let spacing = Math.max(40, canvas.width * 0.06);
+            for(let i = 0; i < canvas.width + spacing; i += spacing) {
                 ctx.beginPath();
-                ctx.moveTo(i - ((frameCount * gameSpeed * 0.5) % 40), 0);
-                ctx.lineTo(i - ((frameCount * gameSpeed * 0.5) % 40), canvas.height);
+                ctx.moveTo(i - ((frameCount * gameSpeed * 0.4) % spacing), 0);
+                ctx.lineTo(i - ((frameCount * gameSpeed * 0.4) % spacing), FLOOR_Y);
                 ctx.stroke();
             }
 
-            // 2. Player Physics & Trail
             player.vy += GRAVITY;
             player.y += player.vy;
 
@@ -409,30 +460,27 @@
                 player.isGrounded = true;
             }
 
-            if (frameCount % 2 === 0) {
+            if (frameCount % 3 === 0) {
                 player.trail.push({x: player.x, y: player.y});
-                if (player.trail.length > 6) player.trail.shift();
+                if (player.trail.length > 4) player.trail.shift();
             }
 
             player.trail.forEach((pos, idx) => {
-                ctx.fillStyle = `rgba(255, 0, 127, ${0.05 * idx})`;
-                ctx.fillRect(pos.x, pos.y, player.width, player.height);
+                drawCyberRunner(ctx, pos.x, pos.y, player.width, player.height, frameCount - (idx * 3), `rgba(255, 0, 127, ${0.04 * idx})`, player.isGrounded);
             });
 
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = player.color;
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.shadowBlur = 0; 
+            drawCyberRunner(ctx, player.x, player.y, player.width, player.height, frameCount, player.color, player.isGrounded);
 
-            // 3. Obstacle Management
-            if (frameCount % Math.max(70, Math.floor(130 - gameSpeed * 4)) === 0) {
-                let type = Math.random() > 0.5 ? 'tall' : 'wide';
+            if (frameCount % Math.max(50, Math.floor(110 - gameSpeed * 3)) === 0) {
+                let isTall = Math.random() > 0.4;
+                let obsHeight = isTall ? player.height * 1.1 : player.height * 0.55;
+                let obsWidth = isTall ? player.width * 0.6 : player.width * 1.2;
+
                 obstacles.push({
                     x: canvas.width,
-                    y: type === 'tall' ? FLOOR_Y - 50 : FLOOR_Y - 25,
-                    width: type === 'tall' ? 20 : 40,
-                    height: type === 'tall' ? 50 : 25,
+                    y: FLOOR_Y - obsHeight,
+                    width: obsWidth,
+                    height: obsHeight,
                     color: '#00f3ff' 
                 });
             }
@@ -441,7 +489,7 @@
                 let obs = obstacles[i];
                 obs.x -= gameSpeed;
 
-                ctx.shadowBlur = 12;
+                ctx.shadowBlur = 10;
                 ctx.shadowColor = obs.color;
                 ctx.fillStyle = obs.color;
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -462,7 +510,6 @@
                 }
             }
 
-            // 4. Particle Processing
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx;
@@ -478,9 +525,8 @@
                 ctx.globalAlpha = 1.0; 
             }
 
-            // 5. Draw Floor
             ctx.strokeStyle = 'var(--neon-cyan)';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = Math.max(3, canvas.height * 0.006);
             ctx.shadowBlur = 15;
             ctx.shadowColor = 'var(--neon-cyan)';
             ctx.beginPath();
@@ -490,7 +536,7 @@
             ctx.shadowBlur = 0;
 
             ctx.fillStyle = '#141622';
-            ctx.fillRect(0, FLOOR_Y + 3, canvas.width, canvas.height - FLOOR_Y);
+            ctx.fillRect(0, FLOOR_Y + ctx.lineWidth/2, canvas.width, canvas.height - FLOOR_Y);
 
             requestAnimationFrame(animate);
         }
