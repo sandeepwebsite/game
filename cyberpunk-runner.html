@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberRunner // Neo-Tokyo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght=400;700&display=swap');
+
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff007f;
+            --dark-bg: #0d0e15;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050508;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            /* Box-sizing normalization for cleaner element calculation */
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            min-height: 100vh;
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            background: var(--dark-bg);
+            margin: 10px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD Styling */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #score-container {
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 8px var(--neon-cyan);
+            letter-spacing: 2px;
+        }
+
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            font-family: 'Orbitron', sans-serif;
+            padding: 5px 10px;
+            cursor: pointer;
+            pointer-events: auto;
+            text-shadow: 0 0 5px var(--neon-pink);
+            box-shadow: 0 0 5px rgba(255, 0, 127, 0.3);
+            transition: all 0.2s;
+        }
+
+        .cyber-btn:hover {
+            background: var(--neon-pink);
+            color: #000;
+        }
+
+        /* UI Overlay Screen */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 14, 21, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .overlay-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #overlay-title {
+            font-size: 3.5rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--neon-cyan);
+            margin: 0 0 10px 0;
+            letter-spacing: 4px;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        #overlay-subtitle {
+            color: #888;
+            margin: 0 0 25px 0;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        .cyber-btn-large {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            padding: 12px 30px;
+            cursor: pointer;
+            text-shadow: 0 0 8px var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+            clip-path: polygon(0 0, 85% 0, 100% 30%, 100% 100%, 15% 100%, 0 70%);
+            transition: all 0.2s;
+        }
+
+        .cyber-btn-large:hover {
+            background: var(--neon-cyan);
+            color: #000;
+        }
+
+        /* -----------------------------------------------------------------
+           MOBILE RESPONSIVENESS & SCALING
+        ----------------------------------------------------------------- */
+        @media (max-width: 768px) {
+            #game-container {
+                height: auto;
+                aspect-ratio: 2 / 1; /* Maintains canvas dimensions adaptively */
+                margin: 5px;
+            }
+
+            #score-container {
+                font-size: 1rem;
+            }
+
+            #overlay-title {
+                font-size: 1.8rem; /* Scaled down drastically to fit mobile views */
+                letter-spacing: 2px;
+                margin-bottom: 8px;
+            }
+
+            #overlay-subtitle {
+                font-size: 0.75rem;
+                margin-bottom: 15px;
+            }
+
+            .cyber-btn-large {
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Neon HUD -->
+        <div id="hud">
+            <div id="score-container">SCORE: <span id="score-val">00000</span></div>
+            <button id="mute-btn" class="cyber-btn">MUTE</button>
+        </div>
+
+        <!-- Canvas for High-Performance Rendering -->
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+        <!-- Start / Game Over Overlay -->
+        <div id="overlay" class="overlay-visible">
+            <h1 id="overlay-title">CYBER_RUNNER</h1>
+            <p id="overlay-subtitle">TAP SPACE, UP ARROW, OR CLICK TO START</p>
+            <button id="start-btn" class="cyber-btn-large">INITIALIZE SYSTEM</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const scoreVal = document.getElementById('score-val');
+        const overlay = document.getElementById('overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlaySubtitle = document.getElementById('overlay-subtitle');
+        const startBtn = document.getElementById('start-btn');
+        const muteBtn = document.getElementById('mute-btn');
+
+        // Audio Context Setup
+        let audioCtx = null;
+        let isMuted = localStorage.getItem('gameMuted') === 'true';
+        updateMuteButtonUI();
+
+        // Game State Engine Variables
+        let gameRunning = false;
+        let score = 0;
+        let gameSpeed = 6;
+        const baseSpeed = 6;
+        const maxSpeed = 14;
+        let obstacles = [];
+        let particles = [];
+        let frameCount = 0;
+
+        // Physics Config
+        const GRAVITY = 0.6;
+        const FLOOR_Y = 340;
+
+        // Entities
+        const player = {
+            x: 80,
+            y: FLOOR_Y - 40,
+            width: 25,
+            height: 40,
+            vy: 0,
+            jumpForce: -12,
+            isGrounded: false,
+            color: '#ff007f', 
+            trail: []
+        };
+
+        // --- Event Listeners ---
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                triggerJump();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            triggerJump();
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerJump();
+        });
+
+        startBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            startGame();
+        });
+        
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMute();
+        });
+
+        // --- Core Game Functions ---
+
+        function startGame() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Reset States
+            score = 0;
+            gameSpeed = baseSpeed;
+            obstacles = [];
+            particles = [];
+            frameCount = 0;
+            player.y = FLOOR_Y - player.height;
+            player.vy = 0;
+            player.trail = [];
+            
+            overlay.classList.add('overlay-hidden');
+            gameRunning = true;
+            playTone(220, 0.1, 'sawtooth'); 
+            animate();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            localStorage.setItem('highScore', Math.max(score, localStorage.getItem('highScore') || 0));
+            
+            playTone(100, 0.3, 'sawtooth');
+            playTone(60, 0.4, 'triangle');
+
+            overlayTitle.innerText = "SYSTEM_FAILURE";
+            overlayTitle.style.color = "var(--neon-pink)";
+            overlayTitle.style.textShadow = "0 0 15px var(--neon-pink)";
+            overlaySubtitle.innerHTML = `SCORE: ${Math.floor(score)} | HIGH SCORE: ${Math.floor(localStorage.getItem('highScore'))}`;
+            startBtn.innerText = "REBOOT SYSTEM";
+            overlay.classList.remove('overlay-hidden');
+        }
+
+        function triggerJump() {
+            if (!gameRunning) return;
+            
+            if (player.isGrounded) {
+                player.vy = player.jumpForce;
+                player.isGrounded = false;
+                playTone(440, 0.08, 'square'); 
+                spawnParticles(player.x + player.width/2, player.y + player.height, '#00f3ff', 8);
+            }
+        }
+
+        // --- Audio Engine ---
+        function playTone(frequency, duration, type = 'sine') {
+            if (isMuted || !audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.value = frequency;
+                
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { console.error(e); }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('gameMuted', isMuted);
+            updateMuteButtonUI();
+        }
+
+        function updateMuteButtonUI() {
+            muteBtn.innerText = isMuted ? "UNMUTE" : "MUTE";
+            if(isMuted) {
+                muteBtn.style.color = '#555';
+                muteBtn.style.borderColor = '#555';
+                muteBtn.style.textShadow = 'none';
+            } else {
+                muteBtn.style.color = 'var(--neon-pink)';
+                muteBtn.style.borderColor = 'var(--neon-pink)';
+                muteBtn.style.textShadow = '0 0 5px var(--neon-pink)';
+            }
+        }
+
+        // --- Particle Engine ---
+        function spawnParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4 - (gameSpeed * 0.2),
+                    vy: (Math.random() - 0.5) * 4,
+                    size: Math.random() * 3 + 1,
+                    alpha: 1,
+                    color: color
+                });
+            }
+        }
+
+        // --- Main Engine Loop ---
+        function animate() {
+            if (!gameRunning) return;
+            frameCount++;
+            
+            // Clear Canvas
+            ctx.fillStyle = '#0d0e15';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Difficulty Curve Setup
+            gameSpeed = Math.min(baseSpeed + (frameCount / 1000), maxSpeed);
+            score += gameSpeed * 0.02;
+            scoreVal.innerText = String(Math.floor(score)).padStart(5, '0');
+
+            // 1. Draw Grid Background Lines
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i - ((frameCount * gameSpeed * 0.5) % 40), 0);
+                ctx.lineTo(i - ((frameCount * gameSpeed * 0.5) % 40), canvas.height);
+                ctx.stroke();
+            }
+
+            // 2. Player Physics & Trail
+            player.vy += GRAVITY;
+            player.y += player.vy;
+
+            if (player.y + player.height >= FLOOR_Y) {
+                player.y = FLOOR_Y - player.height;
+                player.vy = 0;
+                player.isGrounded = true;
+            }
+
+            if (frameCount % 2 === 0) {
+                player.trail.push({x: player.x, y: player.y});
+                if (player.trail.length > 6) player.trail.shift();
+            }
+
+            player.trail.forEach((pos, idx) => {
+                ctx.fillStyle = `rgba(255, 0, 127, ${0.05 * idx})`;
+                ctx.fillRect(pos.x, pos.y, player.width, player.height);
+            });
+
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = player.color;
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.shadowBlur = 0; 
+
+            // 3. Obstacle Management
+            if (frameCount % Math.max(70, Math.floor(130 - gameSpeed * 4)) === 0) {
+                let type = Math.random() > 0.5 ? 'tall' : 'wide';
+                obstacles.push({
+                    x: canvas.width,
+                    y: type === 'tall' ? FLOOR_Y - 50 : FLOOR_Y - 25,
+                    width: type === 'tall' ? 20 : 40,
+                    height: type === 'tall' ? 50 : 25,
+                    color: '#00f3ff' 
+                });
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= gameSpeed;
+
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = obs.color;
+                ctx.fillStyle = obs.color;
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.shadowBlur = 0;
+
+                if (
+                    player.x < obs.x + obs.width &&
+                    player.x + player.width > obs.x &&
+                    player.y < obs.y + obs.height &&
+                    player.y + player.height > obs.y
+                ) {
+                    gameOver();
+                    return;
+                }
+
+                if (obs.x + obs.width < 0) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // 4. Particle Processing
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                ctx.globalAlpha = 1.0; 
+            }
+
+            // 5. Draw Floor
+            ctx.strokeStyle = 'var(--neon-cyan)';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'var(--neon-cyan)';
+            ctx.beginPath();
+            ctx.moveTo(0, FLOOR_Y);
+            ctx.lineTo(canvas.width, FLOOR_Y);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#141622';
+            ctx.fillRect(0, FLOOR_Y + 3, canvas.width, canvas.height - FLOOR_Y);
+
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
