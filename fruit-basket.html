@@ -1,316 +1,513 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fruit Basket</title>
-    <style>
-        :root { 
-            --bg: #fff5f8; --panel: #ffe0e9; --text: #ff4d8d; 
-            --basket-rim: #5d4037; --basket-side: #795548;
+<!DOCTYPE html><html lang="en"><head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">    
+    <title>Fruit Basket</title>    
+    <style>        
+        :root {             
+            --bg: #fff0f5; 
+            --panel: #ffccd9; 
+            --text: #ff3377;             
+            --basket-rim: #4e342e; 
+            --basket-side: #6d4c41;
+            --glow: 0 10px 25px rgba(255, 51, 119, 0.15);
         }
-
-        body { 
-            margin: 0; background: var(--bg); display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; height: 100vh;
-            font-family: 'Comic Sans MS', cursive, sans-serif; touch-action: none; 
+        body {             
+            margin: 0; 
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, var(--bg) 100%); 
+            display: flex; flex-direction: column;             
+            align-items: center; justify-content: center; height: 100vh;            
+            font-family: 'Comic Sans MS', cursive, sans-serif; touch-action: none;             
             overflow: hidden; color: var(--text);
+            user-select: none;
+            -webkit-user-select: none;
         }
-
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            20% { transform: translate(-3px, 0px); }
-            40% { transform: translate(3px, 2px); }
-            60% { transform: translate(-1px, -1px); }
-            100% { transform: translate(0px, 0px); }
-        }
-        .shake { animation: shake 0.2s ease-in-out; }
-
-        #ui { 
-            display: flex; gap: 10px; margin-bottom: 10px; z-index: 10; 
-            width: 90vw; max-width: 380px; justify-content: center;
-        }
-
-        .stat-box, #mute-btn { 
-            background: white; padding: 8px 15px; border-radius: 20px; 
-            border: 3px solid var(--panel); box-shadow: 0 4px 0 var(--panel);
-            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 5px;
-        }
-
-        #evolution-bar {
-            display: flex; gap: 5px; background: rgba(255,255,255,0.6); 
-            padding: 5px 10px; border-radius: 15px; margin-bottom: 10px;
-        }
-        .evo-item { opacity: 0.3; font-size: 14px; transition: all 0.3s; }
-        .evo-active { opacity: 1; transform: scale(1.2); }
-
-        #game-wrapper { 
-            position: relative; width: 90vw; max-width: 380px; height: 70vh;
-            background: #fff; border-left: 12px solid var(--basket-side);
-            border-right: 12px solid var(--basket-side); border-bottom: 18px solid var(--basket-rim);
-            border-radius: 0 0 35px 35px;
-            box-shadow: inset 0 -10px 20px rgba(0,0,0,0.05), 0 15px 0 #3e2723;
-        }
-
-        #next-preview {
-            position: absolute; top: -55px; right: 10px;
-            background: white; border: 3px solid var(--panel);
-            border-radius: 15px; padding: 5px 12px; text-align: center;
-        }
-
-        #danger-line {
-            position: absolute; top: 90px; left: 0; width: 100%; height: 2px;
-            border-top: 2px dashed rgba(255, 0, 0, 0.4); display: none;
-        }
-
-        #container { width: 100%; height: 100%; overflow: hidden; }
         
-        .popup { 
-            position: absolute; color: var(--text); font-weight: bold; pointer-events: none; 
-            animation: floatUp 0.8s ease-out forwards; z-index: 100; font-size: 20px;
-            text-shadow: 2px 2px 0 white;
+        /* Basket Shake & Bounce Animation Matrix */
+        @keyframes containerBounce {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.02, 0.97) translateY(4px); }
+            60% { transform: scale(0.99, 1.01) translateY(-2px); }
+            100% { transform: scale(1); }
         }
-        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(1.5); opacity: 0; } }
-
-        button {
-            background: var(--text); color: white; border: none; padding: 10px 25px;
-            border-radius: 15px; font-family: inherit; font-size: 16px; cursor: pointer;
-            margin-top: 10px; box-shadow: 0 4px 0 #d63031;
+        .basket-bounce { animation: containerBounce 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        
+        #ui {             
+            display: flex; gap: 12px; margin-bottom: 15px; z-index: 10;             
+            width: 90vw; max-width: 380px; justify-content: center;        
         }
-    </style>
-</head>
-<body>
-
-    <div id="ui">
-        <div class="stat-box">Score: <strong id="score">0</strong></div>
-        <div class="stat-box">Best: <strong id="best">0</strong></div>
-        <div id="mute-btn">🔊</div>
+        .stat-box, #mute-btn {             
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 10px 18px; border-radius: 25px;             
+            border: 3px solid var(--panel); 
+            box-shadow: 0 6px 0 var(--panel), var(--glow);            
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .stat-box:active, #mute-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 var(--panel);
+        }
+        
+        #evolution-bar {            
+            display: flex; gap: 6px; 
+            background: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 8px 14px; border-radius: 20px; margin-bottom: 15px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.6);
+        }        
+        .evo-item { opacity: 0.25; font-size: 15px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }        
+        .evo-active { opacity: 1; transform: scale(1.35); text-shadow: 0 0 8px rgba(255,51,119,0.3); }
+        
+        #game-wrapper {             
+            position: relative; width: 90vw; max-width: 380px; height: 68vh;            
+            background: linear-gradient(#ffffff 70%, #fff9fb 100%); 
+            border-left: 12px solid var(--basket-side);            
+            border-right: 12px solid var(--basket-side); 
+            border-bottom: 18px solid var(--basket-rim);            
+            border-radius: 0 0 40px 40px;            
+            box-shadow: inset 0 -15px 25px rgba(0,0,0,0.04), 0 20px 0 #2d1f1c, 0 25px 40px rgba(0,0,0,0.15);
+            will-change: transform;
+        }
+        #next-preview {            
+            position: absolute; top: -60px; right: 15px;            
+            background: white; border: 3px solid var(--panel);            
+            border-radius: 18px; padding: 6px 14px; text-align: center; z-index: 15;
+            box-shadow: 0 5px 0 var(--panel);
+            animation: floatPreview 2s ease-in-out infinite alternate;
+        }
+        @keyframes floatPreview {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-4px); }
+        }
+        
+        #danger-line {            
+            position: absolute; top: 90px; left: 0; width: 100%; height: 2px;            
+            border-top: 3px dashed rgba(255, 0, 50, 0.6); display: none; pointer-events: none; z-index: 5;       
+            animation: pulseDanger 1s infinite alternate;
+        }
+        @keyframes pulseDanger {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        #container { width: 100%; height: 100%; overflow: hidden; }                
+        
+        /* Interactive floating points & combo text rules */
+        .popup {             
+            position: absolute; color: var(--text); font-weight: bold; pointer-events: none;             
+            animation: floatUp 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; z-index: 100; font-size: 22px;            
+            text-shadow: 2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white;        
+        }
+        .combo-announcer {
+            position: absolute; left: 50%; top: 35%; transform: translate(-50%, -50%);
+            font-weight: 900; pointer-events: none; z-index: 110; text-align: center;
+            line-height: 1.1;
+            text-shadow: 4px 4px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
+            animation: popScale 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.35) forwards;
+            white-space: nowrap;
+        }        
+        @keyframes floatUp { 
+            0% { transform: translateY(0) scale(0.6); opacity: 0; } 
+            20% { opacity: 1; transform: translateY(-15px) scale(1.1); }
+            100% { transform: translateY(-70px) scale(1.3); opacity: 0; } 
+        }
+        @keyframes popScale { 
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } 
+            15% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; } 
+            25% { transform: translate(-50%, -50%) scale(1); }
+            75% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 
+            100% { transform: translate(-50%, -80%) scale(0.8); opacity: 0; } 
+        }
+        
+        /* Modal Overlay Screens */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 240, 245, 0.85); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); display: flex; align-items: center;
+            justify-content: center; z-index: 2000;
+        }
+        .modal-card {
+            background: white; padding: 40px; border-radius: 35px; text-align: center;
+            box-shadow: 0 20px 50px rgba(255,51,119,0.15); border: 6px solid var(--panel);
+            min-width: 240px; animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        button {            
+            background: linear-gradient(135deg, #ff6699 0%, var(--text) 100%); 
+            color: white; border: none; padding: 12px 35px;            
+            border-radius: 20px; font-family: inherit; font-size: 18px; font-weight: bold; cursor: pointer;            
+            margin-top: 15px; box-shadow: 0 6px 0 #cc0044, 0 10px 20px rgba(255,51,119,0.2);
+            transition: transform 0.05s ease, box-shadow 0.05s ease;      
+        }
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #cc0044, 0 5px 10px rgba(255,51,119,0.2);
+        }
+    </style></head><body>
+    
+    <div id="ui">        
+        <div class="stat-box">Score: <strong id="score">0</strong></div>        
+        <div class="stat-box">Best: <strong id="best">0</strong></div>        
+        <div id="mute-btn">🔊</div>    
     </div>
-
+    
     <div id="evolution-bar"></div>
-
-    <div id="game-wrapper">
-        <div id="next-preview">
-            <small style="font-size: 10px; display: block; opacity: 0.6;">NEXT</small>
-            <span id="next-emoji-text" style="font-size: 24px;">🍒</span>
-        </div>
-        <div id="danger-line"></div>
-        <div id="container"></div>
+    
+    <div id="game-wrapper">        
+        <div id="next-preview">            
+            <small style="font-size: 10px; display: block; opacity: 0.6; font-weight: bold; margin-bottom: 2px;">NEXT</small>            
+            <span id="next-emoji-text" style="font-size: 24px;">🍒</span>        
+        </div>        
+        <div id="danger-line"></div>        
+        <div id="container"></div>    
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>    
+    <script>        
         const { Engine, Render, Runner, Bodies, Composite, Events, Vector } = Matter;
-
-        const EMOJIS = [
-            { label: '🍒', radius: 15, score: 2, color: '#ff4d4d' },
-            { label: '🍓', radius: 22, score: 4, color: '#ff6b6b' },
-            { label: '🍇', radius: 32, score: 8, color: '#a29bfe' },
-            { label: '🍊', radius: 44, score: 16, color: '#fdcb6e' },
-            { label: '🍎', radius: 56, score: 32, color: '#d63031' },
-            { label: '🍐', radius: 68, score: 64, color: '#55efc4' },
-            { label: '🍑', radius: 80, score: 128, color: '#fab1a0' },
-            { label: '🍍', radius: 92, score: 256, color: '#f1c40f' },
-            { label: '🍈', radius: 105, score: 512, color: '#81ecec' },
-            { label: '🍉', radius: 125, score: 1024, color: '#2ecc71' }
+        
+        const EMOJIS = [            
+            { label: '🍒', radius: 11, score: 2, color: '#ff4d4d' },            
+            { label: '🍓', radius: 16, score: 4, color: '#ff6b6b' },            
+            { label: '🍇', radius: 22, score: 8, color: '#a29bfe' },            
+            { label: '🍊', radius: 29, score: 16, color: '#fdcb6e' },            
+            { label: '🍎', radius: 37, score: 32, color: '#d63031' },            
+            { label: '🍐', radius: 46, score: 64, color: '#55efc4' },            
+            { label: '🍑', radius: 55, score: 128, color: '#fab1a0' },            
+            { label: '🍍', radius: 64, score: 256, color: '#f1c40f' },            
+            { label: '🍈', radius: 74, score: 512, color: '#81ecec' },            
+            { label: '🍉', radius: 86, score: 1024, color: '#2ecc71' }        
+        ];
+        const wrapper = document.getElementById('game-wrapper');        
+        const WIDTH = wrapper.clientWidth;        
+        const HEIGHT = wrapper.clientHeight;                
+        
+        let score = 0;        
+        let highscore = localStorage.getItem('emoji-merge-best') || 0;        
+        document.getElementById('best').innerText = highscore;
+        
+        let isMuted = localStorage.getItem('emoji-mute-setting') === 'true';        
+        document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
+        
+        let currentLvl = Math.floor(Math.random() * 3);        
+        let nextLvl = Math.floor(Math.random() * 3);        
+        let mouseX = WIDTH / 2, canDrop = true, isGameOver = false;        
+        let particles = [], dangerTicks = 0;
+        
+        let comboCount = 0;
+        let comboTimer = null;
+        
+        const COMBOS = [
+            { count: 2, text: "NICE!", size: "26px", color: "#2ecc71" },
+            { count: 3, text: "GREAT!", size: "34px", color: "#3498db" },
+            { count: 4, text: "AMAZING!", size: "42px", color: "#e67e22" },
+            { count: 5, text: "GODLIKE!", size: "52px", color: "#e74c3c" }
         ];
 
-        const wrapper = document.getElementById('game-wrapper');
-        const WIDTH = wrapper.clientWidth;
-        const HEIGHT = wrapper.clientHeight;
-        
-        let score = 0;
-        let highscore = localStorage.getItem('emoji-merge-best') || 0;
-        document.getElementById('best').innerText = highscore;
-
-        let isMuted = localStorage.getItem('emoji-mute-setting') === 'true';
-        document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
-
-        let currentLvl = Math.floor(Math.random() * 3);
-        let nextLvl = Math.floor(Math.random() * 3);
-        let mouseX = WIDTH / 2, canDrop = true, isGameOver = false;
-        let particles = [], dangerTicks = 0;
-
-        const evoBar = document.getElementById('evolution-bar');
-        EMOJIS.forEach((e, i) => {
-            const s = document.createElement('span');
-            s.className = 'evo-item';
-            s.id = `evo-${i}`;
-            s.innerText = e.label;
-            evoBar.appendChild(s);
-        });
+        const evoBar = document.getElementById('evolution-bar');        
+        EMOJIS.forEach((e, i) => {            
+            const s = document.createElement('span');            
+            s.className = 'evo-item';            
+            s.id = `evo-${i}`;            
+            s.innerText = e.label;            
+            evoBar.appendChild(s);        
+        });        
+        document.getElementById(`evo-${currentLvl}`).classList.add('evo-active');
         document.getElementById('next-emoji-text').innerText = EMOJIS[nextLvl].label;
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSfx(freq, type, dur) {
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();        
+        
+        function playDropSfx() {
             if (isMuted) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const now = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + dur);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + dur);
-        }
-
-        const engine = Engine.create();
-        const render = Render.create({
-            element: document.getElementById('container'),
-            engine: engine,
-            options: { width: WIDTH, height: HEIGHT, wireframes: false, background: 'transparent' }
-        });
-
-        // WALLS & GROUND FIX: Ensuring no overlap and low friction so fruits slide
-        const wallOpt = { isStatic: true, friction: 0.05, restitution: 0.2 };
-        Composite.add(engine.world, [
-            // Ground (exactly at the visual bottom)
-            Bodies.rectangle(WIDTH/2, HEIGHT + 10, WIDTH, 20, wallOpt),
-            // Left & Right walls (shifted outside so they don't block the visual sides)
-            Bodies.rectangle(-10, HEIGHT/2, 20, HEIGHT, wallOpt),
-            Bodies.rectangle(WIDTH + 10, HEIGHT/2, 20, HEIGHT, wallOpt)
-        ]);
-
-        function createEmoji(x, y, lvl) {
-            const d = EMOJIS[lvl];
-            document.getElementById(`evo-${lvl}`).classList.add('evo-active');
-            return Bodies.circle(x, y, d.radius, {
-                label: `lvl_${lvl}`, restitution: 0.3, friction: 0.1,
-                render: { label: d.label, size: d.radius * 1.6, color: d.color }
-            });
-        }
-
-        function createSplash(x, y, color) {
-            for(let i=0; i<8; i++) {
-                particles.push({
-                    x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
-                    life: 1.0, color
-                });
-            }
-        }
-
-        const handleInput = (e) => {
-            if(isGameOver) return;
-            if (e.cancelable) e.preventDefault();
-
-            const r = render.canvas.getBoundingClientRect();
-            let clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
             
-            const relativeX = clientX - r.left;
-            const padding = EMOJIS[currentLvl].radius + 5;
-            mouseX = Math.max(padding, Math.min(WIDTH - padding, relativeX));
-        };
-
-        render.canvas.addEventListener('mousemove', handleInput);
-        render.canvas.addEventListener('touchmove', handleInput, { passive: false });
-        render.canvas.addEventListener('touchstart', handleInput, { passive: false });
-
-        render.canvas.addEventListener('pointerup', (e) => {
-            if(e.target.id === 'mute-btn') return;
-            if(!canDrop || isGameOver) return;
-            canDrop = false;
-            playSfx(150, 'sine', 0.2);
-            Composite.add(engine.world, createEmoji(mouseX, 40, currentLvl));
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
             
-            setTimeout(() => {
-                currentLvl = nextLvl;
-                nextLvl = Math.floor(Math.random() * 3);
-                document.getElementById('next-emoji-text').innerText = EMOJIS[nextLvl].label;
-                canDrop = true;
-            }, 600);
-        });
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.15);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
 
-        document.getElementById('mute-btn').onclick = () => {
-            isMuted = !isMuted;
-            document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
-            localStorage.setItem('emoji-mute-setting', isMuted);
-        };
+        function playMergeSfx(lvl, streakBonus = 0) {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const now = audioCtx.currentTime;
+            const baseNotes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+            const targetIndex = Math.max(0, EMOJIS.length - 1 - lvl);
+            
+            const pitchFactor = 1 + (streakBonus * 0.12);
+            const baseFreq = (baseNotes[targetIndex % baseNotes.length] / (lvl > 5 ? 2 : 1)) * pitchFactor;
+            
+            const oscMain = audioCtx.createOscillator();
+            const oscHarmonic = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
 
-        Events.on(engine, 'collisionStart', (e) => {
-            e.pairs.forEach(p => {
-                const { bodyA, bodyB } = p;
-                if(bodyA.label === bodyB.label && bodyA.label.startsWith('lvl_')) {
-                    const lvl = parseInt(bodyA.label.split('_')[1]);
-                    if(lvl < EMOJIS.length - 1) {
-                        const mid = Vector.div(Vector.add(bodyA.position, bodyB.position), 2);
-                        Composite.remove(engine.world, [bodyA, bodyB]);
-                        Composite.add(engine.world, createEmoji(mid.x, mid.y, lvl + 1));
-                        
-                        playSfx(300 + (lvl * 50), 'triangle', 0.3);
-                        createSplash(mid.x, mid.y, EMOJIS[lvl].color);
-                        if(lvl > 4) { wrapper.classList.add('shake'); setTimeout(()=>wrapper.classList.remove('shake'),200); }
-
-                        const popup = document.createElement('div');
-                        popup.className = 'popup';
-                        popup.style.left = mid.x + 'px';
-                        popup.style.top = mid.y + 'px';
-                        popup.innerText = `+${EMOJIS[lvl].score}`;
-                        wrapper.appendChild(popup);
-                        setTimeout(() => popup.remove(), 800);
-
-                        score += EMOJIS[lvl].score;
-                        document.getElementById('score').innerText = score;
-                        if(score > highscore) {
-                            highscore = score;
-                            localStorage.setItem('emoji-merge-best', highscore);
-                            document.getElementById('best').innerText = highscore;
-                        }
-                    }
-                }
-            });
-        });
-
-        Events.on(engine, 'afterUpdate', () => {
-            const bodies = Composite.allBodies(engine.world);
-            const overLine = bodies.some(b => !b.isStatic && b.position.y < 90 && b.velocity.y < 0.1);
-            if(overLine) {
-                dangerTicks++;
-                document.getElementById('danger-line').style.display = 'block';
-                if(dangerTicks > 200 && !isGameOver) { 
-                    isGameOver = true; 
-                    setTimeout(() => {
-                        const over = document.createElement('div');
-                        over.innerHTML = `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:25px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,0.3);z-index:1000;border:5px solid var(--panel);min-width:200px;"><h2>Game Over</h2><p style="font-size: 20px;">Score: <strong>${score}</strong></p><button onclick="location.reload()">Restart</button></div>`;
-                        document.body.appendChild(over);
-                    }, 300);
-                }
+            if (lvl < 4) {
+                oscMain.type = 'sine';
+                gainNode.gain.setValueAtTime(0.18, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                oscMain.frequency.setValueAtTime(baseFreq * 2, now);
+                oscMain.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.1);
+            } else if (lvl < 7) {
+                oscMain.type = 'triangle';
+                oscHarmonic.type = 'sine';
+                oscHarmonic.frequency.setValueAtTime(baseFreq * 1.5, now);
+                
+                gainNode.gain.setValueAtTime(0.22, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                oscMain.frequency.setValueAtTime(baseFreq, now);
+                oscMain.frequency.exponentialRampToValueAtTime(baseFreq * 0.7, now + 0.2);
+                
+                oscHarmonic.connect(gainNode);
+                oscHarmonic.start(now);
+                oscHarmonic.stop(now + 0.25);
             } else {
-                dangerTicks = 0; document.getElementById('danger-line').style.display = 'none';
+                oscMain.type = 'sawtooth';
+                const nativeFilter = audioCtx.createBiquadFilter();
+                nativeFilter.type = 'lowpass';
+                nativeFilter.frequency.setValueAtTime(450, now);
+                nativeFilter.frequency.exponentialRampToValueAtTime(70, now + 0.45);
+                
+                gainNode.gain.setValueAtTime(0.35, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                oscMain.frequency.setValueAtTime(baseFreq * 0.8, now);
+                oscMain.frequency.linearRampToValueAtTime(baseFreq * 0.3, now + 0.45);
+                
+                oscMain.connect(nativeFilter);
+                nativeFilter.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscMain.start(now);
+                oscMain.stop(now + 0.5);
+                return;
             }
-        });
 
-        Events.on(render, 'afterRender', () => {
-            const ctx = render.context;
-            particles.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-                if(p.life <= 0) particles.splice(i, 1);
-                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
-            });
+            oscMain.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscMain.start(now);
+            oscMain.stop(now + 0.5);
+        }
+
+        function triggerComboAnnouncer() {
+            const matchedCombo = COMBOS.reduce((prev, curr) => (comboCount >= curr.count) ? curr : prev, null);
+            if (!matchedCombo) return;
+
+            const oldAnnouncer = document.querySelector('.combo-announcer');
+            if (oldAnnouncer) oldAnnouncer.remove();
+
+            const announcer = document.createElement('div');
+            announcer.className = 'combo-announcer';
+            announcer.style.fontSize = matchedCombo.size;
+            announcer.style.color = matchedCombo.color;
+            announcer.innerText = `${matchedCombo.text}\n${comboCount}x COMBO`;
+            
+            wrapper.appendChild(announcer);
+            setTimeout(() => announcer.remove(), 650);
+        }
+        
+        function triggerJuiceBounce() {
+            wrapper.classList.remove('basket-bounce');
+            void wrapper.offsetWidth; // Force CSS reflow matrix retrigger
+            wrapper.classList.add('basket-bounce');
+        }
+        
+        const engine = Engine.create();        
+        const render = Render.create({            
+            element: document.getElementById('container'),            
+            engine: engine,            
+            options: { width: WIDTH, height: HEIGHT, wireframes: false, background: 'transparent' }        
+        });
+        
+        const wallOpt = { isStatic: true, friction: 0.08, restitution: 0.15 };        
+        Composite.add(engine.world, [            
+            Bodies.rectangle(WIDTH/2, HEIGHT + 20, WIDTH, 40, wallOpt),            
+            Bodies.rectangle(-20, HEIGHT/2, 40, HEIGHT, wallOpt),            
+            Bodies.rectangle(WIDTH + 20, HEIGHT/2, 40, HEIGHT, wallOpt)        
+        ]);
+        
+        function createEmoji(x, y, lvl) {            
+            const d = EMOJIS[lvl];            
+            document.getElementById(`evo-${lvl}`).classList.add('evo-active');            
+            return Bodies.circle(x, y, d.radius, {                
+                label: `lvl_${lvl}`, restitution: 0.18, friction: 0.08, density: 0.001,               
+                render: { visible: false }            
+            });        
+        }
+        
+        function createSplash(x, y, color) {            
+            for(let i=0; i<12; i++) {                
+                particles.push({                    
+                    x, y, 
+                    vx: (Math.random() - 0.5) * 12, 
+                    vy: (Math.random() - 0.6) * 14,                    
+                    life: 1.0, 
+                    radius: Math.random() * 4 + 2,
+                    color                
+                });            
+            }        
+        }
+        
+        const handleInput = (e) => {            
+            if(isGameOver) return;            
+            const r = render.canvas.getBoundingClientRect();            
+            let clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;                        
+            const relativeX = clientX - r.left;            
+            const padding = EMOJIS[currentLvl].radius + 5;            
+            mouseX = Math.max(padding, Math.min(WIDTH - padding, relativeX));        
+        };
+        
+        window.addEventListener('mousemove', handleInput);        
+        window.addEventListener('touchmove', handleInput, { passive: false });        
+        window.addEventListener('touchstart', handleInput, { passive: false });
+        
+        render.canvas.addEventListener('pointerup', (e) => {            
+            if(e.target.id === 'mute-btn' || !canDrop || isGameOver) return;            
+            canDrop = false;            
+            playDropSfx();            
+            Composite.add(engine.world, createEmoji(mouseX, 40, currentLvl));                        
+            
+            setTimeout(() => {                
+                currentLvl = nextLvl;                
+                nextLvl = Math.floor(Math.random() * 3);                
+                document.getElementById('next-emoji-text').innerText = EMOJIS[nextLvl].label;
+                
+                // Refresh active UI indicators
+                document.querySelectorAll('.evo-item').forEach(el => el.classList.remove('evo-active'));
+                document.getElementById(`evo-${currentLvl}`).classList.add('evo-active');
+                canDrop = true;            
+            }, 500);        
+        });
+        
+        document.getElementById('mute-btn').onclick = (e) => {            
+            e.stopPropagation();            
+            isMuted = !isMuted;            
+            document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';            
+            localStorage.setItem('emoji-mute-setting', isMuted);        
+        };
+        
+        Events.on(engine, 'collisionStart', (e) => {            
+            e.pairs.forEach(p => {                
+                const { bodyA, bodyB } = p;                
+                if(bodyA.label && bodyB.label && bodyA.label.startsWith('lvl_') && bodyA.label === bodyB.label) {                    
+                    const lvl = parseInt(bodyA.label.split('_')[1]);                    
+                    if(lvl < EMOJIS.length - 1 && !bodyA.isRemoving && !bodyB.isRemoving) {                        
+                        bodyA.isRemoving = true;                        
+                        bodyB.isRemoving = true;                        
+                        const mid = Vector.div(Vector.add(bodyA.position, bodyB.position), 2);                        
+                        
+                        Composite.remove(engine.world, [bodyA, bodyB]);                        
+                        Composite.add(engine.world, createEmoji(mid.x, mid.y, lvl + 1));                                                
+                        
+                        comboCount++;
+                        clearTimeout(comboTimer);
+                        comboTimer = setTimeout(() => { comboCount = 0; }, 2200); 
+
+                        playMergeSfx(lvl, comboCount);                        
+                        createSplash(mid.x, mid.y, EMOJIS[lvl].color);                        
+                        triggerJuiceBounce();
+                        
+                        triggerComboAnnouncer();
+
+                        const popup = document.createElement('div');                        
+                        popup.className = 'popup';                        
+                        popup.style.left = mid.x + 'px';                        
+                        popup.style.top = mid.y + 'px';                        
+                        
+                        const pointsEarned = EMOJIS[lvl].score * (comboCount > 1 ? comboCount : 1);
+                        popup.innerText = `+${pointsEarned}`;                        
+                        wrapper.appendChild(popup);                        
+                        setTimeout(() => popup.remove(), 700);
+                        
+                        score += pointsEarned;                        
+                        document.getElementById('score').innerText = score;                        
+                        if(score > highscore) {                            
+                            highscore = score;                            
+                            localStorage.setItem('emoji-merge-best', highscore);                            
+                            document.getElementById('best').innerText = highscore;                        
+                        }                    
+                    }                
+                }            
+            });        
+        });
+        
+        Events.on(engine, 'afterUpdate', () => {            
+            const bodies = Composite.allBodies(engine.world);            
+            const overLine = bodies.some(b => !b.isStatic && b.position.y < 90 && b.velocity.y < 0.1);            
+            if(overLine) {                
+                dangerTicks++;                
+                document.getElementById('danger-line').style.display = 'block';                
+                if(dangerTicks > 120 && !isGameOver) {                      
+                    isGameOver = true;                     
+                    setTimeout(() => {                        
+                        const over = document.createElement('div');                        
+                        over.className = 'modal';
+                        over.innerHTML = `<div class="modal-card"><h2>Game Over</h2><p style="font-size: 22px; margin: 10px 0 20px 0;">Final Score: <strong>${score}</strong></p><button onclick="location.reload()">Play Again</button></div>`;                        
+                        document.body.appendChild(over);                    
+                    }, 500);                
+                }            
+            } else {                
+                dangerTicks = 0; document.getElementById('danger-line').style.display = 'none';            
+            }        
+        });
+        
+        Events.on(render, 'afterRender', () => {            
+            const ctx = render.context;            
+            
+            // Physics particle system logic loops
+            particles.forEach((p, i) => {                
+                p.x += p.vx; p.y += p.vy; 
+                p.vy += 0.4; // Internal particle gravity vector drop
+                p.life -= 0.025;                
+                if(p.life <= 0) { particles.splice(i, 1); return; }                
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;                
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI*2); ctx.fill();            
+            });            
             ctx.globalAlpha = 1;
-
-            if(canDrop && !isGameOver) {
-                ctx.setLineDash([5, 10]); ctx.strokeStyle = "#ffe0e9"; ctx.beginPath();
-                ctx.moveTo(mouseX, 60); ctx.lineTo(mouseX, HEIGHT); ctx.stroke();
-                ctx.font = `${EMOJIS[currentLvl].radius*1.6}px serif`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(EMOJIS[currentLvl].label, mouseX, 40);
+            
+            if(canDrop && !isGameOver) {                
+                ctx.setLineDash([6, 8]); ctx.strokeStyle = "rgba(255, 51, 119, 0.25)"; ctx.lineWidth = 3; ctx.beginPath();                
+                ctx.moveTo(mouseX, 60); ctx.lineTo(mouseX, HEIGHT); ctx.stroke();                
+                
+                ctx.font = `${EMOJIS[currentLvl].radius * 2}px Arial`;                
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';                
+                ctx.fillText(EMOJIS[currentLvl].label, mouseX, 40);            
             }
-
-            Composite.allBodies(engine.world).forEach(b => {
-                if(b.render.label) {
-                    ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
-                    ctx.font = `${b.render.size}px serif`;
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(b.render.label, 0, 0); ctx.restore();
-                }
-            });
+            
+            Composite.allBodies(engine.world).forEach(b => {                
+                if(b.label && b.label.startsWith('lvl_')) {                    
+                    const lvl = parseInt(b.label.split('_')[1]);                    
+                    const d = EMOJIS[lvl];                    
+                    ctx.save();                    
+                    ctx.translate(b.position.x, b.position.y);                    
+                    ctx.rotate(b.angle);                    
+                    
+                    ctx.font = `${d.radius * 2}px Arial`;                    
+                    ctx.textAlign = 'center';                    
+                    ctx.textBaseline = 'middle';                    
+                    ctx.fillText(d.label, 0, 0);                    
+                    ctx.restore();                
+                }            
+            });        
         });
-
-        Render.run(render);
-        Runner.run(Runner.create(), engine);
-    </script>
-</body>
-</html>
+        
+        Render.run(render);        
+        Runner.run(Runner.create(), engine);    
+    </script></body></html>
