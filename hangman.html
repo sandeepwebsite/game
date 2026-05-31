@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Party - Arcade Edition</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --accent-color: #e94560;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --success-color: #4cd137;
+            --character-color: #ffbe76;
+            --gold-color: #ffd700;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(233, 69, 96, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 210, 211, 0.15) 0px, transparent 50%);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-badge {
+            background: var(--accent-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(233, 69, 96, 0.2);
+        }
+
+        .mute-btn {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mute-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .coin-display {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--gold-color);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .powerup-btn {
+            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.2);
+            transition: all 0.2s ease;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .powerup-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(255, 107, 107, 0.3);
+        }
+
+        .powerup-btn:active:not(:disabled) {
+            transform: translateY(1px);
+            border-bottom-width: 1px;
+        }
+
+        .powerup-btn:disabled {
+            background: #334155;
+            color: #64748b;
+            box-shadow: none;
+            cursor: not-allowed;
+            border-bottom: none;
+        }
+
+        .hint-container {
+            font-size: 0.95rem;
+            color: #f1f5f9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            background: rgba(30, 41, 59, 0.4);
+            padding: 14px;
+            border-radius: 14px;
+            border-left: 4px solid #00d2d3;
+            text-align: left;
+        }
+
+        #category-display {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hint-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            color: #00d2d3;
+        }
+
+        .figure-container {
+            height: 140px;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto 20px auto;
+        }
+
+        .gallows {
+            stroke: #f8fafc;
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+
+        .figure-part {
+            stroke: var(--character-color);
+            stroke-width: 4.5;
+            fill: transparent;
+            stroke-linecap: round;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .figure-part.visible { opacity: 1; }
+        .figure-part.filled { fill: var(--character-color); }
+
+        .floating-dead-man {
+            animation: floatAnimation 2.5s ease-in-out infinite alternate;
+            transform-origin: 140px 90px;
+        }
+
+        @keyframes floatAnimation {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-10px) rotate(4deg); }
+        }
+
+        .word-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            border-bottom: 4px solid #475569;
+            width: 32px;
+            height: 42px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: #fff;
+        }
+
+        .letter-box.revealed {
+            border-bottom-color: var(--accent-color);
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); }
+            100% { transform: scale(1); }
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 10px;
+            max-width: 100%;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .key {
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 
+                0 4px 0 #0f172a,
+                0 5px 10px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .key:hover:not(:disabled) {
+            background: rgba(47, 61, 85, 0.9);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 0 #0f172a,
+                0 8px 16px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .key:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 
+                0 0px 0 #0f172a,
+                0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .key.correct {
+            background: linear-gradient(135deg, #4cd137, #268513) !important;
+            color: #fff !important;
+            border-color: #4cd137 !important;
+            transform: translateY(4px) !important;
+            box-shadow: 
+                0 0px 0 transparent,
+                0 0px 12px rgba(76, 209, 55, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+            opacity: 1 !important;
+        }
+
+        .key.wrong {
+            background: #1e293b !important;
+            color: #475569 !important;
+            border-color: rgba(255, 255, 255, 0.02) !important;
+            transform: translateY(4px) !important;
+            box-shadow: 
+                0 0px 0 transparent,
+                0 1px 2px rgba(0, 0, 0, 0.2) !important;
+            opacity: 0.4 !important;
+        }
+
+        .key:disabled {
+            cursor: not-allowed;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 440px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-title.win { color: var(--success-color); }
+        .modal-title.lose { color: var(--accent-color); }
+
+        .modal-content p {
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        .word-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        .btn-play-again {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(76, 209, 55, 0.3);
+            transition: all 0.2s;
+            border-bottom: 4px solid #268513;
+        }
+
+        .btn-play-again:hover {
+            background-color: #44bd32;
+            transform: scale(1.03);
+        }
+        
+        .btn-play-again:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .game-container { padding: 16px; border-radius: 16px; }
+            header { flex-direction: column; gap: 12px; margin-bottom: 15px; padding-bottom: 12px; }
+            h1 { font-size: 1.4rem; letter-spacing: 1px; }
+            .dashboard-controls { width: 100%; justify-content: space-between; }
+            .figure-container { height: 120px; margin-bottom: 15px; }
+            .word-display { gap: 6px; margin-bottom: 20px; }
+            .letter-box { width: 22px; height: 32px; font-size: 1.4rem; border-bottom-width: 3px; }
+            .keyboard { grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 10px; }
+            .key { padding: 8px 0; font-size: 0.9rem; border-radius: 6px; box-shadow: 0 2px 0 #0f172a, 0 3px 6px rgba(0, 0, 0, 0.4); }
+            .key:hover:not(:disabled) { box-shadow: 0 3px 0 #0f172a, 0 4px 8px rgba(0, 0, 0, 0.5); }
+            .key.correct, .key.wrong { transform: translateY(2px) !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="game-container">
+        <header>
+            <h1>Hangman</h1>
+            <div class="dashboard-controls">
+                <div class="level-badge" id="level-badge">Level 1</div>
+                <div class="coin-display">🪙 <span id="coin-count">0</span></div>
+                <button class="powerup-btn" id="hint-powerup-btn">✨ Reveal (50)</button>
+                <button class="mute-btn" id="mute-toggle-btn">🔊</button>
+            </div>
+        </header>
+
+        <div class="hint-container">
+            <div id="category-display">Category: -</div>
+            <div class="hint-title">Clue:</div>
+            <div id="hint-display">-</div>
+        </div>
+
+        <div class="figure-container">
+            <svg height="140" width="200" viewBox="0 0 200 140">
+                <line x1="20" y1="130" x2="140" y2="130" class="gallows" />
+                <line x1="60" y1="130" x2="60" y2="10" class="gallows" />
+                <line x1="60" y1="10" x2="140" y2="10" class="gallows" />
+                <line x1="140" y1="10" x2="140" y2="30" class="gallows" />
+
+                <g id="full-character">
+                    <circle cx="140" cy="42" r="12" class="figure-part" id="part-0" />
+                    <line x1="140" y1="54" x2="140" y2="90" class="figure-part" id="part-1" />
+                    <line x1="140" y1="65" x2="115" y2="75" class="figure-part" id="part-2" />
+                    <line x1="140" y1="65" x2="165" y2="75" class="figure-part" id="part-3" />
+                    <line x1="140" y1="90" x2="120" y2="120" class="figure-part" id="part-4" />
+                    <line x1="140" y1="90" x2="160" y2="120" class="figure-part" id="part-5" />
+                </g>
+            </svg>
+        </div>
+
+        <div class="word-display" id="word-display"></div>
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">-</h2>
+            <p id="modal-message">-</p>
+            <div class="word-description" id="word-description">-</div>
+            <button class="btn-play-again" id="btn-restart">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        const globalWordPool = [
+            { word: "CAT", hint: "Common Pet", desc: "A small domesticated furry pet known for purring, catching mice, and sleeping a lot." },
+            { word: "DOG", hint: "Common Pet", desc: "Commonly known as man's best friend, this pet loves wagging its tail and barking." },
+            { word: "MILK", hint: "Drink", desc: "A white liquid produced by cows that is packed with calcium and poured into cereal morning bowls." },
+            { word: "CAKE", hint: "Dessert", desc: "A sweet baked celebratory food item often decorated with frosting and candles on birthdays." },
+            { word: "FISH", hint: "Animal", desc: "A limbless cold-blooded creature with gills that swims around completely underwater inside tanks or oceans." },
+            { word: "PIZZA", hint: "Food", desc: "An incredibly popular Italian fast food dish baked with savory tomato sauce, melted cheese, and toppings." },
+            { word: "BANANA", hint: "Fruit", desc: "A long, curved tropical fruit covered by a yellow peelable skin with a sweet soft interior." },
+            { word: "BURGER", hint: "Food", desc: "A classic fast-food staple containing a grilled meat patty sandwiched inside a sliced bun." },
+            { word: "MONKEY", hint: "Animal", desc: "A highly intelligent climbing mammal with a long tail that loves swinging through jungle trees." },
+            { word: "GUITAR", hint: "Musical Instrument", desc: "A musical instrument featuring six strings that you play by strumming or plucking chords." },
+            { word: "SUN", hint: "Space", desc: "The bright star at the center of our solar system that provides light and warmth to the Earth." },
+            { word: "MOON", hint: "Space", desc: "The natural satellite that orbits the Earth and shines brightly in the night sky." },
+            { word: "RAIN", hint: "Weather", desc: "Water droplets falling from clouds in the sky onto the ground during stormy weather." },
+            { word: "SNOW", hint: "Weather", desc: "Frozen white water vapor that falls as soft flakes and coats everything in winter." },
+            { word: "WIND", hint: "Weather", desc: "The invisible movement of air outside that can blow leaves off trees or fly a kite." },
+            { word: "TREE", hint: "Nature", desc: "A tall perennial plant with a wooden trunk, branches, and green leaves that produces oxygen." },
+            { word: "ROSE", hint: "Flower", desc: "A beautiful, fragrant flower that grows on thorny bushes, often colored red, pink, or yellow." },
+            { word: "RIVER", hint: "Nature", desc: "A large natural stream of water flowing continuously in a channel toward an ocean or lake." },
+            { word: "DESERT", hint: "Nature", desc: "A barren, extremely dry biome covered in sand where water is scarce and cacti grow." },
+            { word: "OCEAN", hint: "Nature", desc: "The massive body of salt water that covers over seventy percent of the Earth's entire surface." },
+            { word: "CLOUD", hint: "Weather", desc: "A fluffy white or gray mass of condensed water vapor floating high in the atmosphere." },
+            { word: "STORM", hint: "Weather", desc: "A violent disturbance of the atmosphere with strong winds, heavy rain, thunder, and lightning." },
+            { word: "VALLEY", hint: "Nature", desc: "A low area of land situated directly between hills or mountains, often with a river running through it." },
+            { word: "FOREST", hint: "Nature", desc: "A large ecosystem densely packed with trees, thick undergrowth, and diverse wildlife." },
+            { word: "VOLCANO", hint: "Nature", desc: "A mountain or hill with an opening that can violently erupt with lava, ash, and gases." },
+            { word: "BIRD", hint: "Animal", desc: "A feathered, winged creature that lays eggs and is typically capable of flying through the air." },
+            { word: "LION", hint: "Animal", desc: "A large wild cat native to Africa, known as the king of the jungle with a majestic mane." },
+            { word: "FROG", hint: "Animal", desc: "A small, tailless amphibian with long webbed hind legs optimized for leaping around ponds." },
+            { word: "SHARK", hint: "Ocean Life", desc: "A large ocean predator with multiple rows of sharp teeth and a prominent dorsal fin." },
+            { word: "SPIDER", hint: "Insect/Bug", desc: "An eight-legged arachnid that spins intricate sticky silk webs to trap small insects for food." },
+            { word: "TIGER", hint: "Animal", desc: "A magnificent large wild cat easily recognized by its bright orange coat and dark vertical stripes." },
+            { word: "RABBIT", hint: "Animal", desc: "A small mammal with long ears, long hind legs, and a fluffy tail that loves to munch on carrots." },
+            { word: "DOLPHIN", hint: "Ocean Life", desc: "An intelligent marine mammal known for its playful behavior, clicking noises, and acrobatic leaps." },
+            { word: "EAGLE", hint: "Animal", desc: "A powerful bird of prey with exceptional eyesight, a sharp hooked beak, and massive wingspan." },
+            { word: "TURTLE", hint: "Animal", desc: "A slow-moving reptile protected by a heavy, hard shell that it can retract its body into." },
+            { word: "PENGUIN", hint: "Animal", desc: "A flightless black-and-white seabird found in cold regions that waddles on land and swims expertly." },
+            { word: "ELEPHANT", hint: "Animal", desc: "The largest living land mammal, featuring a long flexible trunk, large floppy ears, and ivory tusks." },
+            { word: "GIRAFFE", hint: "Animal", desc: "The tallest living land animal, boasting an incredibly long neck and a spotted camouflage coat." },
+            { word: "OCTOPUS", hint: "Ocean Life", desc: "A soft-bodied underwater creature with a bulbous head and eight flexible tentacles lined with suckers." },
+            { word: "KANGAROO", hint: "Animal", desc: "An Australian marsupial with powerful hind legs for hopping and a front pouch for carrying its young." },
+            { word: "APPLE", hint: "Fruit", desc: "A round fruit with a red, green, or yellow skin and a crisp, white, juicy interior core." },
+            { word: "BREAD", hint: "Food", desc: "A staple food made from flour, water, and yeast, mixed together and baked into a soft loaf." },
+            { word: "CHEESE", hint: "Food", desc: "A dairy product made from milk curds, coming in varieties like cheddar, mozzarella, and swiss." },
+            { word: "JUICE", hint: "Drink", desc: "A liquid refreshment extracted from squeezing fruits or vegetables, like oranges or apples." },
+            { word: "COFFEE", hint: "Drink", desc: "A popular dark caffeine beverage brewed from roasted beans, often consumed hot in the morning." },
+            { word: "WATER", hint: "Drink", desc: "The transparent, odorless, tasteless liquid essential for all known forms of organic life." },
+            { word: "MANGO", hint: "Fruit", desc: "A juicy tropical stone fruit with a sweet yellow-orange flesh and a smooth green-red skin." },
+            { word: "COOKIE", hint: "Dessert", desc: "A small sweet baked treat, typically flat and round, often packed with chocolate chips." },
+            { word: "HONEY", hint: "Food", desc: "A sweet, sticky, golden fluid made by honeybees collecting nectar from bright flowers." },
+            { word: "SALAD", hint: "Food", desc: "A cold dish composed of mixed raw vegetables, often greens, tossed with a flavorful dressing." },
+            { word: "CHOCOLATE", hint: "Dessert", desc: "A sweet brown food preparation made from roasted cacao seeds, sold as bars, candy, or syrup." },
+            { word: "SANDWICH", hint: "Food", desc: "An easy meal made of meat, cheese, or vegetables placed between two slices of bread." },
+            { word: "SPAGHETTI", hint: "Food", desc: "Long, thin, cylindrical Italian pasta noodles typically served with tomato sauce and meatballs." },
+            { word: "ICE_CREAM", hint: "Dessert", desc: "A frozen sweet food eaten as a snack, made from dairy and flavored with vanilla, cocoa, or fruit." },
+            { word: "BOOK", hint: "Object", desc: "A written or printed work consisting of pages glued together along one side inside a cover." },
+            { word: "DESK", hint: "Furniture", desc: "A piece of furniture with a flat surface used for writing, reading, or working on a computer." },
+            { word: "CHAIR", hint: "Furniture", desc: "A separate seat for one person, typically featuring four sturdy legs and a supportive backrest." },
+            { word: "CLOCK", hint: "Object", desc: "A mechanical or digital device used to measure and display the current time of day." },
+            { word: "LAMP", hint: "Object", desc: "An electrical appliance that holds a light bulb to provide illumination in a room." },
+            { word: "PHONE", hint: "Device", desc: "A handheld electronic device used to call contacts, text friends, surf the web, and run apps." },
+            { word: "WINDOW", hint: "Architecture", desc: "An opening made in a wall fitted with glass to allow light and fresh air to enter a building." },
+            { word: "MIRROR", hint: "Object", desc: "A surface made of glass with an reflective backing that shows a clear image of whatever is in front of it." },
+            { word: "WALLET", hint: "Object", desc: "A flat, small folding case used to carry paper money, credit cards, and identification cards." },
+            { word: "KEYBOARD", hint: "Device", desc: "A panel of keys used to type text into a desktop computer, laptop, or gaming console." },
+            { word: "CAMERA", hint: "Device", desc: "An optical device used to capture visual moments as digital photographs or video files." },
+            { word: "BLANKET", hint: "Object", desc: "A large piece of soft, thick fabric used as a warm covering on a bed or while relaxing." },
+            { word: "BACKPACK", hint: "Object", desc: "A durable bag with shoulder straps worn on the back to carry schoolbooks or hiking gear." },
+            { word: "PENCIL", hint: "Object", desc: "An instrument containing a thin graphite core inside wood, used for writing or drawing." },
+            { word: "HAT", hint: "Clothing", desc: "A shaped covering for the head worn for warmth, protection from the sun, or fashion purposes." },
+            { word: "SHIRT", hint: "Clothing", desc: "A garment worn on the upper part of the body, usually featuring sleeves, buttons, and a collar." },
+            { word: "SHOES", hint: "Clothing", desc: "Outer coverings for the feet, typically made of leather or canvas with a rigid sole." },
+            { word: "COAT", hint: "Clothing", desc: "A long, warm outer garment with sleeves, worn outdoors over other clothes in freezing weather." },
+            { word: "SOCKS", hint: "Clothing", desc: "Soft fabric foot coverings worn directly inside shoes to absorb sweat and prevent blisters." },
+            { word: "JACKET", hint: "Clothing", desc: "A short, lightweight coat reaching down to the waist, worn to protect against cool winds." },
+            { word: "GLOVES", hint: "Clothing", desc: "Coverings for the hands with separate sheaths for each finger, worn to keep hands warm." },
+            { word: "BOOTS", hint: "Clothing", desc: "Sturdy footwear covering the foot and ankle, stretching up the lower leg for rugged work." },
+            { word: "GLASSES", hint: "Accessory", desc: "A pair of lenses framed to sit on the nose and ears to correct or aid a person's vision." },
+            { word: "CAR", hint: "Vehicle", desc: "A four-wheeled road vehicle powered by an engine, used to transport a small number of people." },
+            { word: "BUS", hint: "Vehicle", desc: "A large public transit road vehicle designed to carry many passengers along a fixed route." },
+            { word: "BOAT", hint: "Vehicle", desc: "A small-to-medium watercraft used for traveling across lakes, rivers, or calm coastal waters." },
+            { word: "SHIP", hint: "Vehicle", desc: "A massive seafaring vessel engineered to transport heavy cargo or cruise passengers across oceans." },
+            { word: "TRAIN", hint: "Vehicle", desc: "A connected series of railway cars pulled by a locomotive engine along metal tracks." },
+            { word: "PLANE", hint: "Vehicle", desc: "A winged aircraft powered by jet engines that transports passengers rapidly through the sky." },
+            { word: "ROCKET", hint: "Vehicle", desc: "A spacecraft propelled by burning fuel engines, used to blast astronauts into outer space." },
+            { word: "BICYCLE", hint: "Vehicle", desc: "A light vehicle with two wheels arranged in tandem, propelled by a rider pushing foot pedals." },
+            { word: "HELICOPTER", hint: "Vehicle", desc: "An aircraft without wings that flies using large overhead horizontal rotating blades." },
+            { word: "BALL", hint: "Sports Equipment", desc: "A solid or hollow spherical object kicked, thrown, or hit with a bat across various sports." },
+            { word: "CHESS", hint: "Board Game", desc: "A strategic two-player board game played with pieces like kings, queens, knights, and pawns." },
+            { word: "PIANO", hint: "Musical Instrument", desc: "A large musical instrument with a row of black and white keys that strike internal strings with hammers." },
+            { word: "DRUMS", hint: "Musical Instrument", desc: "A set of percussion instruments played by striking membrane skins with wooden drumsticks." },
+            { word: "SOCCER", hint: "Sport", desc: "A global team sport played on a field where players try to kick a round ball into a net without using hands." },
+            { word: "TENNIS", hint: "Sport", desc: "A racket sport played over a central net on a court, hitting a bright yellow fuzzy ball back and forth." },
+            { word: "HOCKEY", hint: "Sport", desc: "A fast-paced team game played on ice or a field where sticks are used to shoot a puck or ball into a goal." },
+            { word: "RUNNING", hint: "Exercise", desc: "The action or sport of moving rapidly on foot at a pace faster than a standard walk." },
+            { word: "GAMING", hint: "Hobby", desc: "The activity of playing interactive video games on a specialized console, mobile device, or PC setup." },
+            { word: "COOKING", hint: "Hobby", desc: "The practice or skill of preparing food by combining ingredients and applying heat to make meals." },
+            { word: "PAINTING", hint: "Hobby", desc: "The creative process of applying pigment or color fluids onto a canvas surface to make art." },
+            { word: "HOME", hint: "Place", desc: "The house, apartment, or shelter where an individual or family permanently resides." },
+            { word: "PARK", hint: "Place", desc: "A public green space in a town or city maintained for recreation, walking, and relaxation." },
+            { word: "SCHOOL", hint: "Place", desc: "An institution designed to provide learning spaces and instruction for students by teachers." },
+            { word: "MUSEUM", hint: "Place", desc: "A building where historical, scientific, artistic, or cultural objects are preserved and exhibited." },
+            { word: "MARKET", hint: "Place", desc: "A public gathering place or building where provisions, food, and merchant items are bought and sold." },
+            { word: "CASTLE", hint: "Place", desc: "A massive medieval fortified building with stone walls and towers built for royalty or defense." },
+            { word: "STATION", hint: "Place", desc: "A stopping place along a transit line where passenger trains or buses regularly pick up travelers." },
+            { word: "THEATER", hint: "Place", desc: "A building or outdoor area where plays, dramatic performances, or movies are shown to audiences." },
+            { word: "LIBRARY", hint: "Place", desc: "A quiet room or building containing collections of books and periodicals for reading or borrowing." }
+        ];
+
+        let currentLevel = parseInt(localStorage.getItem('hangman_level')) || 1;
+        let coins = parseInt(localStorage.getItem('hangman_coins')) || 100;
+        let isMuted = localStorage.getItem('hangman_muted') === 'true'; // Audio state tracking
+        let trackingSequence = [];
+        
+        let currentWordData = {};
+        let currentWord = "";
+        let guessedLetters = [];
+        let wrongGuesses = 0;
+        const maxGuesses = 6;
+        const HINT_COST = 50;
+
+        let audioCtx = null;
+        function playSound(type) {
+            if (isMuted) return; // Halt output immediately if mute configuration is active
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.2); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6); osc.start(now); osc.stop(now + 0.6);
+                } else if (type === 'lose') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.5); gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(now); osc.stop(now + 0.5);
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        const wordDisplay = document.getElementById("word-display");
+        const categoryDisplay = document.getElementById("category-display");
+        const hintDisplay = document.getElementById("hint-display");
+        const levelBadge = document.getElementById("level-badge");
+        const coinCount = document.getElementById("coin-count");
+        const hintPowerupBtn = document.getElementById("hint-powerup-btn");
+        const keyboardContainer = document.getElementById("keyboard");
+        const modalOverlay = document.getElementById("modal-overlay");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const wordDescription = document.getElementById("word-description");
+        const restartBtn = document.getElementById("btn-restart");
+        const fullCharacterGroup = document.getElementById("full-character");
+        const muteToggleBtn = document.getElementById("mute-toggle-btn");
+
+        const canvas = document.getElementById("particle-canvas");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 5 + 3;
+                this.speedX = (Math.random() - 0.5) * 8;
+                this.speedY = (Math.random() - 0.5) * 8 - 2;
+                this.color = color; this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.02;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.speedY += 0.1; this.alpha -= this.decay; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            }
+        }
+
+        function triggerExplosion(element, customColor) {
+            if (!element) return;
+            const rect = element.getBoundingClientRect();
+            const posX = rect.left + rect.width / 2;
+            const posY = rect.top + rect.height / 2;
+            const colors = customColor ? [customColor] : ["#4cd137", "#e94560", "#00d2d3", "#ffd700"];
+            for (let i = 0; i < 15; i++) {
+                particles.push(new Particle(posX, posY, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function getSequenceMatrix() {
+            let savedSeq = localStorage.getItem('hangman_sequence');
+            if (savedSeq) {
+                trackingSequence = JSON.parse(savedSeq);
+            }
+            
+            if (!trackingSequence || trackingSequence.length !== globalWordPool.length) {
+                trackingSequence = Array.from({length: globalWordPool.length}, (_, i) => i);
+                for (let i = trackingSequence.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [trackingSequence[i], trackingSequence[j]] = [trackingSequence[j], trackingSequence[i]];
+                }
+                localStorage.setItem('hangman_sequence', JSON.stringify(trackingSequence));
+            }
+        }
+
+        function updateDashboardUI() {
+            coinCount.textContent = coins;
+            levelBadge.textContent = `Level ${currentLevel}`;
+            muteToggleBtn.textContent = isMuted ? "🔇" : "🔊";
+            
+            localStorage.setItem('hangman_coins', coins);
+            localStorage.setItem('hangman_level', currentLevel);
+            localStorage.setItem('hangman_muted', isMuted);
+            
+            const remaining = [...currentWord].filter(l => !guessedLetters.includes(l));
+            hintPowerupBtn.disabled = (coins < HINT_COST || remaining.length <= 1);
+        }
+
+        // Action binding event hook for clicking the Mute button element
+        muteToggleBtn.addEventListener("click", () => {
+            isMuted = !isMuted;
+            updateDashboardUI();
+        });
+
+        function initGame() {
+            getSequenceMatrix();
+            const sequenceIndex = (currentLevel - 1) % globalWordPool.length;
+            
+            if (currentLevel > 1 && sequenceIndex === 0 && guessedLetters.length === 0) {
+                localStorage.removeItem('hangman_sequence');
+                getSequenceMatrix();
+            }
+
+            const activeWordIndex = trackingSequence[sequenceIndex];
+            currentWordData = globalWordPool[activeWordIndex];
+            currentWord = currentWordData.word.toUpperCase();
+            guessedLetters = [];
+            wrongGuesses = 0;
+
+            categoryDisplay.innerHTML = `Category: <b>${currentWordData.hint}</b>`;
+            hintDisplay.textContent = currentWordData.desc;
+            
+            modalOverlay.classList.remove("active");
+            fullCharacterGroup.classList.remove("floating-dead-man");
+            document.querySelectorAll(".figure-part").forEach(p => p.classList.remove("visible", "filled"));
+
+            renderWord();
+            renderKeyboard();
+            updateDashboardUI();
+        }
+
+        function renderWord() {
+            wordDisplay.innerHTML = "";
+            [...currentWord].forEach(letter => {
+                const box = document.createElement("div");
+                box.classList.add("letter-box");
+                if (guessedLetters.includes(letter)) {
+                    box.textContent = letter;
+                    box.classList.add("revealed");
+                }
+                wordDisplay.appendChild(box);
+            });
+            checkGameStatus();
+        }
+
+        function renderKeyboard() {
+            keyboardContainer.innerHTML = "";
+            [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].forEach(letter => {
+                const button = document.createElement("button");
+                button.classList.add("key");
+                button.setAttribute("data-key", letter);
+                button.textContent = letter;
+                if(guessedLetters.includes(letter)) {
+                    button.disabled = true;
+                    button.classList.add(currentWord.includes(letter) ? "correct" : "wrong");
+                }
+                button.addEventListener("click", () => handleGuess(letter));
+                keyboardContainer.appendChild(button);
+            });
+        }
+
+        function handleGuess(letter) {
+            if (guessedLetters.includes(letter) || wrongGuesses >= maxGuesses) return;
+            guessedLetters.push(letter);
+            const keyBtn = document.querySelector(`.key[data-key="${letter}"]`);
+
+            if (currentWord.includes(letter)) {
+                playSound('correct');
+                if (keyBtn) triggerExplosion(keyBtn, "#4cd137");
+                renderWord();
+            } else {
+                playSound('wrong');
+                if (keyBtn) triggerExplosion(keyBtn, "#475569");
+                const currentPart = document.getElementById(`part-${wrongGuesses}`);
+                if (currentPart) currentPart.classList.add("visible");
+                wrongGuesses++;
+                checkGameStatus();
+            }
+            renderKeyboard();
+            updateDashboardUI();
+        }
+
+        hintPowerupBtn.addEventListener("click", () => {
+            if (coins < HINT_COST) return;
+            const unrevealed = [...currentWord].filter(l => !guessedLetters.includes(l));
+            if (unrevealed.length > 0) {
+                const randomLetter = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                coins -= HINT_COST;
+                triggerExplosion(hintPowerupBtn, "#ffd700");
+                handleGuess(randomLetter);
+            }
+        });
+
+        function checkGameStatus() {
+            const isWon = [...currentWord].every(l => guessedLetters.includes(l));
+            if (isWon) { endGame(true); return; }
+            if (wrongGuesses >= maxGuesses) endGame(false);
+        }
+
+        function endGame(isWin) {
+            if (isWin) {
+                playSound('win');
+                modalTitle.textContent = "Cleared! 🎉";
+                modalTitle.className = "modal-title win";
+                coins += 40;
+                modalMessage.innerHTML = `Great job! Uncovered <b>${currentWord}</b>!<br><span style="color:var(--gold-color)">🪙 +40 Victory Bonus!</span>`;
+                wordDescription.innerHTML = `Category classification: <b>${currentWordData.hint}</b>`;
+                currentLevel++;
+                restartBtn.textContent = `Start Level ${currentLevel}`;
+            } else {
+                playSound('lose');
+                document.querySelectorAll(".figure-part").forEach(p => p.classList.add("visible", "filled"));
+                setTimeout(() => fullCharacterGroup.classList.add("floating-dead-man"), 300);
+                modalTitle.textContent = "Defeat 💀";
+                modalTitle.className = "modal-title lose";
+                modalMessage.innerHTML = `The correct word was: 💔`;
+                restartBtn.textContent = "Try Level Again";
+            }
+            localStorage.setItem('hangman_level', currentLevel);
+            localStorage.setItem('hangman_coins', coins);
+            
+            setTimeout(() => modalOverlay.classList.add("active"), 800);
+        }
+
+        window.addEventListener("keydown", (e) => {
+            const letter = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(letter) && !modalOverlay.classList.contains("active")) {
+                handleGuess(letter);
+            }
+        });
+
+        restartBtn.addEventListener("click", initGame);
+        initGame();
+    </script>
+</body>
+</html>
