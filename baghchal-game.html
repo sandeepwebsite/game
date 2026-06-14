@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaghChal (Connected Edition)</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a1f;
+            --panel-color: #2a2a35;
+            --board-color: #dcb382;
+            --line-color: #2c251e;
+            --tiger-color: #ff5252;
+            --goat-color: #40a0ff;
+            --selected-color: #ffd54f;
+            --last-move-color: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        h2 { margin-top: 5px; margin-bottom: 15px; }
+
+        /* Setup / Menu Screen */
+        #menu-screen {
+            background-color: var(--panel-color);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            text-align: center;
+            max-width: 440px;
+            width: 90%;
+            border: 1px solid #3f3f52;
+        }
+
+        .mode-section {
+            background: rgba(0,0,0,0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid #444;
+        }
+
+        .mode-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffd54f;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Difficulty Toggle Wrapper */
+        .diff-container {
+            margin: 10px 0;
+            text-align: left;
+        }
+        .diff-label {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 600;
+        }
+        .diff-selector {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .diff-btn {
+            flex: 1;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #888;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .diff-btn.active[data-diff="easy"] { background-color: #2ecc71; color: #fff; }
+        .diff-btn.active[data-diff="medium"] { background-color: #f39c12; color: #fff; }
+        .diff-btn.active[data-diff="hard"] { background-color: #e74c3c; color: #fff; }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .btn-goat { background-color: var(--goat-color); border-bottom: 3px solid #1e60a5; }
+        .btn-tiger { background-color: var(--tiger-color); border-bottom: 3px solid #b32d2d; }
+        .btn-neutral { background-color: #34495e; border-bottom: 3px solid #2c3e50; }
+        .menu-btn:active { transform: scale(0.98); }
+        .menu-btn:hover { filter: brightness(1.1); }
+
+        /* Connection Inputs */
+        .online-ui {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .online-input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #15151a;
+            color: #fff;
+            text-align: center;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .status-text {
+            font-size: 0.85rem;
+            color: #2ecc71;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+
+        /* Clickable Copy Badge Box */
+        .copy-badge {
+            display: inline-block;
+            background: #1c1c24;
+            border: 1px dashed #2ecc71;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-top: 6px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.05rem;
+            color: #2ecc71;
+            transition: background 0.2s;
+        }
+        .copy-badge:hover {
+            background: rgba(46, 204, 113, 0.15);
+        }
+
+        /* Game Screen Layout */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #top-bar {
+            display: flex;
+            width: 400px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .audio-btn {
+            background: var(--panel-color);
+            border: 1px solid #444;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        #status-panel {
+            background-color: var(--panel-color);
+            width: 360px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 1px solid #3f3f52;
+        }
+
+        #turn-indicator { font-size: 1.15rem; font-weight: 600; margin-bottom: 5px; }
+        #score-board { font-size: 0.95rem; color: #aaa; }
+
+        /* Board Container with Internal Padding for Edge Overlap */
+        #game-container {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            background-color: var(--board-color);
+            border: 4px solid var(--line-color);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            padding: 25px;
+        }
+
+        #board-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #board-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #interactive-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        /* Hotspot node click-box elements targeting exact lines */
+        .node-hotspot {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 6;
+        }
+
+        .node-hotspot.last-move-source { background: rgba(255, 255, 255, 0.2); }
+        .node-hotspot.last-move-target { background: rgba(255, 255, 255, 0.35); }
+
+        .node-hotspot.valid-move::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background-color: rgba(46, 204, 113, 0.85);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        /* Game Pieces Positioned Exactly Over Cross Nodes */
+        .piece {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.35rem;
+            transform: translate(-50%, -50%);
+            transition: top 0.25s cubic-bezier(0.25, 1, 0.5, 1), left 0.25s cubic-bezier(0.25, 1, 0.5, 1), transform 0.1s;
+            z-index: 10;
+            box-shadow: 0 5px 9px rgba(0,0,0,0.4);
+            cursor: pointer;
+            pointer-events: none;
+        }
+
+        .piece.tiger { background: radial-gradient(circle at 30% 30%, #ff7676, var(--tiger-color)); border: 2px solid #700; }
+        .piece.goat { background: radial-gradient(circle at 30% 30%, #70baff, var(--goat-color)); border: 2px solid #003366; }
+        
+        .node-hotspot.active-selection { z-index: 12; }
+        .node-hotspot.active-selection + .piece { 
+            outline: 4px solid var(--selected-color); 
+            transform: translate(-50%, -50%) scale(1.15); 
+            z-index: 20; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6); 
+        }
+
+        /* Action Buttons Row */
+        #action-row {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            width: 430px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--panel-color);
+            color: white;
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        .control-btn:hover { background-color: #383847; }
+        .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Custom Modal Popup Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active { display: flex; opacity: 1; }
+
+        .modal-content {
+            background-color: var(--panel-color);
+            border: 2px solid #444;
+            padding: 30px 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 85%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-title { font-size: 2.2rem; font-weight: bold; margin-bottom: 10px; }
+        .modal-title.win { color: #2ecc71; text-shadow: 0 0 15px rgba(46, 204, 113, 0.3); }
+        .modal-title.lose { color: #e74c3c; text-shadow: 0 0 15px rgba(231, 76, 60, 0.3); }
+        .modal-desc { color: #ccc; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.5; }
+        .modal-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .modal-btn:hover { background-color: #27ae60; }
+        .modal-btn:active { transform: scale(0.97); }
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen">
+        <h2>Bagha Chheli (BaghChal)</h2>
+        
+        <div class="mode-section">
+            <div class="mode-title">🤖 Single Player vs AI</div>
+            <div class="diff-container">
+                <span class="diff-label">AI DIFFICULTY:</span>
+                <div class="diff-selector">
+                    <button class="diff-btn active" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
+                    <button class="diff-btn" data-diff="medium" onclick="setDifficulty('medium')">Medium</button>
+                    <button class="diff-btn" data-diff="hard" onclick="setDifficulty('hard')">Hard</button>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="menu-btn btn-goat" onclick="startLocalGame('vsAI', 'G')">As Goats 🐐</button>
+                <button class="menu-btn btn-tiger" onclick="startLocalGame('vsAI', 'T')">As Tigers 🐯</button>
+            </div>
+        </div>
+
+        <div class="mode-section">
+            <div class="mode-title">👥 Local 2-Player (Pass & Play)</div>
+            <button class="menu-btn btn-neutral" onclick="startLocalGame('local2P', null)">Start Local Match</button>
+        </div>
+
+        <div class="mode-section">
+            <div class="mode-title">🌐 Online Multiplayer (P2P)</div>
+            <button id="btn-host" class="menu-btn btn-neutral" onclick="initOnlineRoom(true)">Host Online Match</button>
+            
+            <div class="online-ui">
+                <input type="text" id="join-id-input" class="online-input" placeholder="Enter Friend's Room ID">
+                <button id="btn-join" class="menu-btn btn-neutral" style="margin:0;" onclick="initOnlineRoom(false)">Join Room ID</button>
+            </div>
+            <div id="network-status" class="status-text" style="color: #aaa;"></div>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <div id="top-bar">
+            <h1 id="game-title-header" style="font-size: 1.1rem; color: #aaa; margin:0;">BaghChal</h1>
+            <button id="audio-toggle" class="audio-btn" onclick="toggleMute()">Volume: ON 🔊</button>
+        </div>
+
+        <div id="status-panel">
+            <div id="turn-indicator">Goat's Turn</div>
+            <div id="score-board">Placing Phase</div>
+        </div>
+
+        <div id="game-container">
+            <div id="board-wrapper">
+                <svg id="board-lines" viewBox="0 0 400 400" preserveAspectRatio="none">
+                    <line x1="0" y1="0" x2="400" y2="0" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="0" y1="100" x2="400" y2="100" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="0" y1="300" x2="400" y2="300" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="0" y1="400" x2="400" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+
+                    <line x1="0" y1="0" x2="0" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="100" y1="0" x2="100" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="200" y1="0" x2="200" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="300" y1="0" x2="300" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+                    <line x1="400" y1="0" x2="400" y2="400" stroke="var(--line-color)" stroke-width="4"/>
+
+                    <line x1="0" y1="0" x2="400" y2="400" stroke="var(--line-color)" stroke-width="3"/>
+                    <line x1="400" y1="0" x2="0" y2="400" stroke="var(--line-color)" stroke-width="3"/>
+                    
+                    <line x1="200" y1="0" x2="0" y2="200" stroke="var(--line-color)" stroke-width="3"/>
+                    <line x1="200" y1="0" x2="400" y2="200" stroke="var(--line-color)" stroke-width="3"/>
+                    <line x1="0" y1="200" x2="200" y2="400" stroke="var(--line-color)" stroke-width="3"/>
+                    <line x1="400" y1="200" x2="200" y2="400" stroke="var(--line-color)" stroke-width="3"/>
+                </svg>
+
+                <div id="interactive-layer"></div>
+            </div>
+        </div>
+
+        <div id="action-row">
+            <button id="undo-btn" class="control-btn" onclick="handleUndoClick()" disabled>Undo Move ↩</button>
+            <button class="control-btn" onclick="returnToMenu()">Quit Game 🚪</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-title" class="modal-title">Victory!</div>
+            <div id="modal-desc" class="modal-desc">Description of match results.</div>
+            <button class="modal-btn" onclick="closeModalAndExit()">Play Again 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_SIZE = 5;
+        let board = []; 
+        let turn = 'G'; 
+        let gameMode = 'vsAI'; 
+        let playerSide = 'G';  
+        let currentDifficulty = 'easy';
+        let goatsToPlace = 20;
+        let goatsEaten = 0;
+        let selectedPiece = null; 
+        let validMoves = [];
+        let isGameOver = false;
+        let isMuted = false;
+
+        let historyStack = [];
+        let lastMoveVisual = null; 
+
+        let peer = null;
+        let conn = null;
+        let activeRoomId = "";
+
+        const interactiveLayer = document.getElementById('interactive-layer');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const scoreBoard = document.getElementById('score-board');
+        const menuScreen = document.getElementById('menu-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const undoBtn = document.getElementById('undo-btn');
+        const netStatus = document.getElementById('network-status');
+        
+        const gameOverModal = document.getElementById('game-over-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'place') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'capture') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            } else if (type === 'select') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            }
+        }
+
+        function setDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('data-diff') === level) btn.classList.add('active');
+            });
+        }
+
+        function loadMuteSettings() {
+            const saved = localStorage.getItem('baghChalMute');
+            isMuted = saved === 'true';
+            document.getElementById('audio-toggle').innerText = isMuted ? "Volume: OFF 🔇" : "Volume: ON 🔊";
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('baghChalMute', isMuted);
+            document.getElementById('audio-toggle').innerText = isMuted ? "Volume: OFF 🔇" : "Volume: ON 🔊";
+        }
+
+        function accurateHasDiagonal(r, c) {
+            return (r + c) % 2 === 0;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedDiff = localStorage.getItem('bc_diff') || 'easy';
+            setDifficulty(savedDiff);
+            loadMuteSettings();
+        });
+
+        function startLocalGame(mode, side) {
+            gameMode = mode;
+            playerSide = side; 
+            menuScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+
+            let title = "BaghChal (Local 2P)";
+            if (gameMode === 'vsAI') {
+                title = `BaghChal (vs AI - ${currentDifficulty.toUpperCase()})`;
+                localStorage.setItem('bc_diff', currentDifficulty);
+            }
+            document.getElementById('game-title-header').innerText = title;
+            initGame();
+        }
+
+        function initOnlineRoom(isHost) {
+            gameMode = 'onlineP2P';
+            netStatus.style.color = '#f1c40f';
+            activeRoomId = "";
+            
+            if (peer) { peer.destroy(); }
+            peer = new Peer();
+
+            if (isHost) {
+                playerSide = 'G'; 
+                netStatus.innerText = "Generating connection ID...";
+                
+                peer.on('open', (id) => {
+                    activeRoomId = id;
+                    netStatus.style.color = '#fff';
+                    netStatus.innerHTML = `
+                        <div style="margin-bottom: 4px; color: #aaa; font-size:0.85rem;">Room active! Click code below to copy:</div>
+                        <div class="copy-badge" onclick="copyRoomIdToClipboard()">${id} 📋</div>
+                        <div id="copy-confirm" style="font-size:0.8rem; color:#2ecc71; margin-top:4px; opacity:0; transition:opacity 0.2s;">Copied to clipboard!</div>
+                    `;
+                });
+
+                peer.on('connection', (connection) => {
+                    conn = connection;
+                    setupNetworkEvents();
+                    launchOnlineGame();
+                });
+            } else {
+                playerSide = 'T'; 
+                const targetId = document.getElementById('join-id-input').value.trim();
+                if (!targetId) {
+                    netStatus.innerText = "Error: Room ID missing.";
+                    netStatus.style.color = '#e74c3c';
+                    return;
+                }
+                netStatus.innerText = "Connecting to room host...";
+                
+                peer.on('open', () => {
+                    conn = peer.connect(targetId);
+                    setupNetworkEvents();
+                });
+            }
+
+            peer.on('error', (err) => {
+                netStatus.innerText = "Network Error: " + err.type;
+                netStatus.style.color = '#e74c3c';
+            });
+        }
+
+        /* Clipboard Copy Utility Engine */
+        function copyRoomIdToClipboard() {
+            if (!activeRoomId) return;
+            navigator.clipboard.writeText(activeRoomId).then(() => {
+                const confirmation = document.getElementById('copy-confirm');
+                if (confirmation) {
+                    confirmation.style.opacity = '1';
+                    setTimeout(() => { confirmation.style.opacity = '0'; }, 1800);
+                }
+            }).catch(err => {
+                console.error('Could not copy room token: ', err);
+            });
+        }
+
+        function setupNetworkEvents() {
+            conn.on('open', () => {
+                launchOnlineGame();
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'SYNC_MOVE') {
+                    board = data.board;
+                    turn = data.turn;
+                    goatsToPlace = data.goatsToPlace;
+                    goatsEaten = data.goatsEaten;
+                    lastMoveVisual = data.lastMoveVisual;
+                    
+                    playSound(data.soundEvent);
+                    renderUnifiedBoard();
+                    updateStatusAndControls();
+                } else if (data.type === 'UNDO') {
+                    board = data.board;
+                    turn = data.turn;
+                    goatsToPlace = data.goatsToPlace;
+                    goatsEaten = data.goatsEaten;
+                    lastMoveVisual = data.lastMoveVisual;
+                    selectedPiece = null;
+                    validMoves = [];
+                    
+                    playSound('select');
+                    renderUnifiedBoard();
+                    updateStatusAndControls();
+                }
+            });
+
+            conn.on('close', () => {
+                alert("Opponent disconnected from the network.");
+                returnToMenu();
+            });
+        }
+
+        function launchOnlineGame() {
+            menuScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            document.getElementById('game-title-header').innerText = `BaghChal Online (${playerSide === 'G' ? 'Goat' : 'Tiger'})`;
+            initGame();
+        }
+
+        function returnToMenu() {
+            gameScreen.style.display = 'none';
+            menuScreen.style.display = 'block';
+            gameOverModal.classList.remove('active');
+            if (peer) {
+                peer.destroy();
+                peer = null;
+                conn = null;
+            }
+            netStatus.innerHTML = "";
+            activeRoomId = "";
+        }
+
+        function showGameOverModal(description) {
+            modalTitle.innerText = "Game Over! 🏁";
+            modalTitle.className = "modal-title win";
+            modalDesc.innerText = description;
+            gameOverModal.classList.add('active');
+        }
+
+        function closeModalAndExit() {
+            gameOverModal.classList.remove('active');
+            returnToMenu();
+        }
+
+        function initGame() {
+            board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+            turn = 'G'; 
+            goatsToPlace = 20;
+            goatsEaten = 0;
+            selectedPiece = null;
+            validMoves = [];
+            isGameOver = false;
+            historyStack = [];
+            lastMoveVisual = null;
+
+            board[0][0] = 'T'; board[0][4] = 'T';
+            board[4][0] = 'T'; board[4][4] = 'T';
+
+            renderUnifiedBoard();
+            updateStatusAndControls();
+
+            if (gameMode === 'vsAI' && playerSide === 'T') {
+                setTimeout(makeComputerMove, 500);
+            }
+        }
+
+        function renderUnifiedBoard() {
+            interactiveLayer.innerHTML = '';
+            
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const topPct = `${r * 25}%`;
+                    const leftPct = `${c * 25}%`;
+
+                    const hotspot = document.createElement('div');
+                    hotspot.classList.add('node-hotspot');
+                    hotspot.style.top = topPct;
+                    hotspot.style.left = leftPct;
+                    
+                    if (lastMoveVisual) {
+                        if (lastMoveVisual.fromR === r && lastMoveVisual.fromC === c) hotspot.classList.add('last-move-source');
+                        if (lastMoveVisual.toR === r && lastMoveVisual.toC === c) hotspot.classList.add('last-move-target');
+                    }
+
+                    if (isMyTurn() && validMoves.some(m => m.r === r && m.c === c)) {
+                        hotspot.classList.add('valid-move');
+                    }
+
+                    if (selectedPiece && selectedPiece.r === r && selectedPiece.c === c) {
+                        hotspot.classList.add('active-selection');
+                    }
+
+                    hotspot.addEventListener('click', () => handleCellClick(r, c));
+                    interactiveLayer.appendChild(hotspot);
+
+                    if (board[r][c]) {
+                        const p = document.createElement('div');
+                        p.classList.add('piece', board[r][c] === 'T' ? 'tiger' : 'goat');
+                        p.innerText = board[r][c] === 'T' ? '🐯' : '🐐';
+                        p.style.top = topPct;
+                        p.style.left = leftPct;
+
+                        interactiveLayer.appendChild(p);
+                    }
+                }
+            }
+        }
+
+        function isMyTurn() {
+            if (isGameOver) return false;
+            if (gameMode === 'local2P') return true; 
+            return (turn === playerSide);
+        }
+
+        function saveHistoryState() {
+            const boardClone = board.map(row => [...row]);
+            historyStack.push({
+                board: boardClone,
+                turn: turn,
+                goatsToPlace: goatsToPlace,
+                goatsEaten: goatsEaten,
+                lastMoveVisual: lastMoveVisual ? {...lastMoveVisual} : null
+            });
+        }
+
+        function handleUndoClick() {
+            if (!isMyTurn() || gameMode === 'onlineP2P') return; 
+            if (historyStack.length < (gameMode === 'vsAI' ? 2 : 1)) return;
+            
+            if (gameMode === 'vsAI') {
+                historyStack.pop(); 
+                const preservedState = historyStack.pop();
+                restoreState(preservedState);
+            } else {
+                const preservedState = historyStack.pop();
+                restoreState(preservedState);
+            }
+        }
+
+        function restoreState(state) {
+            board = state.board;
+            turn = state.turn;
+            goatsToPlace = state.goatsToPlace;
+            goatsEaten = state.goatsEaten;
+            lastMoveVisual = state.lastMoveVisual;
+            selectedPiece = null;
+            validMoves = [];
+            
+            playSound('select');
+            renderUnifiedBoard();
+            updateStatusAndControls();
+        }
+
+        function updateStatusAndControls() {
+            let phaseText = goatsToPlace > 0 ? " (Placing)" : " (Moving)";
+            if (isGameOver) {
+                undoBtn.disabled = true;
+                return;
+            }
+
+            if (isMyTurn()) {
+                turnIndicator.innerText = (gameMode === 'local2P') ? `${turn === 'G' ? 'Goat' : 'Tiger'} Turn (Local)` : "Your Turn ✨";
+                turnIndicator.style.color = turn === 'G' ? 'var(--goat-color)' : 'var(--tiger-color)';
+            } else {
+                turnIndicator.innerText = (gameMode === 'vsAI') ? "AI thinking..." : "Waiting for opponent...";
+                turnIndicator.style.color = '#aaa';
+            }
+
+            scoreBoard.innerText = `Goats Left: ${goatsToPlace} | Eaten: ${goatsEaten}/5 ${turn === 'G' ? phaseText : ''}`;
+            
+            if (gameMode === 'onlineP2P') {
+                undoBtn.style.display = 'none'; 
+            } else {
+                undoBtn.style.display = 'block';
+                undoBtn.disabled = (gameMode === 'vsAI') ? historyStack.length < 2 : historyStack.length < 1;
+            }
+
+            checkWinConditions();
+        }
+
+        function handleCellClick(r, c) {
+            if (!isMyTurn() || isGameOver) return;
+            const clickedPiece = board[r][c];
+
+            if (turn === 'G' && goatsToPlace > 0) {
+                if (!clickedPiece) {
+                    if (gameMode !== 'onlineP2P') saveHistoryState();
+                    board[r][c] = 'G';
+                    goatsToPlace--;
+                    lastMoveVisual = { fromR: null, fromC: null, toR: r, toC: c };
+                    executeTurnTransition('place');
+                }
+                return;
+            }
+
+            if (clickedPiece === turn) {
+                selectedPiece = { r, c };
+                validMoves = getLegalMoves(r, c);
+                playSound('select');
+                renderUnifiedBoard();
+                return;
+            }
+
+            const move = validMoves.find(m => m.r === r && m.c === c);
+            if (move) {
+                if (gameMode !== 'onlineP2P') saveHistoryState();
+                lastMoveVisual = { fromR: selectedPiece.r, fromC: selectedPiece.c, toR: r, toC: c };
+                
+                board[r][c] = turn;
+                board[selectedPiece.r][selectedPiece.c] = null;
+                let soundUsed = 'place';
+
+                if (turn === 'T' && move.isJump) {
+                    board[move.jumpedR][move.jumpedC] = null;
+                    goatsEaten++;
+                    soundUsed = 'capture';
+                }
+
+                executeTurnTransition(soundUsed);
+            } else {
+                selectedPiece = null;
+                validMoves = [];
+                renderUnifiedBoard();
+            }
+        }
+
+        function executeTurnTransition(soundEvent) {
+            playSound(soundEvent);
+            selectedPiece = null;
+            validMoves = [];
+            turn = turn === 'G' ? 'T' : 'G';
+
+            if (gameMode === 'onlineP2P' && conn) {
+                conn.send({
+                    type: 'SYNC_MOVE',
+                    board: board,
+                    turn: turn,
+                    goatsToPlace: goatsToPlace,
+                    goatsEaten: goatsEaten,
+                    lastMoveVisual: lastMoveVisual,
+                    soundEvent: soundEvent
+                });
+            }
+
+            renderUnifiedBoard();
+            updateStatusAndControls();
+
+            if (!isGameOver && gameMode === 'vsAI' && turn !== playerSide) {
+                setTimeout(makeComputerMove, 600);
+            }
+        }
+
+        function getLegalMoves(r, c, customBoard = null) {
+            const currentBoard = customBoard || board;
+            const moves = [];
+            const piece = currentBoard[r][c];
+            if (!piece) return [];
+
+            const directions = [
+                {dr: -1, dc: 0, diag: false}, {dr: 1, dc: 0, diag: false},
+                {dr: 0, dc: -1, diag: false}, {dr: 0, dc: 1, diag: false},
+                {dr: -1, dc: -1, diag: true}, {dr: -1, dc: 1, diag: true},
+                {dr: 1, dc: -1, diag: true},  {dr: 1, dc: 1, diag: true}
+            ];
+
+            directions.forEach(({dr, dc, diag}) => {
+                if (diag && !accurateHasDiagonal(r, c)) return;
+
+                const nr = r + dr;
+                const nc = c + dc;
+
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                    if (!currentBoard[nr][nc]) {
+                        moves.push({ r: nr, c: nc, isJump: false });
+                    } 
+                    else if (piece === 'T' && currentBoard[nr][nc] === 'G') {
+                        const jr = nr + dr;
+                        const jc = nc + dc;
+                        if (jr >= 0 && jr < BOARD_SIZE && jc >= 0 && jc < BOARD_SIZE && !currentBoard[jr][jc]) {
+                            moves.push({ r: jr, c: jc, isJump: true, jumpedR: nr, jumpedC: nc });
+                        }
+                    }
+                }
+            });
+            return moves;
+        }
+
+        function makeComputerMove() {
+            if (isGameOver) return;
+            let chosenMove = null;
+
+            if (turn === 'G') {
+                if (goatsToPlace > 0) {
+                    let emptyCells = [];
+                    for (let r = 0; r < BOARD_SIZE; r++) {
+                        for (let c = 0; c < BOARD_SIZE; c++) {
+                            if (!board[r][c]) emptyCells.push({r, c});
+                        }
+                    }
+
+                    if (currentDifficulty === 'easy') {
+                        emptyCells.sort((a,b) => (Math.abs(2-a.r)+Math.abs(2-a.c)) - (Math.abs(2-b.r)+Math.abs(2-b.c)));
+                        chosenMove = { type: 'place', to: emptyCells[Math.floor(Math.random() * Math.min(5, emptyCells.length))] };
+                    } else {
+                        let bestScore = -Infinity;
+                        let pool = [];
+                        emptyCells.forEach(cell => {
+                            let score = 0;
+                            score += (4 - (Math.abs(2-cell.r) + Math.abs(2-cell.c))) * 2;
+                            board[cell.r][cell.c] = 'G';
+                            let tigerJumps = countTotalTigerJumps();
+                            board[cell.r][cell.c] = null;
+                            score -= tigerJumps * 45;
+                            
+                            if(currentDifficulty === 'hard') {
+                                score += getAdjacencyCount(cell.r, cell.c, 'G') * 5;
+                            }
+                            if (score > bestScore) { bestScore = score; pool = [cell]; }
+                            else if (score === bestScore) { pool.push(cell); }
+                        });
+                        chosenMove = { type: 'place', to: pool[Math.floor(Math.random() * pool.length)] };
+                    }
+                } else {
+                    let allGoatMoves = [];
+                    for (let r = 0; r < BOARD_SIZE; r++) {
+                        for (let c = 0; c < BOARD_SIZE; c++) {
+                            if (board[r][c] === 'G') {
+                                getLegalMoves(r, c).forEach(m => allGoatMoves.push({from: {r, c}, to: m}));
+                            }
+                        }
+                    }
+
+                    if (currentDifficulty === 'easy' || allGoatMoves.length === 0) {
+                        chosenMove = allGoatMoves[Math.floor(Math.random() * allGoatMoves.length)];
+                    } else {
+                        let bestScore = -Infinity;
+                        let pool = [];
+                        allGoatMoves.forEach(move => {
+                            board[move.from.r][move.from.c] = null;
+                            board[move.to.r][move.to.c] = 'G';
+                            let score = -countTotalTigerJumps() * 50;
+                            let tigerMovesLeft = countTotalTigerMoves();
+                            if (tigerMovesLeft === 0) score += 10000;
+                            score += (4 - tigerMovesLeft) * 15;
+                            board[move.to.r][move.to.c] = null;
+                            board[move.from.r][move.from.c] = 'G';
+
+                            if (score > bestScore) { bestScore = score; pool = [move]; }
+                            else if (score === bestScore) { pool.push(move); }
+                        });
+                        chosenMove = pool[Math.floor(Math.random() * pool.length)];
+                    }
+                }
+
+                if (chosenMove) {
+                    saveHistoryState();
+                    if (chosenMove.type === 'place') {
+                        board[chosenMove.to.r][chosenMove.to.c] = 'G';
+                        goatsToPlace--;
+                        lastMoveVisual = { fromR: null, fromC: null, toR: chosenMove.to.r, toC: chosenMove.to.c };
+                        playSound('place');
+                    } else {
+                        lastMoveVisual = { fromR: chosenMove.from.r, fromC: chosenMove.from.c, toR: chosenMove.to.r, toC: chosenMove.to.c };
+                        board[chosenMove.to.r][chosenMove.to.c] = 'G';
+                        board[chosenMove.from.r][chosenMove.from.c] = null;
+                        playSound('place');
+                    }
+                }
+            } 
+            else if (turn === 'T') {
+                let safeSlides = [];
+                let forcedJumps = [];
+
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c] === 'T') {
+                            getLegalMoves(r, c).forEach(m => {
+                                if (!m.isJump) safeSlides.push({from: {r, c}, to: m});
+                                else forcedJumps.push({from: {r, c}, to: m});
+                            });
+                        }
+                    }
+                }
+
+                saveHistoryState();
+                let usedSound = 'place';
+
+                if (currentDifficulty === 'easy') {
+                    if (safeSlides.length > 0) chosenMove = safeSlides[Math.floor(Math.random() * safeSlides.length)];
+                    else if (forcedJumps.length > 0) chosenMove = forcedJumps[Math.floor(Math.random() * forcedJumps.length)];
+                } 
+                else if (currentDifficulty === 'medium') {
+                    if (forcedJumps.length > 0) chosenMove = forcedJumps[Math.floor(Math.random() * forcedJumps.length)];
+                    else chosenMove = safeSlides[Math.floor(Math.random() * safeSlides.length)];
+                } 
+                else if (currentDifficulty === 'hard') {
+                    if (forcedJumps.length > 0) {
+                        let bestJump = null;
+                        let minEscapeScore = Infinity;
+                        forcedJumps.forEach(jump => {
+                            let origTarget = board[jump.to.r][jump.to.c];
+                            let origMid = board[jump.to.jumpedR][jump.to.jumpedC];
+                            board[jump.from.r][jump.from.c] = null;
+                            board[jump.to.jumpedR][jump.to.jumpedC] = null;
+                            board[jump.to.r][jump.to.c] = 'T';
+                            let escapes = countTotalTigerMoves();
+                            board[jump.to.r][jump.to.c] = origTarget;
+                            board[jump.to.jumpedR][jump.to.jumpedC] = origMid;
+                            board[jump.from.r][jump.from.c] = 'T';
+                            if (escapes < minEscapeScore) { minEscapeScore = escapes; bestJump = jump; }
+                        });
+                        chosenMove = bestJump || forcedJumps[0];
+                    } else {
+                        let bestSlide = null;
+                        let maxStrategicScore = -Infinity;
+                        safeSlides.forEach(slide => {
+                            board[slide.from.r][slide.from.c] = null;
+                            board[slide.to.r][slide.to.c] = 'T';
+                            let localMoves = getLegalMoves(slide.to.r, slide.to.c).length;
+                            let centerGravity = (4 - (Math.abs(2 - slide.to.r) + Math.abs(2 - slide.to.c)));
+                            let score = (localMoves * 4) + centerGravity;
+                            board[slide.to.r][slide.to.c] = null;
+                            board[slide.from.r][slide.from.c] = 'T';
+                            if (score > maxStrategicScore) { maxStrategicScore = score; bestSlide = slide; }
+                        });
+                        chosenMove = bestSlide || safeSlides[0];
+                    }
+                }
+
+                if (chosenMove) {
+                    lastMoveVisual = { fromR: chosenMove.from.r, fromC: chosenMove.from.c, toR: chosenMove.to.r, toC: chosenMove.to.c };
+                    board[chosenMove.to.r][chosenMove.to.c] = 'T';
+                    board[chosenMove.from.r][chosenMove.from.c] = null;
+                    if (chosenMove.to.isJump) {
+                        board[chosenMove.to.jumpedR][chosenMove.to.jumpedC] = null;
+                        goatsEaten++;
+                        usedSound = 'capture';
+                    }
+                    playSound(usedSound);
+                }
+            }
+
+            turn = turn === 'G' ? 'T' : 'G';
+            renderUnifiedBoard();
+            updateStatusAndControls();
+        }
+
+        function countTotalTigerJumps() {
+            let count = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === 'T') {
+                        getLegalMoves(r, c).forEach(m => { if(m.isJump) count++; });
+                    }
+                }
+            }
+            return count;
+        }
+
+        function countTotalTigerMoves() {
+            let total = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === 'T') total += getLegalMoves(r, c).length;
+                }
+            }
+            return total;
+        }
+
+        function getAdjacencyCount(r, c, type) {
+            let adjacent = 0;
+            const steps = [-1, 0, 1];
+            steps.forEach(dr => {
+                steps.forEach(dc => {
+                    if (dr === 0 && dc === 0) return;
+                    let nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        if(board[nr][nc] === type) adjacent++;
+                    }
+                });
+            });
+            return adjacent;
+        }
+
+        function checkWinConditions() {
+            if (goatsEaten >= 5) {
+                isGameOver = true;
+                setTimeout(() => { showGameOverModal("Tigers Win! 5 goats have been captured."); }, 300);
+                return;
+            }
+
+            if (countTotalTigerMoves() === 0) {
+                isGameOver = true;
+                setTimeout(() => { showGameOverModal("Goats Win! All tigers are completely trapped."); }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
