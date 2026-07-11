@@ -4,123 +4,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♟️</text></svg>">
-    <title>Grandmaster Pro</title>
+    <title>Grandmaster Pro Online</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 
     <style>
         :root {
-            --bg: #0f172a; --card: #1e293b; --accent: #10b981;
-            --text: #f8fafc; --secondary: #334155; --danger: #ef4444;
+            --bg: #090d16; 
+            --card: #151f32; 
+            --card-hover: #1e2c47;
+            --accent: #10b981;
+            --accent-bg: rgba(16, 185, 129, 0.1);
+            --text: #f8fafc; 
+            --text-muted: #64748b;
+            --secondary: #222f45; 
+            --danger: #ef4444;
             --gold: #f59e0b;
         }
 
         html, body { 
             height: 100%; margin: 0; padding: 0; 
             background: var(--bg); color: var(--text);
-            font-family: -apple-system, system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        button { cursor: pointer; }
+        button, input { font-family: inherit; }
+        
         .app-shell { 
             display: flex; flex-direction: column; 
             height: 100%; width: 100%; max-width: 450px; 
             margin: 0 auto; position: relative;
             overflow: hidden;
+            background: var(--bg);
         }
 
         .screen { 
             position: absolute; top: 0; left: 0; 
             width: 100%; height: 100%; 
-            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
-            transition: transform 0.4s ease-in-out, opacity 0.3s;
+            display: flex; flex-direction: column; padding: 24px 20px; box-sizing: border-box;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
             transform: translateX(100%); opacity: 0; pointer-events: none;
         }
+        
         .screen.active { transform: translateX(0); opacity: 1; pointer-events: auto; position: relative; }
         .screen.left { transform: translateX(-100%); opacity: 0; }
 
-        #screen-home { justify-content: center; align-items: center; text-align: center; }
-        .main-title { font-size: 2.2rem; font-weight: 900; color: var(--accent); margin: 0; }
-
-        .board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; }
-        #myBoard { width: 90vw; max-width: 380px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); touch-action: none; }
-
-        .btn { width: 90%; padding: 18px; margin: 8px 0; border-radius: 15px; border: none; font-size: 1.1rem; font-weight: bold; }
-        .btn-primary { background: var(--accent); color: #064e3b; }
-        .btn-secondary { background: var(--card); color: white; }
-
-        .board-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
-        .icon-btn { background: var(--card); border: none; color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        /* NATIVE APP DASHBOARD STYLES */
+        #screen-home { justify-content: space-between; align-items: stretch; }
+        .brand-header { text-align: center; padding: 20px 0 10px 0; }
+        .brand-logo { font-size: 3.5rem; filter: drop-shadow(0 8px 16px rgba(16,185,129,0.2)); margin-bottom: 5px; }
+        .main-title { font-size: 2.2rem; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.5px; }
+        .main-subtitle { color: var(--text-muted); font-size: 0.95rem; margin: 4px 0 0 0; font-weight: 500; }
         
-        /* Back Arrow Style */
-        .back-arrow { cursor: pointer; font-size: 2.2rem; color: var(--text); width: 45px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
-        .back-arrow:hover { opacity: 0.7; }
+        .menu-container { display: flex; flex-direction: column; gap: 14px; margin: auto 0; }
+        
+        /* Native Grid Cards */
+        .native-card {
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            text-align: left;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .native-card:active { transform: scale(0.98); background: var(--card-hover); }
+        .native-card.featured { border: 1px solid rgba(16, 185, 129, 0.2); background: linear-gradient(145deg, var(--card), #112823); }
+        
+        .card-icon-frame {
+            width: 52px; height: 52px; border-radius: 14px;
+            background: var(--secondary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; flex-shrink: 0;
+        }
+        .native-card.featured .card-icon-frame { background: var(--accent-bg); color: var(--accent); }
+        
+        .card-body { flex: 1; }
+        .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0 0 3px 0; }
+        .card-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.3; }
+        .card-arrow { color: var(--text-muted); font-size: 1.1rem; padding-right: 4px; }
 
-        .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 10px; overflow-y: auto; }
-        .level-node { aspect-ratio: 1; border-radius: 15px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-        .level-node.unlocked { background: var(--card); border: 2px solid var(--accent); color: white; cursor: pointer; }
-        .level-node.current { background: var(--accent); color: #000; cursor: pointer; }
+        /* BOARD WRAPPER LAYOUT */
+        .board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; padding: 10px 0; }
+        #myBoard { width: 100%; max-width: 390px; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.6); touch-action: none; }
+        
+        .board-header { display: flex; justify-content: space-between; align-items: center; padding: 5px 0 12px 0; }
+        .icon-btn { background: var(--card); border: none; color: white; width: 46px; height: 46px; border-radius: 14px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .back-arrow { cursor: pointer; font-size: 1.8rem; color: var(--text); width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 3000; justify-content: center; align-items: center; }
-        .native-modal { width: 80%; background: var(--card); border-radius: 25px; padding: 30px; text-align: center; }
+        /* COMPACT CONTROL BUTTONS */
+        .btn { width: 100%; padding: 16px; margin: 0; border-radius: 14px; border: none; font-size: 1.05rem; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; box-sizing: border-box; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--accent); color: #022c22; }
+        .btn-secondary { background: var(--card); color: white; }
+        
+        /* ACTION TRAY CONFIGURATION */
+        .action-tray { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            padding: 16px 0 24px 0; 
+            position: relative;
+            top: 10px;
+            width: 100%;
+            min-height: 54px;
+            box-sizing: border-box;
+            transition: opacity 0.2s ease;
+        }
+
+        /* LOBBY ELEMENTS */
+        .token-box { background: var(--card); border-radius: 20px; padding: 18px; margin: 15px 0; width: 100%; box-sizing: border-box; }
+        .token-input { width: 100%; padding: 14px; background: var(--secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; color: white; font-size: 1.1rem; box-sizing: border-box; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; text-align: center; margin-top: 10px;}
+        .token-display { font-size: 1.4rem; font-weight: 800; color: var(--gold); letter-spacing: 2px; text-align: center; padding: 12px; border: 2px dashed var(--secondary); border-radius: 12px; margin-top: 10px; background: rgba(0,0,0,0.2); }
+
+        /* LEVEL MAP */
+        .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px 5px; overflow-y: auto; flex: 1; }
+        .level-node { aspect-ratio: 1; border-radius: 18px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.3rem; opacity: 0.4; }
+        .level-node.unlocked { background: var(--card); border: 2px solid var(--secondary); color: white; cursor: pointer; opacity: 0.9; }
+        .level-node.current { background: var(--accent); border: 2px solid var(--accent); color: #022c22; cursor: pointer; opacity: 1; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; z-index: 3000; justify-content: center; align-items: center; }
+        .native-modal { width: 84%; max-width: 360px; background: var(--card); border-radius: 28px; padding: 30px 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
 <div class="app-shell">
     <div id="screen-home" class="screen active">
-        <div style="font-size: 4rem;">♟️</div>
-        <h1 class="main-title">Grandmaster Pro</h1>
-        <p style="opacity:0.6; margin-bottom:30px;">Master the board, one level at a time.</p>
-        <button class="btn btn-primary" onclick="initGame('ai')">🖥️ VS COMPUTER</button>
-        <button class="btn btn-secondary" onclick="initGame('local')">👥 2 PLAYERS</button>
-        <button id="resume-btn" class="btn" style="display:none; background:var(--gold); color:white;" onclick="resumeSavedGame()">⏯️ RESUME PROGRESS</button>
+        <div class="brand-header">
+            <div class="brand-logo">♟️</div>
+            <h1 class="main-title">Grandmaster Pro</h1>
+            <p class="main-subtitle">Ranked Battleground Engine</p>
+        </div>
+
+        <div class="menu-container">
+            <div class="native-card featured" onclick="initGame('ai')">
+                <div class="card-icon-frame">🖥️</div>
+                <div class="card-body">
+                    <h3 class="card-title">Singleplayer AI</h3>
+                    <p class="card-desc">Fight across 15 adaptive progression tiers.</p>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <div class="native-card" onclick="openOnlineLobby()">
+                <div class="card-icon-frame" style="color: var(--gold); background: rgba(245,158,11,0.1)">🌐</div>
+                <div class="card-body">
+                    <h3 class="card-title">P2P Network Room</h3>
+                    <p class="card-desc">Establish secure tokenized direct matches.</p>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+
+            <div class="native-card" onclick="initGame('local')">
+                <div class="card-icon-frame">👥</div>
+                <div class="card-body">
+                    <h3 class="card-title">Pass & Play Local</h3>
+                    <p class="card-desc">Classic offline couch multiplayer encounter.</p>
+                </div>
+                <div class="card-arrow">→</div>
+            </div>
+            
+            <div id="resume-btn" class="native-card" style="display:none; border: 1px solid rgba(245,158,11,0.3); background: linear-gradient(145deg, var(--card), #2a1f0a);" onclick="resumeSavedGame()">
+                <div class="card-icon-frame" style="color: var(--gold); background: transparent;">⏯️</div>
+                <div class="card-body">
+                    <h3 class="card-title" style="color: var(--gold);">Resume Encounter</h3>
+                    <p class="card-desc">Pick up exactly where your local strategy left off.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); padding-bottom: 10px;">
+            Engine v2.0 • WebRTC Compliant
+        </div>
+    </div>
+
+    <div id="screen-online" class="screen">
+        <div class="board-header">
+            <div class="back-arrow" onclick="navigate('screen-home')">←</div>
+            <h2 style="margin:0; flex: 1; text-align: center; font-size: 1.3rem;">P2P Connection</h2>
+            <div style="width:46px"></div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;">
+            <div class="token-box">
+                <label style="font-size:0.85rem; font-weight:700; opacity:0.6;">YOUR DISCOVERY TOKEN:</label>
+                <div id="myTokenDisplay" class="token-display">GENERATING...</div>
+                <button class="btn btn-secondary" style="margin-top:10px; padding:10px; font-size:0.9rem;" onclick="copyMyToken()">📋 COPY TOKEN</button>
+            </div>
+            
+            <div style="font-weight:bold; opacity:0.3; margin:10px 0;">— OR —</div>
+
+            <div class="token-box">
+                <label style="font-size:0.85rem; font-weight:700; opacity:0.6;">ENTER PEER'S MATCH TOKEN:</label>
+                <input type="text" id="peerTokenInput" class="token-input" placeholder="PASTE TOKEN" maxlength="6">
+                <button class="btn btn-primary" style="margin-top:12px;" onclick="connectToPeer()">⚡ STRIKE CONNECTION</button>
+            </div>
+            <div id="lobbyStatus" style="font-size:0.9rem; font-weight:bold; color:var(--gold); margin-top:10px; text-align:center;"></div>
+        </div>
     </div>
 
     <div id="screen-map" class="screen">
-        <div class="board-header" style="padding: 10px 5px;">
-            <div class="back-arrow" onclick="navigate('screen-game')">←</div>
-            <h2 style="margin:0; flex: 1; text-align: center;">Level Map</h2>
-            <div style="width:45px"></div>
+        <div class="board-header">
+            <div class="back-arrow" onclick="navigate('screen-home')">←</div>
+            <h2 style="margin:0; flex: 1; text-align: center; font-size: 1.4rem;">Campaign Maps</h2>
+            <div style="width:46px"></div>
         </div>
         <div class="level-grid" id="mapGrid"></div>
     </div>
 
     <div id="screen-game" class="screen">
         <div class="board-header">
-            <button class="icon-btn" onclick="openMapMenu()">🏁</button>
-            <div id="game-info" style="font-weight: 800; color: var(--accent);">LEVEL 1</div>
+            <button class="icon-btn" id="mapMenuBtn" onclick="openMapMenu()">🏁</button>
+            <div id="game-info" style="font-weight: 800; font-size: 1.1rem; color: var(--accent); letter-spacing: 0.5px;">LEVEL 1</div>
             <button class="icon-btn" id="muteBtn">🔊</button>
         </div>
-        <div id="status" style="text-align:center; padding:10px; font-weight:700;">White to move</div>
+        <div id="status" style="text-align:center; padding-bottom:15px; font-weight:700; font-size: 1.05rem; min-height: 24px;">White to move</div>
+        
         <div class="board-wrapper">
             <div id="myBoard"></div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px 0;">
-            <button class="btn" style="width:100%; margin:0; background:var(--secondary); color:white;" onclick="resetGame()">RESET</button>
-            <button class="btn" style="width:100%; margin:0; background:var(--accent); color:#000;" onclick="undoMove()">UNDO</button>
+    
+        <div class="action-tray" id="controlTray">
+            <button class="btn" style="background: var(--secondary); color: white;" onclick="resetGame()">RESET</button>
+            <button class="btn" style="background: var(--card); border: 1px solid var(--secondary); color: white;" onclick="undoMove()">UNDO</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="quitModal">
         <div class="native-modal">
-            <h2>Quit Game?</h2>
-            <p style="opacity:0.7;">Your current match will be saved locally.</p>
-            <button class="btn btn-primary" onclick="confirmQuit()">QUIT & SAVE</button>
-            <button class="btn btn-secondary" onclick="$('#quitModal').hide()">CONTINUE PLAYING</button>
+            <h2 style="margin-top: 0;">Leave Match?</h2>
+            <p id="quitModalDesc" style="opacity:0.7; font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">Your current local positions will be preserved safely.</p>
+            <button class="btn btn-primary" onclick="confirmQuit()">QUIT TO MENU</button>
+            <button class="btn btn-secondary" style="margin-top:8px;" onclick="$('#quitModal').hide()">RESUME MATCH</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="resultModal">
         <div class="native-modal">
-            <span id="resIcon" style="font-size:3.5rem;">🏆</span>
-            <h2 id="resTitle" style="margin:10px 0; font-size:1.8rem;">VICTORY</h2>
-            <p id="resWinner" style="opacity:0.7; margin-bottom:25px;"></p>
-            <div id="modalButtons" style="display:flex; flex-direction:column; gap:10px;"></div>
+            <span id="resIcon" style="font-size:4rem;">🏆</span>
+            <h2 id="resTitle" style="margin:15px 0 5px 0; font-size:1.8rem; font-weight: 900;">VICTORY</h2>
+            <p id="resWinner" style="opacity:0.6; font-size:0.95rem; margin-bottom:25px;"></p>
+            <div id="modalButtons" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
     </div>
 </div>
@@ -128,12 +265,18 @@
 <script>
     let board = null;
     let game = new Chess();
-    let gameMode = 'ai';
-    let currentLevel = 1;
+    let gameMode = 'ai'; 
+    let currentLevel = parseInt(localStorage.getItem('chess_current_level')) || 1;
     let maxLevel = parseInt(localStorage.getItem('chess_max_level')) || 1;
     let isMuted = localStorage.getItem('chess_muted') === 'true';
 
-    // --- AUDIO LOGIC ---
+    // --- P2P MODULE HOOKS ---
+    let peer = null;
+    let conn = null;
+    let myPlayerColor = 'w'; 
+    let myCustomIdToken = '';
+
+    // --- SOUND FRAMEWORK ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playMoveSound(isSpecial = false) {
         if (isMuted) return;
@@ -141,14 +284,15 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = isSpecial ? 'triangle' : 'sine';
-        osc.frequency.setValueAtTime(isSpecial ? 440 : 220, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(isSpecial ? 380 : 280, audioCtx.currentTime);
+        if (isSpecial) osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (isSpecial ? 0.18 : 0.08));
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + (isSpecial ? 0.18 : 0.08));
     }
 
-    // --- NAVIGATION ---
+    // --- WINDOW ROUTING ---
     window.history.pushState({page: 'home'}, 'home', ''); 
     window.onpopstate = () => {
         if ($('#screen-game').hasClass('active')) {
@@ -159,21 +303,179 @@
 
     function navigate(screenId) {
         $('.screen').removeClass('active left');
-        $(`#${screenId}`).addClass('active').prevAll('.screen').addClass('left');
+        const target = $(`#${screenId}`);
+        target.addClass('active').prevAll('.screen').addClass('left');
+        if(screenId === 'screen-game' && board) {
+            setTimeout(() => { board.resize(); }, 50);
+        }
     }
 
-    function confirmQuit() { saveGameState(); location.reload(); }
+    function confirmQuit() { 
+        if(gameMode === 'online' && conn) {
+            conn.send({type: 'disconnect'});
+            cleanupP2P();
+        } else {
+            saveGameState(); 
+        }
+        $('#quitModal').hide();
+        navigate('screen-home');
+        if(localStorage.getItem('chess_saved_game')) $('#resume-btn').show();
+    }
 
-    // --- GAME LOGIC ---
+    // --- NETWORK LOBBY HANDLERS ---
+    function generateShortToken() {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    function openOnlineLobby() {
+        navigate('screen-online');
+        $('#lobbyStatus').text('');
+        if (!peer || peer.destroyed) {
+            myCustomIdToken = generateShortToken();
+            peer = new Peer('GMPRO-' + myCustomIdToken);
+            
+            peer.on('open', (id) => { $('#myTokenDisplay').text(myCustomIdToken); });
+            peer.on('error', (err) => {
+                console.error(err);
+                $('#lobbyStatus').text('Connection failure. Connection pooled out.').css('color', 'var(--danger)');
+            });
+
+            peer.on('connection', (incomingConn) => {
+                if (conn) { incomingConn.close(); return; } 
+                conn = incomingConn;
+                myPlayerColor = 'w'; 
+                setupP2PConnectionHandlers();
+                $('#lobbyStatus').text('Establishing channel connection...').css('color', 'var(--accent)');
+            });
+        } else {
+            $('#myTokenDisplay').text(myCustomIdToken);
+        }
+    }
+
+    // --- UNIVERSAL DUAL-FALLBACK COPY IMPLEMENTATION ---
+    function copyMyToken() {
+        const tokenText = $('#myTokenDisplay').text();
+        if(!tokenText || tokenText === 'GENERATING...') return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            // Path 1: Async Clipboard API
+            navigator.clipboard.writeText(tokenText)
+                .then(() => alert('Match token copied: ' + tokenText))
+                .catch(() => fallbackCopyExecution(tokenText));
+        } else {
+            // Path 2: Textarea Fallback
+            fallbackCopyExecution(tokenText);
+        }
+    }
+
+    function fallbackCopyExecution(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // Avoid page scrolling downstream
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // Mobile iOS targeting fix
+        
+        try {
+            const status = document.execCommand('copy');
+            if(status) alert('Match token copied: ' + text);
+            else throw new Error();
+        } catch (err) {
+            alert('Copy failed. Manual copy required: ' + text);
+        }
+        document.body.removeChild(textarea);
+    }
+
+    function connectToPeer() {
+        const inputToken = $('#peerTokenInput').val().trim().toUpperCase();
+        if(inputToken.length !== 6) {
+            alert('A validation token consists of exactly 6 characters.');
+            return;
+        }
+        $('#lobbyStatus').text('Exchanging operational handshake...').css('color', 'var(--gold)');
+        conn = peer.connect('GMPRO-' + inputToken);
+        myPlayerColor = 'b'; 
+        setupP2PConnectionHandlers();
+    }
+
+    function setupP2PConnectionHandlers() {
+        conn.on('open', () => {
+            gameMode = 'online';
+            $('#quitModalDesc').text("Conceding early breaks room state and causes standard forfeit.");
+            
+            // Hide control tray with pointers to prevent screen jumps
+            $('#controlTray').css({ 'opacity': '0', 'pointer-events': 'none' });
+            
+            updateHeader();
+            navigate('screen-game');
+            
+            setTimeout(() => {
+                setupBoard();
+                board.orientation(myPlayerColor === 'w' ? 'white' : 'black');
+                board.start();
+                game.reset();
+                updateStatus();
+            }, 350);
+        });
+
+        conn.on('data', (data) => {
+            if (data.type === 'move') {
+                let move = game.move({ from: data.from, to: data.to, promotion: data.promotion || 'q' });
+                if (move) {
+                    board.position(game.fen());
+                    playMoveSound(move.captured || game.in_check());
+                    updateStatus();
+                }
+            } else if (data.type === 'disconnect') {
+                alert('Opponent has explicitly severed connection strings.');
+                cleanupP2P();
+                navigate('screen-home');
+            }
+        });
+
+        conn.on('close', () => {
+            alert('Peer room context closed.');
+            cleanupP2P();
+            navigate('screen-home');
+        });
+    }
+
+    function cleanupP2P() {
+        if(conn) { conn.close(); conn = null; }
+        if(peer) { peer.destroy(); peer = null; }
+        $('#quitModalDesc').text("Your current local positions will be preserved safely.");
+        $('#controlTray').css({ 'opacity': '1', 'pointer-events': 'auto' }); 
+    }
+
+    // --- GAME ENGINE PROCESSORS ---
     function initGame(mode) {
+        cleanupP2P();
         gameMode = mode;
+        game.reset();
+        if(mode === 'local') currentLevel = 1;
         updateHeader();
         navigate('screen-game');
-        setTimeout(setupBoard, 450);
+        setTimeout(() => {
+            setupBoard();
+            board.orientation('white');
+            board.start();
+            updateStatus();
+        }, 350);
     }
 
     function updateHeader() {
-        $('#game-info').text(gameMode === 'ai' ? `LEVEL ${currentLevel}` : "2 PLAYERS");
+        if(gameMode === 'ai') {
+            $('#game-info').text(`LEVEL ${currentLevel}`).show();
+            $('#mapMenuBtn').css('visibility', 'visible');
+        } else if(gameMode === 'online') {
+            $('#game-info').text(`ONLINE [${myPlayerColor === 'w' ? 'WHITE' : 'BLACK'}]`);
+            $('#mapMenuBtn').css('visibility', 'hidden');
+        } else {
+            $('#game-info').text("2 PLAYERS LOCAL");
+            $('#mapMenuBtn').css('visibility', 'hidden');
+        }
     }
 
     function openMapMenu() {
@@ -185,6 +487,7 @@
             if (i <= maxLevel) {
                 node.on('click', function() {
                     currentLevel = i;
+                    localStorage.setItem('chess_current_level', currentLevel);
                     updateHeader();
                     resetGame();
                     navigate('screen-game');
@@ -196,29 +499,57 @@
     }
 
     function setupBoard() {
-        const boardEl = document.getElementById('myBoard');
-        boardEl.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
         if (!board) {
             board = Chessboard('myBoard', {
-                draggable: true, position: 'start',
+                draggable: true,
+                position: 'start',
                 pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                onDragStart: (source, piece, position, orientation) => {
+                    if (game.game_over()) return false;
+                    if (gameMode === 'ai' && game.turn() === 'b') return false;
+                    if (gameMode === 'online' && game.turn() !== myPlayerColor) return false;
+                    if (gameMode === 'local') {
+                        if (game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
+                        if (game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
+                    }
+                },
                 onDrop: (s, t) => {
-                    let m = game.move({ from: s, to: t, promotion: 'q' });
-                    if (!m) return 'snapback';
-                    playMoveSound(m.captured || game.in_check());
+                    let move = game.move({ from: s, to: t, promotion: 'q' });
+                    if (!move) return 'snapback';
+                    
+                    playMoveSound(move.captured || game.in_check());
                     updateStatus();
-                    saveGameState();
-                    if (gameMode === 'ai' && !game.game_over()) setTimeout(makeAI, 450);
-                }
+                    
+                    if (gameMode === 'online' && conn) {
+                        conn.send({ type: 'move', from: s, to: t, promotion: 'q' });
+                    } else if (gameMode === 'ai' && !game.game_over()) {
+                        setTimeout(makeAIMove, 400);
+                    } else {
+                        saveGameState();
+                    }
+                },
+                onSnapEnd: () => { board.position(game.fen()); }
             });
         }
         board.resize();
     }
 
-    function makeAI() {
-        let moves = game.moves();
-        if (game.game_over()) return;
-        let m = game.move(moves[Math.floor(Math.random() * moves.length)]);
+    function makeAIMove() {
+        let moves = game.moves({ verbose: true });
+        if (game.game_over() || moves.length === 0) return;
+        
+        let selectedMove = null;
+        if(currentLevel > 1) {
+            let checks = moves.filter(m => {
+                game.move(m.san); let isCheck = game.in_check(); game.undo(); return isCheck;
+            });
+            let captures = moves.filter(m => m.captured);
+            if(checks.length && Math.random() < (currentLevel * 0.06)) selectedMove = checks[Math.floor(Math.random() * checks.length)];
+            else if(captures.length && Math.random() < (currentLevel * 0.07)) selectedMove = captures[Math.floor(Math.random() * captures.length)];
+        }
+        if(!selectedMove) selectedMove = moves[Math.floor(Math.random() * moves.length)];
+        
+        let m = game.move(selectedMove.san);
         board.position(game.fen());
         playMoveSound(m.captured || game.in_check());
         updateStatus();
@@ -226,54 +557,82 @@
     }
 
     function updateStatus() {
-        let status = game.turn() === 'w' ? "White" : "Black";
+        let statusText = game.turn() === 'w' ? "White" : "Black";
+        
         if (game.in_checkmate()) {
             $('#status').text("CHECKMATE!").css('color', 'var(--danger)');
             playMoveSound(true);
-            localStorage.removeItem('chess_saved_game'); 
-            setTimeout(() => showResultModal('win'), 600);
+            if(gameMode !== 'online') localStorage.removeItem('chess_saved_game'); 
+            setTimeout(() => showResultModal(game.turn() === 'b' ? 'win' : 'lose'), 500);
         } else if (game.in_draw()) {
-            $('#status').text("DRAW!").css('color', 'var(--gold)');
-            localStorage.removeItem('chess_saved_game');
-            setTimeout(() => showResultModal('draw'), 600);
+            $('#status').text("DRAW STALEMATE").css('color', 'var(--gold)');
+            if(gameMode !== 'online') localStorage.removeItem('chess_saved_game');
+            setTimeout(() => showResultModal('draw'), 500);
         } else {
-            $('#status').text(`${status}'s turn`).css('color', 'white');
-            if(game.in_check()) $('#status').append(" (CHECK!)").css('color', 'var(--danger)');
+            if(gameMode === 'online') {
+                $('#status').text(game.turn() === myPlayerColor ? "Your Turn" : "Opponent's Turn").css('color', 'white');
+            } else {
+                $('#status').text(`${statusText}'s Turn`).css('color', 'white');
+            }
+            if(game.in_check()) $('#status').text(`${statusText.toUpperCase()} IN CHECK!`).css('color', 'var(--danger)');
         }
     }
 
     function showResultModal(type) {
         const modal = $('#resultModal').css('display', 'flex');
         const btns = $('#modalButtons').empty();
-        const userWon = (game.turn() === 'b'); 
 
         if (type === 'draw') {
-            $('#resTitle').text("DRAW").css('color', 'var(--gold)');
+            $('#resTitle').text("MATCH DRAW").css('color', 'var(--gold)');
             $('#resIcon').text("⚖️");
-        } else {
-            $('#resTitle').text(userWon ? "VICTORY" : "DEFEAT");
-            $('#resTitle').css('color', userWon ? 'var(--accent)' : 'var(--danger)');
-            $('#resIcon').text(userWon ? "🏆" : "💀");
+            $('#resWinner').text("A balanced battlefield.");
+        } else if (type === 'win') {
+            $('#resTitle').text("VICTORY").css('color', 'var(--accent)');
+            $('#resIcon').text("🏆");
             
-            if (userWon && gameMode === 'ai' && currentLevel === maxLevel) {
-                maxLevel++;
-                localStorage.setItem('chess_max_level', maxLevel);
+            if (gameMode === 'online') {
+                $('#resWinner').text(game.turn() !== myPlayerColor ? "You successfully claimed the match room!" : "Opponent won.");
+            } else {
+                $('#resWinner').text(gameMode === 'ai' ? `You cleared Level ${currentLevel}!` : "White player wins!");
+                if (gameMode === 'ai' && currentLevel === maxLevel && maxLevel < 15) {
+                    maxLevel++;
+                    localStorage.setItem('chess_max_level', maxLevel);
+                }
             }
+        } else {
+            $('#resTitle').text("DEFEAT").css('color', 'var(--danger)');
+            $('#resIcon').text("💀");
+            $('#resWinner').text(gameMode === 'online' ? "Opponent outmaneuvered your defenses." : "The automation outmaneuvered you.");
         }
 
-        const btnText = (userWon && gameMode === 'ai') ? "NEXT LEVEL" : "RETRY";
+        let mainBtnText = (type === 'win' && gameMode === 'ai' && currentLevel < 15) ? "NEXT LEVEL" : "PLAY AGAIN";
         
-        btns.append($('<button class="btn btn-primary"></button>').text(btnText).click(() => {
-            if (userWon && gameMode === 'ai') { currentLevel++; }
-            modal.hide();
-            updateHeader();
-            resetGame();
-        }));
+        if (gameMode !== 'online') {
+            btns.append($('<button class="btn btn-primary"></button>').text(mainBtnText).click(() => {
+                if (type === 'win' && gameMode === 'ai' && currentLevel < 15) { 
+                    currentLevel++; 
+                    localStorage.setItem('chess_current_level', currentLevel);
+                }
+                modal.hide();
+                updateHeader();
+                resetGame();
+            }));
+        }
 
-        btns.append($('<button class="btn btn-secondary">MAIN MENU</button>').click(() => location.reload()));
+        btns.append($('<button class="btn btn-secondary">MAIN MENU</button>').click(() => {
+            modal.hide();
+            cleanupP2P();
+            navigate('screen-home');
+            if(localStorage.getItem('chess_saved_game')) $('#resume-btn').show();
+        }));
     }
 
+    // --- GAME DATA STORAGE ---
     function saveGameState() {
+        if(gameMode === 'online' || game.game_over()) {
+            localStorage.removeItem('chess_saved_game');
+            return;
+        }
         localStorage.setItem('chess_saved_game', JSON.stringify({
             fen: game.fen(), level: currentLevel, mode: gameMode
         }));
@@ -282,19 +641,38 @@
     function resumeSavedGame() {
         const data = JSON.parse(localStorage.getItem('chess_saved_game'));
         if(!data) return;
+        cleanupP2P();
         currentLevel = data.level;
         gameMode = data.mode;
-        initGame(gameMode);
-        setTimeout(() => { game.load(data.fen); board.position(data.fen); updateStatus(); }, 500);
+        updateHeader();
+        navigate('screen-game');
+        setTimeout(() => { 
+            setupBoard();
+            board.orientation('white');
+            game.load(data.fen); 
+            board.position(data.fen); 
+            updateStatus(); 
+        }, 400);
     }
 
-    function resetGame() { game.reset(); board.start(); updateStatus(); saveGameState(); }
+    function resetGame() { 
+        if (gameMode === 'online') return;
+        game.reset(); 
+        if(board) board.start(); 
+        updateStatus(); 
+        saveGameState(); 
+    }
+    
     function undoMove() { 
-        game.undo(); if(gameMode==='ai') game.undo(); 
-        board.position(game.fen()); updateStatus(); saveGameState();
+        if (gameMode === 'online') return;
+        game.undo(); 
+        if(gameMode === 'ai') game.undo(); 
+        if(board) board.position(game.fen()); 
+        updateStatus(); 
+        saveGameState();
     }
 
-    // Mute/Unmute & Persistence
+    // --- INITIAL CONFIGURATION CONTROL ---
     if (isMuted) $('#muteBtn').text('🔇');
     $('#muteBtn').click(function() {
         isMuted = !isMuted;
@@ -302,6 +680,7 @@
         $(this).text(isMuted ? '🔇' : '🔊');
     });
 
+    window.addEventListener('resize', () => { if(board) board.resize(); });
     if (localStorage.getItem('chess_saved_game')) $('#resume-btn').show();
 </script>
 </body>
