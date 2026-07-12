@@ -1,33 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>BaghChal Pro</title>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #0f0f14;
-            --panel-bg: #181824;
-            --panel-border: #262638;
+      :root {
+            --bg-dark: #07070c;
+            --bg-glow: radial-gradient(circle at 50% 50%, #121225 0%, #07070c 100%);
+            --panel-bg: rgba(20, 20, 35, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
             --accent-gold: #ffcc00;
-            --tiger-neon: #ff3366;
-            --goat-neon: #3399ff;
-            --board-wood: #cf9a59;
-            --board-lines: #261c10;
-            --text-main: #f0f0f5;
-            --text-muted: #8a8a9e;
+            --tiger-neon: #ff2a5f;
+            --tiger-glow: rgba(255, 42, 95, 0.25);
+            --goat-neon: #00b0ff;
+            --goat-glow: rgba(0, 176, 255, 0.25);
+            --board-wood: #221610;
+            --board-lines: #4a3525;
+            --text-main: #f0f0f8;
+            --text-muted: #7e7e9a;
+            --glass-sheet: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Roboto, Helvetica, sans-serif;
+            background: var(--bg-dark);
+            background-image: var(--bg-glow);
             color: var(--text-main);
             display: flex;
             flex-direction: column;
@@ -35,228 +41,268 @@
             justify-content: center;
             min-height: 100vh;
             overflow-x: hidden;
-            padding: 20px;
+            padding: 16px;
         }
 
-        /* App Wrapper / Container mimicking a mobile game layout */
+        /* Ambient Animated Tech Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* AAA Game App Wrapper Canvas Container */
         .app-window {
             width: 100%;
-            max-width: 420px;
+            max-width: 430px;
             background: var(--panel-bg);
+            backdrop-filter: blur(24px) saturate(120%);
+            -webkit-backdrop-filter: blur(24px) saturate(120%);
             border: 1px solid var(--panel-border);
-            border-radius: 24px;
+            border-radius: 32px;
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
             gap: 20px;
+            position: relative;
         }
 
         .app-header {
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .app-header h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 30%, var(--text-muted));
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #ffffff 40%, #a5a5c0 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
         .app-header p {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 600;
             color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
             margin-top: 4px;
         }
 
-        /* Cards/Sections inside Screen */
+        /* Component Cards */
         .game-card {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 16px;
+            background: rgba(10, 10, 20, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
         }
 
         .card-title {
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.75rem;
+            font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        /* Inputs & Component UI */
+        /* Form Inputs */
         .app-input {
             width: 100%;
-            padding: 12px 16px;
-            background: #0b0b11;
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
+            padding: 14px 18px;
+            background: rgba(5, 5, 10, 0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
             color: #fff;
             font-size: 1rem;
             outline: none;
             text-align: center;
-            transition: border-color 0.2s;
+            font-weight: 600;
+            transition: all 0.25s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
         }
 
         .app-input:focus {
-            border-color: #444466;
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 0 12px rgba(255,255,255,0.05);
         }
 
-        .app-input::placeholder {
-            color: #4a4a5a;
-        }
-
-        /* Buttons Platform Styles */
+        /* 3D App Tactile Buttons */
         .app-btn {
+            position: relative;
             width: 100%;
-            padding: 14px;
+            padding: 14px 20px;
             font-size: 0.95rem;
             font-weight: 700;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            gap: 10px;
             color: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: linear-gradient(180deg, #2c2c3d 0%, #1e1e2b 100%);
+            border-bottom: 4px solid #13131c;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            transition: all 0.1s ease;
+        }
+
+        .app-btn:hover {
+            filter: brightness(1.1);
         }
 
         .app-btn:active {
-            transform: scale(0.98);
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
         }
 
-        .btn-primary { background: linear-gradient(135deg, #3a3a52, #252535); border: 1px solid var(--panel-border); }
-        .btn-primary:hover { background: #2f2f42; }
+        .btn-primary {
+            background: linear-gradient(180deg, #3d3d5c 0%, #29293d 100%);
+            border-bottom: 4px solid #1a1a26;
+        }
 
-        .btn-accent-goat { background: linear-gradient(135deg, #1e3c72, var(--goat-neon)); }
-        .btn-accent-tiger { background: linear-gradient(135deg, #721e2c, var(--tiger-neon)); }
+        .btn-accent-goat {
+            background: linear-gradient(180deg, #0091ea 0%, #0071bc 100%);
+            border-bottom: 4px solid #005691;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
 
-        /* Row Dividers */
+        .btn-accent-tiger {
+            background: linear-gradient(180deg, #ff1744 0%, #d50000 100%);
+            border-bottom: 4px solid #9b0000;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+
         .btn-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
         }
 
-        /* Difficulty Selector Segmented Control */
+        /* Segmented Controller Settings Component */
         .segmented-control {
             display: flex;
-            background: #0b0b11;
+            background: rgba(5, 5, 10, 0.6);
             padding: 4px;
-            border-radius: 10px;
-            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 4px;
         }
 
         .segment-btn {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background: none;
             border: none;
             color: var(--text-muted);
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            border-radius: 7px;
-            transition: all 0.2s;
+            border-radius: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .segment-btn.active[data-diff="easy"] { background: #2ecc71; color: #fff; }
-        .segment-btn.active[data-diff="medium"] { background: #f39c12; color: #fff; }
-        .segment-btn.active[data-diff="hard"] { background: #e74c3c; color: #fff; }
+        .segment-btn.active[data-diff="easy"] { background: #00e676; color: #003311; box-shadow: 0 2px 8px rgba(0,230,118,0.3); }
+        .segment-btn.active[data-diff="medium"] { background: #ff9100; color: #331a00; box-shadow: 0 2px 8px rgba(255,145,0,0.3); }
+        .segment-btn.active[data-diff="hard"] { background: #ff1744; color: #fff; box-shadow: 0 2px 8px rgba(255,23,68,0.3); }
 
-        /* Online Info Badge */
+        /* Match Network Code Panel Badge */
         .lobby-status-box {
             text-align: center;
             margin-top: 10px;
-            font-size: 0.9rem;
         }
 
         .numeric-code-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #1d2b1d, #141f14);
-            border: 1px solid #2ecc71;
-            color: #2ecc71;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 1.4rem;
-            font-family: monospace;
+            gap: 10px;
+            background: rgba(0, 230, 118, 0.06);
+            border: 1px dashed #00e676;
+            color: #00e676;
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-size: 1.5rem;
+            font-family: 'SF Mono', SFMono-Regular, monospace;
             font-weight: 800;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             cursor: pointer;
-            margin-top: 6px;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.1);
+            margin-top: 8px;
+            transition: all 0.2s;
         }
 
         .numeric-code-badge:hover {
-            filter: brightness(1.1);
+            background: rgba(0, 230, 118, 0.1);
+            transform: scale(1.02);
         }
 
-        /* --- GAME ENGINE BOARD SCREEN --- */
+        /* --- ARÈNE HUD AND RUNTIME PANEL --- */
         #game-screen {
             display: none;
             flex-direction: column;
-            gap: 16px;
-        }
-
-        .top-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .audio-pill {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--panel-border);
-            color: var(--text-main);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
+            gap: 18px;
         }
 
         .dashboard-panel {
-            background: #0b0b11;
+            background: rgba(10, 10, 18, 0.8);
             border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 14px;
+            border-radius: 20px;
+            padding: 16px;
             text-align: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Neon status track accents under score bar */
+        .dashboard-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--goat-neon), var(--tiger-neon));
+            opacity: 0.7;
         }
 
         #turn-indicator {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+            font-weight: 800;
             margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         #score-board {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
+            font-weight: 600;
             color: var(--text-muted);
+            letter-spacing: 0.5px;
         }
 
-        /* Beautiful Dynamic Board Setup */
+        /* High Tech Cyber-Grid Game Board Viewport Container */
         .board-viewport {
             width: 100%;
             aspect-ratio: 1;
             background-color: var(--board-wood);
-            border: 6px solid var(--board-lines);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 8px solid #140d0a;
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.6),
+                        inset 0 0 30px rgba(0,0,0,0.8);
+            position: relative;
         }
 
         .board-canvas {
@@ -267,27 +313,22 @@
 
         #board-svg-grid {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
+            opacity: 0.85;
         }
 
         .board-interactive-surface {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 5;
         }
 
-        /* Grid Node Coordinates Matrix Mapping */
+        /* Precise Intersection Layer Nodes */
         .board-node {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             transform: translate(-50%, -50%);
             border-radius: 50%;
             cursor: pointer;
@@ -295,184 +336,293 @@
             justify-content: center;
             align-items: center;
             z-index: 6;
+            transition: background 0.2s;
         }
 
-        .board-node.source-highlight { background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255,255,255,0.4); }
-        .board-node.target-highlight { background: rgba(255, 255, 255, 0.4); border: 2px dashed #fff; }
+        /* Action Highlighting */
+        .board-node.source-highlight { background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255,255,255,0.2); }
+        .board-node.target-highlight { background: rgba(255, 255, 255, 0.2); border: 2px dashed rgba(255,255,255,0.5); }
 
         .board-node.valid-target::after {
             content: '';
-            width: 14px;
-            height: 14px;
-            background-color: #2ecc71;
+            width: 16px;
+            height: 16px;
+            background-color: #00e676;
             border-radius: 50%;
-            box-shadow: 0 0 12px #2ecc71;
-            animation: pulseEffect 1.4s infinite;
+            box-shadow: 0 0 14px #00e676, 0 0 24px #00e676;
+            animation: pulseEffect 1.2s infinite ease-in-out;
         }
 
         @keyframes pulseEffect {
-            0% { transform: scale(0.8); opacity: 0.7; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.7; }
+            0% { transform: scale(0.75); opacity: 0.6; }
+            50% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(0.75); opacity: 0.6; }
         }
 
-        /* Dynamic Rendered Game Pieces */
+        /* Micro-polished Engine Game Pieces */
         .game-piece {
             position: absolute;
-            width: 42px;
-            height: 42px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.35rem;
+            font-size: 1.6rem;
             transform: translate(-50%, -50%);
-            transition: top 0.22s cubic-bezier(0.25, 1, 0.5, 1), left 0.22s cubic-bezier(0.25, 1, 0.5, 1), transform 0.1s;
+            transition: top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+                left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.1s;
             z-index: 10;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6), inset 0 -3px 0 rgba(0,0,0,0.3);
             cursor: pointer;
             pointer-events: none;
         }
 
         .game-piece.tiger {
-            background: radial-gradient(circle at 30% 30%, #ff5e84, var(--tiger-neon));
-            border: 2px solid #500;
+            background: radial-gradient(circle at 35% 35%, #ff527b 0%, var(--tiger-neon) 70%, #900 100%);
+            border: 2px solid #3a000c;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--tiger-glow);
         }
 
         .game-piece.goat {
-            background: radial-gradient(circle at 30% 30%, #5eaeff, var(--goat-neon));
-            border: 2px solid #003;
+            background: radial-gradient(circle at 35% 35%, #40c4ff 0%, var(--goat-neon) 70%, #004b7c 100%);
+            border: 2px solid #001a2e;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--goat-glow);
         }
         
-        .board-node.active-selected-node { z-index: 12; }
         .board-node.active-selected-node + .game-piece { 
-            outline: 3px solid var(--accent-gold); 
-            transform: translate(-50%, -50%) scale(1.15); 
+            transform: translate(-50%, -50%) scale(1.22); 
             z-index: 20; 
-            box-shadow: 0 8px 18px rgba(0,0,0,0.7); 
+            outline: 3px solid var(--accent-gold);
+            outline-offset: 2px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.7); 
         }
 
-        /* Modals and Endings Layout templates */
+        /* --- PREMIUM ONLINE CHAT BOX ENGINE --- */
+        .online-chat-box {
+            display: none;
+            flex-direction: column;
+            background: rgba(5, 5, 12, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 12px;
+            gap: 10px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .chat-log {
+            height: 110px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 4px;
+        }
+
+        /* Custom Modern Scrollbar */
+        .chat-log::-webkit-scrollbar { width: 4px; }
+        .chat-log::-webkit-scrollbar-track { background: transparent; }
+        .chat-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        .chat-msg {
+            font-size: 0.82rem;
+            font-weight: 500;
+            line-height: 1.4;
+            word-break: break-word;
+            padding: 6px 12px;
+            border-radius: 12px;
+            max-width: 80%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .chat-msg.me {
+            background: linear-gradient(135deg, #2a2a40 0%, #1e1e2d 100%);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .chat-msg.them {
+            background: rgba(15, 15, 25, 0.9);
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .chat-msg.system {
+            background: transparent;
+            color: var(--text-muted);
+            font-style: italic;
+            align-self: center;
+            text-align: center;
+            box-shadow: none;
+            font-size: 0.75rem;
+        }
+
+        .chat-compose-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            font-weight: 500;
+        }
+        
+        .chat-input:focus {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .chat-send-btn {
+            padding: 0 16px;
+            background: #222235;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.82rem;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+            border-bottom: 2px solid #141421;
+        }
+
+        .chat-send-btn:active {
+            transform: translateY(1px);
+            border-bottom-width: 0px;
+        }
+
+        /* Modals Overlays Screens layout templates */
         .modal-mask {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(3, 3, 6, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 100;
             justify-content: center;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.2s ease;
         }
         .modal-mask.active { display: flex; opacity: 1; }
+        
         .modal-body {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            padding: 30px;
-            border-radius: 20px;
+            background: linear-gradient(135deg, #161626 0%, #0f0f1a 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 32px 24px;
+            border-radius: 24px;
             text-align: center;
-            width: 85%;
-            max-width: 340px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            width: 88%;
+            max-width: 350px;
+            box-shadow: 0 24px 50px rgba(0,0,0,0.9);
         }
-        .modal-headline { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: var(--accent-gold); }
-        .modal-subtext { color: var(--text-muted); font-size: 1rem; margin-bottom: 20px; }
+        .modal-headline { font-size: 1.8rem; font-weight: 900; margin-bottom: 6px; color: var(--accent-gold); letter-spacing: 0.5px; }
+        .modal-subtext { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500; line-height: 1.4; }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="app-window">
-        <div id="menu-screen" style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="app-header">
-                <h1>BAGHCHAL</h1>
-                <p>Strategic Nepalese Board Game</p>
-            </div>
-            
-            <div class="game-card">
-                <div class="card-title">🤖 Single Player vs AI</div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="segmented-control">
-                        <button class="segment-btn active" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
-                        <button class="segment-btn" data-diff="medium" onclick="setDifficulty('medium')">Medium</button>
-                        <button class="segment-btn" data-diff="hard" onclick="setDifficulty('hard')">Hard</button>
-                    </div>
-                    <div class="btn-grid-2">
-                        <button class="app-btn btn-accent-goat" onclick="startLocalGame('vsAI', 'G')">🐐 Goats</button>
-                        <button class="app-btn btn-accent-tiger" onclick="startLocalGame('vsAI', 'T')">🐯 Tigers</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="game-card">
-                <div class="card-title">👥 Offline Mode</div>
-                <button class="app-btn btn-primary" onclick="startLocalGame('local2P', null)">Pass & Play Match</button>
-            </div>
-
-            <div class="game-card">
-                <div class="card-title">🌐 Online Arena</div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="btn-host" class="app-btn btn-primary" onclick="initOnlineRoom(true)">Host Online Match</button>
-                    
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
-                        <input type="text" id="join-id-input" class="app-input" placeholder="5-Digit Room Code" maxlength="5" pattern="\d*">
-                        <button id="btn-join" class="app-btn btn-primary" style="width: auto; padding: 0 20px;" onclick="initOnlineRoom(false)">Join</button>
-                    </div>
-                    <div id="network-status" class="lobby-status-box" style="color: var(--text-muted); font-size: 0.8rem;"></div>
-                </div>
-            </div>
+      <div id="menu-screen" style="display: flex; flex-direction: column; gap: 18px;">
+        <div class="app-header">
+          <h1>BAGHCHAL</h1>
+          <p>Tactical Arena</p>
         </div>
-
-        <div id="game-screen">
-            <div class="top-navbar">
-                <div id="game-title-header" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">BaghChal Pro</div>
-                <button id="audio-toggle" class="audio-pill" onclick="toggleMute()">Volume: ON 🔊</button>
+        
+        <div class="game-card">
+          <div class="card-title">🤖 Single Player vs AI</div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="segmented-control">
+              <button class="segment-btn active" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
+              <button class="segment-btn" data-diff="medium" onclick="setDifficulty('medium')">Medium</button>
+              <button class="segment-btn" data-diff="hard" onclick="setDifficulty('hard')">Hard</button>
             </div>
-
-            <div class="dashboard-panel">
-                <div id="turn-indicator">Goat's Turn</div>
-                <div id="score-board">Placing Phase</div>
-            </div>
-
-            <div class="board-viewport">
-                <div class="board-canvas">
-                    <svg id="board-svg-grid" viewBox="0 0 400 400" preserveAspectRatio="none">
-                        <line x1="0" y1="0" x2="400" y2="0" stroke="var(--board-lines)" stroke-width="4"/>
-                        <line x1="0" y1="100" x2="400" y2="100" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="0" y1="200" x2="400" y2="200" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="0" y1="300" x2="400" y2="300" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="0" y1="400" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="4"/>
-
-                        <line x1="0" y1="0" x2="0" y2="400" stroke="var(--board-lines)" stroke-width="4"/>
-                        <line x1="100" y1="0" x2="100" y2="400" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="200" y1="0" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="300" y1="0" x2="300" y2="400" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="400" y1="0" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="4"/>
-
-                        <line x1="0" y1="0" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="3"/>
-                        <line x1="400" y1="0" x2="0" y2="400" stroke="var(--board-lines)" stroke-width="3"/>
-                        
-                        <line x1="200" y1="0" x2="0" y2="200" stroke="var(--board-lines)" stroke-width="2"/>
-                        <line x1="200" y1="0" x2="400" y2="200" stroke="var(--board-lines)" stroke-width="2"/>
-                        <line x1="0" y1="200" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="2"/>
-                        <line x1="400" y1="200" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="2"/>
-                    </svg>
-                    <div class="board-interactive-surface" id="interactive-layer"></div>
-                </div>
-            </div>
-
             <div class="btn-grid-2">
-                <button id="undo-btn" class="app-btn btn-primary" onclick="handleUndoClick()" disabled>Undo Move ↩</button>
-                <button class="app-btn btn-primary" style="color: #ff4a4a;" onclick="returnToMenu()">Quit 🚪</button>
+              <button class="app-btn btn-accent-goat" onclick="startLocalGame('vsAI', 'G')">🐐 Goats</button>
+              <button class="app-btn btn-accent-tiger" onclick="startLocalGame('vsAI', 'T')">🐯 Tigers</button>
             </div>
+          </div>
         </div>
+
+        <div class="game-card">
+          <div class="card-title">👥 Offline Local Mode</div>
+          <button class="app-btn btn-primary" onclick="startLocalGame('local2P', null)">Pass &amp; Play Match</button>
+        </div>
+
+        <div class="game-card">
+          <div class="card-title">🌐 P2P Online Arena</div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button id="btn-host" class="app-btn btn-primary" onclick="initOnlineRoom(true)">Host Private Match</button>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="join-id-input" class="app-input" placeholder="5-Digit Code" maxlength="5" pattern="\d*" />
+              <button id="btn-join" class="app-btn btn-primary" style="width: auto; padding: 0 24px;" onclick="initOnlineRoom(false)">Join</button>
+            </div>
+            <div id="network-status" class="lobby-status-box" style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="game-screen">
+        <div class="dashboard-panel">
+          <div id="turn-indicator">Goat's Turn</div>
+          <div id="score-board">Placing Phase</div>
+        </div>
+
+        <div class="board-viewport">
+          <div class="board-canvas">
+            <svg id="board-svg-grid" viewBox="0 0 400 400" preserveAspectRatio="none">
+              <line x1="0" y1="0" x2="400" y2="0" stroke="var(--board-lines)" stroke-width="5"></line>
+              <line x1="0" y1="100" x2="400" y2="100" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="0" y1="200" x2="400" y2="200" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="0" y1="300" x2="400" y2="300" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="0" y1="400" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="5"></line>
+              <line x1="0" y1="0" x2="0" y2="400" stroke="var(--board-lines)" stroke-width="5"></line>
+              <line x1="100" y1="0" x2="100" y2="400" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="200" y1="0" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="300" y1="0" x2="300" y2="400" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="400" y1="0" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="5"></line>
+              <line x1="0" y1="0" x2="400" y2="400" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="400" y1="0" x2="0" y2="400" stroke="var(--board-lines)" stroke-width="3"></line>
+              <line x1="200" y1="0" x2="0" y2="200" stroke="var(--board-lines)" stroke-width="2"></line>
+              <line x1="200" y1="0" x2="400" y2="200" stroke="var(--board-lines)" stroke-width="2"></line>
+              <line x1="0" y1="200" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="2"></line>
+              <line x1="400" y1="200" x2="200" y2="400" stroke="var(--board-lines)" stroke-width="2"></line>
+            </svg>
+            <div class="board-interactive-surface" id="interactive-layer"></div>
+          </div>
+        </div>
+        
+        <div id="chat-container" class="online-chat-box">
+          <div id="chat-messages-log" class="chat-log"></div>
+          <div class="chat-compose-row">
+            <input type="text" id="chat-input-field" class="chat-input" placeholder="Send a message..." maxlength="120" />
+            <button class="chat-send-btn" onclick="sendChatMessage()">Send</button>
+          </div>
+        </div>
+
+        <div class="btn-grid-2">
+          <button id="undo-btn" class="app-btn btn-primary" onclick="handleUndoClick()" disabled>Undo Move ↩</button>
+          <button class="app-btn btn-primary" style="color: #ff5252;" onclick="returnToMenu()">Leave Lobby 🚪</button>
+        </div>
+      </div>
     </div>
 
     <div id="game-over-modal" class="modal-mask">
-        <div class="modal-body">
-            <div id="modal-title" class="modal-headline">Victory!</div>
-            <div id="modal-desc" class="modal-subtext">Description of match results.</div>
-            <button class="app-btn btn-accent-goat" style="background: #2ecc71;" onclick="closeModalAndExit()">Return to Hub 🔄</button>
-        </div>
+      <div class="modal-body">
+        <div id="modal-title" class="modal-headline">Victory!</div>
+        <div id="modal-desc" class="modal-subtext">Description of match results.</div>
+        <button class="app-btn btn-accent-goat" style="background: linear-gradient(180deg, #00e676 0%, #00b359 100%); border-bottom-color: #00803f;" onclick="closeModalAndExit()">Confirm 🔄</button>
+      </div>
     </div>
 
     <script>
@@ -507,6 +657,10 @@
         const gameOverModal = document.getElementById('game-over-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalDesc = document.getElementById('modal-desc');
+
+        const chatContainer = document.getElementById('chat-container');
+        const chatMessagesLog = document.getElementById('chat-messages-log');
+        const chatInputField = document.getElementById('chat-input-field');
 
         let audioCtx = null;
         function initAudio() {
@@ -555,13 +709,6 @@
         function loadMuteSettings() {
             const saved = localStorage.getItem('baghChalMute');
             isMuted = saved === 'true';
-            document.getElementById('audio-toggle').innerText = isMuted ? "Volume: OFF 🔇" : "Volume: ON 🔊";
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            localStorage.setItem('baghChalMute', isMuted);
-            document.getElementById('audio-toggle').innerText = isMuted ? "Volume: OFF 🔇" : "Volume: ON 🔊";
         }
 
         function accurateHasDiagonal(r, c) {
@@ -572,6 +719,10 @@
             const savedDiff = localStorage.getItem('bc_diff') || 'easy';
             setDifficulty(savedDiff);
             loadMuteSettings();
+
+            chatInputField.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
         });
 
         function startLocalGame(mode, side) {
@@ -579,41 +730,35 @@
             playerSide = side; 
             menuScreen.style.display = 'none';
             gameScreen.style.display = 'flex';
+            chatContainer.style.display = 'none';
 
             let title = "BaghChal: Local 2P";
             if (gameMode === 'vsAI') {
-                title = `VS AI: ${currentDifficulty.toUpperCase()}`;
                 localStorage.setItem('bc_diff', currentDifficulty);
             }
-            document.getElementById('game-title-header').innerText = title;
             initGame();
         }
 
-        /* Upgraded Online Core System: Generates clean 5 digit Room Tokens */
         function initOnlineRoom(isHost) {
             gameMode = 'onlineP2P';
-            netStatus.style.color = '#f1c40f';
+            netStatus.style.color = '#ffcc00';
             activeRoomId = "";
             
             if (peer) { peer.destroy(); }
 
             if (isHost) {
                 playerSide = 'G'; 
-                netStatus.innerText = "Reserving private room code...";
-                
-                // Generate a reliable, safe custom numeric 5-digit string range
+                netStatus.innerText = "Securing private match-room key...";
                 const numericalId = String(Math.floor(10000 + Math.random() * 90000));
-                
-                // Force PeerJS cloud network directory tracker to target our custom clean string identifier
                 peer = new Peer(numericalId);
 
                 peer.on('open', (id) => {
                     activeRoomId = id;
                     netStatus.style.color = '#fff';
                     netStatus.innerHTML = `
-                        <div style="margin-bottom: 6px; color: var(--text-muted); font-size:0.8rem;">Lobby Ready! Tap code to copy:</div>
+                        <div style="margin-bottom: 6px; color: var(--text-muted); font-size:0.8rem; font-weight:600;">Lobby Created! Tap key to duplicate:</div>
                         <div class="numeric-code-badge" onclick="copyRoomIdToClipboard()">${id} 📋</div>
-                        <div id="copy-confirm" style="font-size:0.75rem; color:#2ecc71; margin-top:4px; opacity:0; transition:opacity 0.2s; font-weight:600;">Copied to clipboard!</div>
+                        <div id="copy-confirm" style="font-size:0.75rem; color:#00e676; margin-top:6px; opacity:0; transition:opacity 0.2s; font-weight:700;">Code Copied!</div>
                     `;
                 });
 
@@ -624,27 +769,26 @@
                 });
                 
                 peer.on('error', (err) => {
-                    // Fallback to automatic token string assignment if code collision occurs
                     if (err.type === 'unavailable-id') {
                         peer = new Peer();
                         peer.on('open', (fallbackId) => {
-                            activeRoomId = fallbackId.substring(0, 6);
+                            activeRoomId = fallbackId.substring(0, 5);
                             netStatus.innerHTML = `<div class="numeric-code-badge" onclick="copyRoomIdToClipboard()">${activeRoomId} 📋</div>`;
                         });
                     } else {
                         netStatus.innerText = "Error: " + err.type;
-                        netStatus.style.color = '#e74c3c';
+                        netStatus.style.color = '#ff1744';
                     }
                 });
             } else {
                 playerSide = 'T'; 
                 const targetId = document.getElementById('join-id-input').value.trim();
                 if (!targetId || targetId.length < 4) {
-                    netStatus.innerText = "Please enter a valid room code.";
-                    netStatus.style.color = '#e74c3c';
+                    netStatus.innerText = "Please fill out a valid identity key.";
+                    netStatus.style.color = '#ff1744';
                     return;
                 }
-                netStatus.innerText = `Searching for room ${targetId}...`;
+                netStatus.innerText = `Connecting onto mainframe node ${targetId}...`;
                 
                 peer = new Peer();
                 peer.on('open', () => {
@@ -681,11 +825,13 @@
                     playSound(data.soundEvent);
                     renderUnifiedBoard();
                     updateStatusAndControls();
+                } else if (data.type === 'CHAT_MSG') {
+                    appendChatMessage(data.sender, data.text, 'them');
                 }
             });
 
             conn.on('close', () => {
-                alert("Match partner disconnected.");
+                alert("Match partner aborted session connection.");
                 returnToMenu();
             });
         }
@@ -693,8 +839,37 @@
         function launchOnlineGame() {
             menuScreen.style.display = 'none';
             gameScreen.style.display = 'flex';
-            document.getElementById('game-title-header').innerText = `Online Arena (${playerSide === 'G' ? 'Goat' : 'Tiger'})`;
+            chatContainer.style.display = 'flex';
+            chatMessagesLog.innerHTML = '';
+            appendChatMessage('System', 'Connected directly onto P2P secure channel.', 'system');
             initGame();
+        }
+
+        function sendChatMessage() {
+            const rawMsg = chatInputField.value.trim();
+            if (!rawMsg || !conn) return;
+
+            const senderName = playerSide === 'G' ? 'Goat' : 'Tiger';
+            conn.send({
+                type: 'CHAT_MSG',
+                sender: senderName,
+                text: rawMsg
+            });
+
+            appendChatMessage(senderName, rawMsg, 'me');
+            chatInputField.value = '';
+        }
+
+        function appendChatMessage(sender, text, tone) {
+            const row = document.createElement('div');
+            row.classList.add('chat-msg', tone);
+            if (tone === 'system') {
+                row.innerText = text;
+            } else {
+                row.innerText = `${sender}: ${text}`;
+            }
+            chatMessagesLog.appendChild(row);
+            chatMessagesLog.scrollTop = chatMessagesLog.scrollHeight;
         }
 
         function returnToMenu() {
@@ -711,7 +886,7 @@
         }
 
         function showGameOverModal(description) {
-            modalTitle.innerText = "Game Over! 🏁";
+            modalTitle.innerText = "Match Concluded";
             modalDesc.innerText = description;
             gameOverModal.classList.add('active');
         }
@@ -838,14 +1013,20 @@
             }
 
             if (isMyTurn()) {
-                turnIndicator.innerText = (gameMode === 'local2P') ? `${turn === 'G' ? "Goat's" : "Tiger's"} Turn` : "Your Turn ✨";
+                turnIndicator.innerText = (gameMode === 'local2P') ? `${turn === 'G' ? "Goat's" : "Tiger's"} Turn` : "Your Action Phase ✨";
                 turnIndicator.style.color = turn === 'G' ? 'var(--goat-neon)' : 'var(--tiger-neon)';
+                if(turn === 'G') {
+                    turnIndicator.style.textShadow = "0 0 10px var(--goat-glow)";
+                } else {
+                    turnIndicator.style.textShadow = "0 0 10px var(--tiger-glow)";
+                }
             } else {
-                turnIndicator.innerText = (gameMode === 'vsAI') ? "AI thinking..." : "Opponent Turn...";
+                turnIndicator.innerText = (gameMode === 'vsAI') ? "AI Processing..." : "Opponent Turn...";
                 turnIndicator.style.color = 'var(--text-muted)';
+                turnIndicator.style.textShadow = 'none';
             }
 
-            scoreBoard.innerText = `Goats Stock: ${goatsToPlace} | Captured: ${goatsEaten}/5 ${turn === 'G' ? phaseText : ''}`;
+            scoreBoard.innerText = `Deployable Goats: ${goatsToPlace}  |  Captured: ${goatsEaten}/5 ${turn === 'G' ? phaseText : ''}`;
             
             if (gameMode === 'onlineP2P') {
                 undoBtn.style.display = 'none'; 
@@ -1164,15 +1345,15 @@
         function checkWinConditions() {
             if (goatsEaten >= 5) {
                 isGameOver = true;
-                setTimeout(() => { showGameOverModal("Tigers Win! 5 goats captured."); }, 300);
+                setTimeout(() => { showGameOverModal("Tigers dominate the board! 5 goats captured."); }, 300);
                 return;
             }
 
             if (countTotalTigerMoves() === 0) {
                 isGameOver = true;
-                setTimeout(() => { showGameOverModal("Goats Win! Tigers are trapped."); }, 300);
+                setTimeout(() => { showGameOverModal("Goats form an impenetrable wall! Tigers are trapped."); }, 300);
             }
         }
     </script>
-</body>
+  </body>
 </html>
