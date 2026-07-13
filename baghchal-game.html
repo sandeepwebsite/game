@@ -20,7 +20,7 @@
             --board-lines: #4a3525;
             --text-main: #f0f0f8;
             --text-muted: #7e7e9a;
-            --glass-sheet: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            --chat-bg: rgba(13, 13, 25, 0.75);
         }
 
         * {
@@ -44,7 +44,6 @@
             padding: 16px;
         }
 
-        /* Ambient Animated Tech Background */
         body::before {
             content: '';
             position: fixed;
@@ -56,7 +55,6 @@
             pointer-events: none;
         }
 
-        /* AAA Game App Wrapper Canvas Container */
         .app-window {
             width: 100%;
             max-width: 430px;
@@ -72,6 +70,7 @@
             flex-direction: column;
             gap: 20px;
             position: relative;
+            transition: max-width 0.4s ease;
         }
 
         .app-header {
@@ -98,7 +97,6 @@
             margin-top: 4px;
         }
 
-        /* Component Cards */
         .game-card {
             background: rgba(10, 10, 20, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.04);
@@ -119,7 +117,6 @@
             gap: 8px;
         }
 
-        /* Form Inputs */
         .app-input {
             width: 100%;
             padding: 14px 18px;
@@ -137,10 +134,8 @@
 
         .app-input:focus {
             border-color: rgba(255,255,255,0.2);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 0 12px rgba(255,255,255,0.05);
         }
 
-        /* 3D App Tactile Buttons */
         .app-btn {
             position: relative;
             width: 100%;
@@ -161,10 +156,7 @@
             transition: all 0.1s ease;
         }
 
-        .app-btn:hover {
-            filter: brightness(1.1);
-        }
-
+        .app-btn:hover { filter: brightness(1.1); }
         .app-btn:active {
             transform: translateY(2px);
             border-bottom-width: 2px;
@@ -176,25 +168,6 @@
             border-bottom: 4px solid #1a1a26;
         }
 
-        .btn-accent-goat {
-            background: linear-gradient(180deg, #0091ea 0%, #0071bc 100%);
-            border-bottom: 4px solid #005691;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        }
-
-        .btn-accent-tiger {
-            background: linear-gradient(180deg, #ff1744 0%, #d50000 100%);
-            border-bottom: 4px solid #9b0000;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        }
-
-        .btn-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        /* Segmented Controller Settings Component */
         .segmented-control {
             display: flex;
             background: rgba(5, 5, 10, 0.6);
@@ -202,6 +175,7 @@
             border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.05);
             margin-bottom: 4px;
+            gap: 4px;
         }
 
         .segment-btn {
@@ -217,16 +191,12 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .segment-btn.active[data-diff="easy"] { background: #00e676; color: #003311; box-shadow: 0 2px 8px rgba(0,230,118,0.3); }
-        .segment-btn.active[data-diff="medium"] { background: #ff9100; color: #331a00; box-shadow: 0 2px 8px rgba(255,145,0,0.3); }
-        .segment-btn.active[data-diff="hard"] { background: #ff1744; color: #fff; box-shadow: 0 2px 8px rgba(255,23,68,0.3); }
+        .segment-btn.active { color: #fff; background: rgba(255,255,255,0.1); }
+        .segment-btn.active[data-diff="easy"] { background: #00e676; color: #003311; }
+        .segment-btn.active[data-diff="medium"] { background: #ff9100; color: #331a00; }
+        .segment-btn.active[data-diff="hard"] { background: #ff1744; color: #fff; }
 
-        /* Match Network Code Panel Badge */
-        .lobby-status-box {
-            text-align: center;
-            margin-top: 10px;
-        }
-
+        .lobby-status-box { text-align: center; margin-top: 10px; }
         .numeric-code-badge {
             display: inline-flex;
             align-items: center;
@@ -242,216 +212,178 @@
             letter-spacing: 4px;
             cursor: pointer;
             margin-top: 8px;
-            transition: all 0.2s;
         }
 
-        .numeric-code-badge:hover {
-            background: rgba(0, 230, 118, 0.1);
-            transform: scale(1.02);
+        .game-modes-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            width: 100%;
+            margin-top: 12px;
+            padding-bottom: 20px;
         }
 
-        /* --- ARÈNE HUD AND RUNTIME PANEL --- */
-        #game-screen {
-            display: none;
+        @media (min-width: 680px) {
+            .app-window.wide-mode { max-width: 980px; }
+            .app-window.wide-mode .game-modes-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        }
+
+        .mode-card-frame {
+            position: relative;
+            background: linear-gradient(180deg, #ff9100 0%, #ff5200 100%);
+            border-radius: 28px;
+            padding: 6px;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
+            display: flex;
             flex-direction: column;
-            gap: 18px;
-        }
-
-        .dashboard-panel {
-            background: rgba(10, 10, 18, 0.8);
-            border: 1px solid var(--panel-border);
-            border-radius: 20px;
-            padding: 16px;
-            text-align: center;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Neon status track accents under score bar */
-        .dashboard-panel::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(90deg, var(--goat-neon), var(--tiger-neon));
-            opacity: 0.7;
-        }
-
-        #turn-indicator {
-            font-size: 1.25rem;
-            font-weight: 800;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        #score-board {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-        }
-
-        /* High Tech Cyber-Grid Game Board Viewport Container */
-        .board-viewport {
-            width: 100%;
-            aspect-ratio: 1;
-            background-color: var(--board-wood);
-            border: 8px solid #140d0a;
-            border-radius: 24px;
-            padding: 22px;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.6),
-                        inset 0 0 30px rgba(0,0,0,0.8);
-            position: relative;
-        }
-
-        .board-canvas {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        #board-svg-grid {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            opacity: 0.85;
-        }
-
-        .board-interactive-surface {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5;
-        }
-
-        /* Precise Intersection Layer Nodes */
-        .board-node {
-            position: absolute;
-            width: 44px;
-            height: 44px;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 6;
-            transition: background 0.2s;
-        }
-
-        /* Action Highlighting */
-        .board-node.source-highlight { background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255,255,255,0.2); }
-        .board-node.target-highlight { background: rgba(255, 255, 255, 0.2); border: 2px dashed rgba(255,255,255,0.5); }
-
-        .board-node.valid-target::after {
-            content: '';
-            width: 16px;
-            height: 16px;
-            background-color: #00e676;
-            border-radius: 50%;
-            box-shadow: 0 0 14px #00e676, 0 0 24px #00e676;
-            animation: pulseEffect 1.2s infinite ease-in-out;
-        }
-
-        @keyframes pulseEffect {
-            0% { transform: scale(0.75); opacity: 0.6; }
-            50% { transform: scale(1.25); opacity: 1; }
-            100% { transform: scale(0.75); opacity: 0.6; }
-        }
-
-        /* Micro-polished Engine Game Pieces */
-        .game-piece {
-            position: absolute;
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.6rem;
-            transform: translate(-50%, -50%);
-            transition: top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
-                left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
-                transform 0.1s;
-            z-index: 10;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6), inset 0 -3px 0 rgba(0,0,0,0.3);
-            cursor: pointer;
-            pointer-events: none;
-        }
-
-        .game-piece.tiger {
-            background: radial-gradient(circle at 35% 35%, #ff527b 0%, var(--tiger-neon) 70%, #900 100%);
-            border: 2px solid #3a000c;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--tiger-glow);
-        }
-
-        .game-piece.goat {
-            background: radial-gradient(circle at 35% 35%, #40c4ff 0%, var(--goat-neon) 70%, #004b7c 100%);
-            border: 2px solid #001a2e;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--goat-glow);
+            margin-bottom: 16px;
+            transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
-        .board-node.active-selected-node + .game-piece { 
-            transform: translate(-50%, -50%) scale(1.22); 
-            z-index: 20; 
-            outline: 3px solid var(--accent-gold);
-            outline-offset: 2px;
-            box-shadow: 0 12px 24px rgba(0,0,0,0.7); 
+        .mode-card-frame.purple-theme { background: linear-gradient(180deg, #b8860b 0%, #8b6508 100%); }
+        .mode-card-frame.blue-theme { background: linear-gradient(180deg, #00b0ff 0%, #007bb5 100%); }
+
+        .mode-card-frame:hover { transform: translateY(-4px); }
+        .mode-card-body {
+            background-color: #3b2d6b;
+            border-radius: 22px;
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mode-card-frame.purple-theme .mode-card-body { background-color: #2b1f47; }
+        .mode-card-frame.blue-theme .mode-card-body { background-color: #1a2942; }
+
+        .mode-card-footer-btn {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #ffaa00 0%, #ff6a00 100%);
+            border: none;
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            white-space: normal;
+            line-height: 1.2;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 106, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 4px 0 #bc4e00;
+        }
+        
+        .mode-card-frame.purple-theme .mode-card-footer-btn {
+            background: linear-gradient(180deg, #daa520 0%, #b8860b 100%);
+            box-shadow: 0 8px 20px rgba(184, 134, 11, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 4px 0 #7a5805;
+        }
+        
+        .mode-card-frame.blue-theme .mode-card-footer-btn {
+            background: linear-gradient(180deg, #00c3ff 0%, #0099ff 100%);
+            box-shadow: 0 8px 20px rgba(0, 153, 255, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 4px 0 #0066aa;
         }
 
-        /* --- PREMIUM ONLINE CHAT BOX ENGINE --- */
+        .vector-illustration { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding-bottom: 12px; }
+        .mini-phone-mock {
+            width: 48px; height: 88px; background: #110d26; border: 3px solid #000; border-radius: 10px;
+            position: relative; box-shadow: 0 6px 12px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; margin-left: 8px;
+        }
+
+        #game-screen { display: none; flex-direction: column; gap: 18px; width: 100%; max-width: 430px; margin: 0 auto; }
+        .dashboard-panel {
+            background: rgba(10, 10, 18, 0.8); border: 1px solid var(--panel-border); border-radius: 20px;
+            padding: 16px; text-align: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.8); position: relative; overflow: hidden;
+        }
+        .dashboard-panel::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--goat-neon), var(--tiger-neon)); opacity: 0.7; }
+
+        #turn-indicator { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
+        #score-board { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; }
+
+        .board-viewport { width: 100%; aspect-ratio: 1; background-color: var(--board-wood); border: 8px solid #140d0a; border-radius: 24px; padding: 22px; box-shadow: 0 16px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.8); position: relative; }
+        .board-canvas { position: relative; width: 100%; height: 100%; }
+        #board-svg-grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.85; }
+        .board-interactive-surface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
+
+        .board-node { position: absolute; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 6; }
+        .board-node.source-highlight { background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255,255,255,0.2); }
+        .board-node.target-highlight { background: rgba(255, 255, 255, 0.2); border: 2px dashed rgba(255,255,255,0.5); }
+        .board-node.valid-target::after {
+            content: ''; width: 16px; height: 16px; background-color: #00e676; border-radius: 50%;
+            box-shadow: 0 0 14px #00e676, 0 0 24px #00e676; animation: pulseEffect 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulseEffect { 0%, 100% { transform: scale(0.75); opacity: 0.6; } 50% { transform: scale(1.25); opacity: 1; } }
+
+        .game-piece {
+            position: absolute; width: 46px; height: 46px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6rem;
+            transform: translate(-50%, -50%); transition: top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.1s;
+            z-index: 10; box-shadow: 0 8px 16px rgba(0,0,0,0.6), inset 0 -3px 0 rgba(0,0,0,0.3); cursor: pointer; pointer-events: none;
+        }
+        .game-piece.tiger { background: radial-gradient(circle at 35% 35%, #ff527b 0%, var(--tiger-neon) 70%, #900 100%); border: 2px solid #3a000c; box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--tiger-glow); }
+        .game-piece.goat { background: radial-gradient(circle at 35% 35%, #40c4ff 0%, var(--goat-neon) 70%, #004b7c 100%); border: 2px solid #001a2e; box-shadow: 0 8px 16px rgba(0,0,0,0.6), 0 0 14px var(--goat-glow); }
+        .board-node.active-selected-node + .game-piece { transform: translate(-50%, -50%) scale(1.22); z-index: 20; outline: 3px solid var(--accent-gold); outline-offset: 2px; }
+
+        /* PREMIUM CHAT UI DESIGN */
         .online-chat-box {
             display: none;
             flex-direction: column;
-            background: rgba(5, 5, 12, 0.6);
+            background: var(--chat-bg);
             border: 1px solid var(--panel-border);
-            border-radius: 20px;
-            padding: 12px;
-            gap: 10px;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+            border-radius: 24px;
+            padding: 16px;
+            gap: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            position: relative;
         }
-
         .chat-log {
-            height: 110px;
+            height: 140px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
             padding-right: 4px;
         }
-
-        /* Custom Modern Scrollbar */
         .chat-log::-webkit-scrollbar { width: 4px; }
         .chat-log::-webkit-scrollbar-track { background: transparent; }
         .chat-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
+        
         .chat-msg {
-            font-size: 0.82rem;
-            font-weight: 500;
-            line-height: 1.4;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 16px;
+            max-width: 85%;
+            line-height: 1.35;
             word-break: break-word;
-            padding: 6px 12px;
-            border-radius: 12px;
-            max-width: 80%;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            animation: messageSlideIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        @keyframes messageSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
         .chat-msg.me {
-            background: linear-gradient(135deg, #2a2a40 0%, #1e1e2d 100%);
-            color: #fff;
+            background: linear-gradient(135deg, #3b3b5c 0%, #252538 100%);
+            color: #ffffff;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.04);
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
-
         .chat-msg.them {
-            background: rgba(15, 15, 25, 0.9);
+            background: rgba(25, 25, 40, 0.85);
             color: var(--text-main);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
-
         .chat-msg.system {
             background: transparent;
             color: var(--text-muted);
@@ -459,119 +391,204 @@
             align-self: center;
             text-align: center;
             box-shadow: none;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
         }
-
-        .chat-compose-row {
+        
+        /* TYPING INDICATOR UI */
+        .chat-typing-container {
+            height: 16px;
             display: flex;
-            gap: 8px;
+            align-items: center;
+            padding-left: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
+        .chat-typing-container.active { opacity: 1; }
+        .typing-dots { display: inline-flex; gap: 3px; margin-left: 6px; align-items: center; }
+        .typing-dots span {
+            width: 4px; height: 4px; background-color: var(--text-muted); border-radius: 50%;
+            animation: typingDotBlink 1.4s infinite both;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDotBlink { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 
+        .chat-compose-row { display: flex; gap: 8px; position: relative; }
         .chat-input {
             flex: 1;
-            padding: 10px 14px;
-            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 10px;
+            border-radius: 14px;
             color: #fff;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             outline: none;
-            font-weight: 500;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+            transition: border-color 0.2s;
         }
-        
-        .chat-input:focus {
-            border-color: rgba(255,255,255,0.15);
-        }
-
+        .chat-input:focus { border-color: rgba(255,255,255,0.15); }
         .chat-send-btn {
-            padding: 0 16px;
-            background: #222235;
+            padding: 0 18px;
+            background: linear-gradient(180deg, #3d3d5c 0%, #29293d 100%);
             border: none;
-            border-radius: 10px;
+            border-bottom: 2px solid #1a1a26;
+            border-radius: 14px;
             color: #fff;
-            font-size: 0.82rem;
-            cursor: pointer;
             font-weight: 700;
-            transition: all 0.2s;
-            border-bottom: 2px solid #141421;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.1s;
         }
+        .chat-send-btn:active { transform: translateY(1px); border-bottom-width: 1px; }
 
-        .chat-send-btn:active {
-            transform: translateY(1px);
-            border-bottom-width: 0px;
-        }
-
-        /* Modals Overlays Screens layout templates */
-        .modal-mask {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(3, 3, 6, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .modal-mask.active { display: flex; opacity: 1; }
+        .btn-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         
-        .modal-body {
-            background: linear-gradient(135deg, #161626 0%, #0f0f1a 100%);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 32px 24px;
-            border-radius: 24px;
-            text-align: center;
-            width: 88%;
-            max-width: 350px;
-            box-shadow: 0 24px 50px rgba(0,0,0,0.9);
-        }
-        .modal-headline { font-size: 1.8rem; font-weight: 900; margin-bottom: 6px; color: var(--accent-gold); letter-spacing: 0.5px; }
-        .modal-subtext { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500; line-height: 1.4; }
+        .modal-mask { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(3, 3, 6, 0.85); backdrop-filter: blur(8px); z-index: 100; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease; }
+        .modal-mask.active { display: flex; opacity: 1; }
+        .modal-body { background: linear-gradient(135deg, #161626 0%, #0f0f1a 100%); border: 1px solid rgba(255,255,255,0.08); padding: 32px 24px; border-radius: 24px; text-align: center; width: 88%; max-width: 350px; }
+        .modal-headline { font-size: 1.8rem; font-weight: 900; margin-bottom: 6px; color: var(--accent-gold); }
+        .modal-subtext { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.4; }
     </style>
   </head>
   <body>
-    <div class="app-window">
-      <div id="menu-screen" style="display: flex; flex-direction: column; gap: 18px;">
+    <div class="app-window wide-mode" id="main-app-container">
+      
+      <!-- MENU HUB SCREEN CONTAINER -->
+      <div id="menu-screen" style="display: flex; flex-direction: column; gap: 14px;">
         <div class="app-header">
           <h1>BAGHCHAL</h1>
           <p>Tactical Arena</p>
         </div>
-        
-        <div class="game-card">
-          <div class="card-title">🤖 Single Player vs AI</div>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div class="segmented-control">
-              <button class="segment-btn active" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
-              <button class="segment-btn" data-diff="medium" onclick="setDifficulty('medium')">Medium</button>
-              <button class="segment-btn" data-diff="hard" onclick="setDifficulty('hard')">Hard</button>
+
+        <div class="game-modes-grid">
+          <!-- CARD 1: SINGLE PLAYER VS COMPUTER -->
+          <div class="mode-card-frame">
+            <div class="mode-card-body">
+              <div class="vector-illustration">
+                <svg width="75" height="90" viewBox="0 0 64 64">
+                  <ellipse cx="32" cy="24" rx="18" ry="14" fill="#cbd5e1"/>
+                  <ellipse cx="32" cy="24" rx="14" ry="10" fill="#1e293b"/>
+                  <circle cx="24" cy="24" r="3" fill="#00e676" />
+                  <circle cx="40" cy="24" r="3" fill="#00e676" />
+                  <path d="M26 30 Q32 34 38 30" stroke="#00e676" stroke-width="2" fill="none"/>
+                  <rect x="20" y="42" width="24" height="18" rx="6" fill="#cbd5e1"/>
+                </svg>
+                <div class="mini-phone-mock">
+                  <svg width="34" height="70" viewBox="0 0 40 40">
+                    <line x1="5" y1="5" x2="35" y2="5" stroke="#4a3525" stroke-width="2"/>
+                    <line x1="5" y1="20" x2="35" y2="20" stroke="#4a3525" stroke-width="2"/>
+                    <line x1="5" y1="35" x2="35" y2="35" stroke="#4a3525" stroke-width="2"/>
+                    <line x1="5" y1="5" x2="5" y2="35" stroke="#4a3525" stroke-width="2"/>
+                    <line x1="20" y1="5" x2="20" y2="35" stroke="#4a3525" stroke-width="2"/>
+                    <line x1="35" y1="5" x2="35" y2="35" stroke="#4a3525" stroke-width="2"/>
+                  </svg>
+                </div>
+              </div>
             </div>
-            <div class="btn-grid-2">
-              <button class="app-btn btn-accent-goat" onclick="startLocalGame('vsAI', 'G')">🐐 Goats</button>
-              <button class="app-btn btn-accent-tiger" onclick="startLocalGame('vsAI', 'T')">🐯 Tigers</button>
-            </div>
+            <button class="mode-card-footer-btn" onclick="showAiConfigurationPanel()">Play With Computer</button>
           </div>
-        </div>
 
-        <div class="game-card">
-          <div class="card-title">👥 Offline Local Mode</div>
-          <button class="app-btn btn-primary" onclick="startLocalGame('local2P', null)">Pass &amp; Play Match</button>
-        </div>
 
-        <div class="game-card">
-          <div class="card-title">🌐 P2P Online Arena</div>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button id="btn-host" class="app-btn btn-primary" onclick="initOnlineRoom(true)">Host Private Match</button>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" id="join-id-input" class="app-input" placeholder="5-Digit Code" maxlength="5" pattern="\d*" />
-              <button id="btn-join" class="app-btn btn-primary" style="width: auto; padding: 0 24px;" onclick="initOnlineRoom(false)">Join</button>
+          <!-- CARD 2: RESTORED OFFLINE LOCAL PASS & PLAY SANDBOX -->
+          <div class="mode-card-frame purple-theme">
+            <div class="mode-card-body">
+              <div class="vector-illustration" style="gap: 12px;">
+                <svg width="48" height="90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="22" r="10" fill="#40c4ff"/>
+                  <path d="M12 44 C12 32, 52 32, 52 44" fill="#004b7c"/>
+                </svg>
+                <span style="font-size: 1.5rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">⚔️</span>
+                <svg width="48" height="90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="22" r="10" fill="#ff527b"/>
+                  <path d="M12 44 C12 32, 52 32, 52 44" fill="#900"/>
+                </svg>
+              </div>
             </div>
-            <div id="network-status" class="lobby-status-box" style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;"></div>
+            <button class="mode-card-footer-btn" onclick="startLocalGame('local2P', null)">Launch Offline Match</button>
+          </div>
+
+        <!-- CARD 3: P2P ONLINE MULTIPLAYER MATCHMAKING -->
+          <div class="mode-card-frame blue-theme">
+            <div class="mode-card-body">
+              <div class="vector-illustration" style="gap: 8px;">
+                <svg width="65" height="90" viewBox="0 0 64 64">
+                  <path d="M16 45 C16 34, 48 34, 48 45" fill="#f43f5e" />
+                  <circle cx="32" cy="24" r="11" fill="#fbcfe8"/>
+                </svg>
+                <svg width="60" height="90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="22" fill="#38bdf8"/>
+                  <path d="M10 32 Q32 16 54 32" stroke="#e0f2fe" stroke-width="1.5" fill="none"/>
+                  <line x1="10" y1="32" x2="54" y2="32" stroke="#e0f2fe" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </div>
+            <button class="mode-card-footer-btn" onclick="showOnlineConfigurationPanel()">Play Online Room</button>
           </div>
         </div>
       </div>
 
+      <!-- DYNAMIC CONFIGURATION SUBPANEL: PLAY WITH AI SETUP -->
+      <div id="ai-setup-screen" style="display: none; flex-direction: column; gap: 16px;">
+        <div class="app-header">
+          <h1>AI SETTING</h1>
+          <p>Configure Deployment</p>
+        </div>
+
+        <div class="game-card">
+          <div class="card-title">🎭 Select Your Allegiance Side</div>
+          <div class="segmented-control" id="side-selector">
+            <button class="segment-btn active" id="side-g-btn" onclick="selectSide('G')">Goat (🐐 First)</button>
+            <button class="segment-btn" id="side-t-btn" onclick="selectSide('T')">Tiger (🐯 Hunt)</button>
+          </div>
+        </div>
+
+        <div class="game-card">
+          <div class="card-title">⚙️ AI Calibration Engine Level</div>
+          <div class="segmented-control">
+            <button class="segment-btn active" data-diff="easy" onclick="setDifficulty('easy')">Easy</button>
+            <button class="segment-btn" data-diff="medium" onclick="setDifficulty('medium')">Medium</button>
+            <button class="segment-btn" data-diff="hard" onclick="setDifficulty('hard')">Hard</button>
+          </div>
+        </div>
+
+        <div class="btn-grid-2">
+          <button class="app-btn btn-primary" style="color: var(--text-muted);" onclick="returnToMainMenuHub()">↩ Back</button>
+          <button class="app-btn" style="background: linear-gradient(180deg, #ffaa00 0%, #ff6a00 100%); border-bottom-color:#bc4e00;" onclick="confirmAndLaunchAiMatch()">Start Arena ⚔️</button>
+        </div>
+      </div>
+
+      <!-- DYNAMIC CONFIGURATION SUBPANEL: ONLINE PORTAL HUB -->
+      <div id="online-setup-screen" style="display: none; flex-direction: column; gap: 16px;">
+        <div class="app-header">
+          <h1>ONLINE ROOM</h1>
+          <p>Secure Matchmaking Portal</p>
+        </div>
+
+        <div class="game-card" style="text-align: center;">
+          <div class="card-title" style="justify-content: center;">👑 Host Secure Room Session</div>
+          <button class="app-btn btn-primary" id="btn-create-room" onclick="initOnlineRoom(true)">Generate Access Key</button>
+          <div id="host-network-status" class="lobby-status-box"></div>
+        </div>
+
+        <div style="text-align: center; color: var(--text-muted); font-weight: 800; font-size: 0.8rem;">— OR JOIN ENTRYWAY —</div>
+
+        <div class="game-card">
+          <div class="card-title">🔑 Enter Remote Connection Code</div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="join-id-input" class="app-input" placeholder="Join Code" maxlength="5" />
+            <button id="btn-join" class="app-btn" style="width: auto; padding: 14px 22px; background: linear-gradient(180deg, #ffaa00 0%, #ff6a00 100%); border-bottom-color:#bc4e00;" onclick="initOnlineRoom(false)">Join</button>
+          </div>
+          <div id="join-network-status" class="lobby-status-box"></div>
+        </div>
+
+        <button class="app-btn btn-primary" style="color: var(--text-muted);" onclick="returnToMainMenuHub()">↩ Back to Main Menu</button>
+      </div>
+
+      <!-- RUNTIME ARENA SCREEN MATCHBOARD -->
       <div id="game-screen">
         <div class="dashboard-panel">
           <div id="turn-indicator">Goat's Turn</div>
@@ -602,17 +619,25 @@
           </div>
         </div>
         
+        <!-- UPGRADED CHAT MODULE CONSOLE -->
         <div id="chat-container" class="online-chat-box">
           <div id="chat-messages-log" class="chat-log"></div>
+          
+          <!-- LIVE REAL-TIME TYPING BADGE -->
+          <div id="chat-typing-indicator" class="chat-typing-container">
+            <span id="typing-indicator-text">Opponent is typing</span>
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+          </div>
+
           <div class="chat-compose-row">
-            <input type="text" id="chat-input-field" class="chat-input" placeholder="Send a message..." maxlength="120" />
+            <input type="text" id="chat-input-field" class="chat-input" placeholder="Type a message..." maxlength="120" oninput="broadcastTypingState()" />
             <button class="chat-send-btn" onclick="sendChatMessage()">Send</button>
           </div>
         </div>
 
         <div class="btn-grid-2">
-          <button id="undo-btn" class="app-btn btn-primary" onclick="handleUndoClick()" disabled>Undo Move ↩</button>
-          <button class="app-btn btn-primary" style="color: #ff5252;" onclick="returnToMenu()">Leave Lobby 🚪</button>
+          <button id="undo-btn" class="app-btn btn-primary" onclick="handleUndoClick()" disabled>Undo ↩</button>
+          <button class="app-btn btn-primary" style="color: #ff5252;" onclick="returnToMainMenuHub()">Leave Lobby 🚪</button>
         </div>
       </div>
     </div>
@@ -621,7 +646,7 @@
       <div class="modal-body">
         <div id="modal-title" class="modal-headline">Victory!</div>
         <div id="modal-desc" class="modal-subtext">Description of match results.</div>
-        <button class="app-btn btn-accent-goat" style="background: linear-gradient(180deg, #00e676 0%, #00b359 100%); border-bottom-color: #00803f;" onclick="closeModalAndExit()">Confirm 🔄</button>
+        <button class="app-btn" style="background: linear-gradient(180deg, #00e676 0%, #00b359 100%); border-bottom: 4px solid #00803f;" onclick="closeModalAndExit()">Confirm 🔄</button>
       </div>
     </div>
 
@@ -645,14 +670,24 @@
         let peer = null;
         let conn = null;
         let activeRoomId = "";
+        
+        // Typing tracking mechanics
+        let localTypingTimeout = null;
+        let remoteTypingClearTimeout = null;
 
+        const appContainer = document.getElementById('main-app-container');
         const interactiveLayer = document.getElementById('interactive-layer');
         const turnIndicator = document.getElementById('turn-indicator');
         const scoreBoard = document.getElementById('score-board');
+        
         const menuScreen = document.getElementById('menu-screen');
+        const aiSetupScreen = document.getElementById('ai-setup-screen');
+        const onlineSetupScreen = document.getElementById('online-setup-screen');
         const gameScreen = document.getElementById('game-screen');
+        
         const undoBtn = document.getElementById('undo-btn');
-        const netStatus = document.getElementById('network-status');
+        const hostNetStatus = document.getElementById('host-network-status');
+        const joinNetStatus = document.getElementById('join-network-status');
         
         const gameOverModal = document.getElementById('game-over-modal');
         const modalTitle = document.getElementById('modal-title');
@@ -661,6 +696,8 @@
         const chatContainer = document.getElementById('chat-container');
         const chatMessagesLog = document.getElementById('chat-messages-log');
         const chatInputField = document.getElementById('chat-input-field');
+        const chatTypingIndicator = document.getElementById('chat-typing-indicator');
+        const typingIndicatorText = document.getElementById('typing-indicator-text');
 
         let audioCtx = null;
         function initAudio() {
@@ -698,12 +735,81 @@
             }
         }
 
+        function showAiConfigurationPanel() {
+            menuScreen.style.display = 'none';
+            onlineSetupScreen.style.display = 'none';
+            aiSetupScreen.style.display = 'flex';
+            appContainer.classList.remove('wide-mode');
+            appContainer.style.maxWidth = "430px";
+        }
+
+        function showOnlineConfigurationPanel() {
+            menuScreen.style.display = 'none';
+            aiSetupScreen.style.display = 'none';
+            onlineSetupScreen.style.display = 'flex';
+            appContainer.classList.remove('wide-mode');
+            appContainer.style.maxWidth = "430px";
+            hostNetStatus.innerHTML = "";
+            joinNetStatus.innerHTML = "";
+        }
+
+        function returnToMainMenuHub() {
+            gameScreen.style.display = 'none';
+            aiSetupScreen.style.display = 'none';
+            onlineSetupScreen.style.display = 'none';
+            menuScreen.style.display = 'flex';
+            gameOverModal.classList.remove('active');
+            chatTypingIndicator.classList.remove('active');
+            
+            if(window.innerWidth >= 680) {
+                appContainer.classList.add('wide-mode');
+                appContainer.style.maxWidth = "980px";
+            } else {
+                appContainer.style.maxWidth = "430px";
+            }
+
+            if (peer) {
+                peer.destroy();
+                peer = null;
+                conn = null;
+            }
+            activeRoomId = "";
+        }
+
+        function selectSide(side) {
+            playerSide = side;
+            document.getElementById('side-g-btn').classList.remove('active');
+            document.getElementById('side-t-btn').classList.remove('active');
+            if(side === 'G') document.getElementById('side-g-btn').classList.add('active');
+            else document.getElementById('side-t-btn').classList.add('active');
+        }
+
         function setDifficulty(level) {
             currentDifficulty = level;
-            document.querySelectorAll('.segment-btn').forEach(btn => {
+            document.querySelectorAll('[data-diff]').forEach(btn => {
                 btn.classList.remove('active');
                 if(btn.getAttribute('data-diff') === level) btn.classList.add('active');
             });
+        }
+
+        function confirmAndLaunchAiMatch() {
+            aiSetupScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            gameMode = 'vsAI';
+            localStorage.setItem('bc_diff', currentDifficulty);
+            initGame();
+        }
+
+        function startLocalGame(mode, side) {
+            gameMode = mode;
+            playerSide = side; 
+            menuScreen.style.display = 'none';
+            aiSetupScreen.style.display = 'none';
+            onlineSetupScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            chatContainer.style.display = 'none';
+            appContainer.style.maxWidth = "430px";
+            initGame();
         }
 
         function loadMuteSettings() {
@@ -720,45 +826,36 @@
             setDifficulty(savedDiff);
             loadMuteSettings();
 
+            if(window.innerWidth >= 680) {
+                appContainer.classList.add('wide-mode');
+                appContainer.style.maxWidth = "980px";
+            }
+
             chatInputField.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') sendChatMessage();
             });
         });
 
-        function startLocalGame(mode, side) {
-            gameMode = mode;
-            playerSide = side; 
-            menuScreen.style.display = 'none';
-            gameScreen.style.display = 'flex';
-            chatContainer.style.display = 'none';
-
-            let title = "BaghChal: Local 2P";
-            if (gameMode === 'vsAI') {
-                localStorage.setItem('bc_diff', currentDifficulty);
-            }
-            initGame();
-        }
-
         function initOnlineRoom(isHost) {
             gameMode = 'onlineP2P';
-            netStatus.style.color = '#ffcc00';
             activeRoomId = "";
             
             if (peer) { peer.destroy(); }
 
             if (isHost) {
                 playerSide = 'G'; 
-                netStatus.innerText = "Securing private match-room key...";
+                hostNetStatus.style.color = '#ffcc00';
+                hostNetStatus.innerText = "Securing match-room key code...";
                 const numericalId = String(Math.floor(10000 + Math.random() * 90000));
                 peer = new Peer(numericalId);
 
                 peer.on('open', (id) => {
                     activeRoomId = id;
-                    netStatus.style.color = '#fff';
-                    netStatus.innerHTML = `
-                        <div style="margin-bottom: 6px; color: var(--text-muted); font-size:0.8rem; font-weight:600;">Lobby Created! Tap key to duplicate:</div>
+                    hostNetStatus.style.color = '#fff';
+                    hostNetStatus.innerHTML = `
+                        <div style="margin-bottom: 6px; color: var(--text-muted); font-size:0.8rem; font-weight:600;">Lobby Created! Share this entry key:</div>
                         <div class="numeric-code-badge" onclick="copyRoomIdToClipboard()">${id} 📋</div>
-                        <div id="copy-confirm" style="font-size:0.75rem; color:#00e676; margin-top:6px; opacity:0; transition:opacity 0.2s; font-weight:700;">Code Copied!</div>
+                        <div id="copy-confirm" style="font-size:0.75rem; color:#00e676; margin-top:6px; opacity:0; font-weight:700;">Code Copied!</div>
                     `;
                 });
 
@@ -769,31 +866,29 @@
                 });
                 
                 peer.on('error', (err) => {
-                    if (err.type === 'unavailable-id') {
-                        peer = new Peer();
-                        peer.on('open', (fallbackId) => {
-                            activeRoomId = fallbackId.substring(0, 5);
-                            netStatus.innerHTML = `<div class="numeric-code-badge" onclick="copyRoomIdToClipboard()">${activeRoomId} 📋</div>`;
-                        });
-                    } else {
-                        netStatus.innerText = "Error: " + err.type;
-                        netStatus.style.color = '#ff1744';
-                    }
+                    hostNetStatus.style.color = '#ff1744';
+                    hostNetStatus.innerText = "Connection failed. Please retry.";
                 });
             } else {
                 playerSide = 'T'; 
                 const targetId = document.getElementById('join-id-input').value.trim();
                 if (!targetId || targetId.length < 4) {
-                    netStatus.innerText = "Please fill out a valid identity key.";
-                    netStatus.style.color = '#ff1744';
+                    joinNetStatus.innerText = "Please fill out a valid identity key.";
+                    joinNetStatus.style.color = '#ff1744';
                     return;
                 }
-                netStatus.innerText = `Connecting onto mainframe node ${targetId}...`;
+                joinNetStatus.style.color = '#ffcc00';
+                joinNetStatus.innerText = `Connecting onto node ${targetId}...`;
                 
                 peer = new Peer();
                 peer.on('open', () => {
                     conn = peer.connect(targetId);
                     setupNetworkEvents();
+                });
+
+                peer.on('error', (err) => {
+                    joinNetStatus.style.color = '#ff1744';
+                    joinNetStatus.innerText = "Unable to reach targeted key session.";
                 });
             }
         }
@@ -826,23 +921,54 @@
                     renderUnifiedBoard();
                     updateStatusAndControls();
                 } else if (data.type === 'CHAT_MSG') {
+                    chatTypingIndicator.classList.remove('active');
                     appendChatMessage(data.sender, data.text, 'them');
+                } else if (data.type === 'TYPING_STATE') {
+                    if (data.isTyping) {
+                        typingIndicatorText.innerText = `${data.sender} is typing`;
+                        chatTypingIndicator.classList.add('active');
+                        
+                        // Fallback safety filter auto-clearing typing animation after 3.5s
+                        clearTimeout(remoteTypingClearTimeout);
+                        remoteTypingClearTimeout = setTimeout(() => {
+                            chatTypingIndicator.classList.remove('active');
+                        }, 3500);
+                    } else {
+                        chatTypingIndicator.classList.remove('active');
+                    }
                 }
             });
 
             conn.on('close', () => {
-                alert("Match partner aborted session connection.");
-                returnToMenu();
+                alert("Match partner left the game.");
+                returnToMainMenuHub();
             });
         }
 
         function launchOnlineGame() {
             menuScreen.style.display = 'none';
+            aiSetupScreen.style.display = 'none';
+            onlineSetupScreen.style.display = 'none';
             gameScreen.style.display = 'flex';
             chatContainer.style.display = 'flex';
+            appContainer.style.maxWidth = "430px";
             chatMessagesLog.innerHTML = '';
-            appendChatMessage('System', 'Connected directly onto P2P secure channel.', 'system');
+            chatTypingIndicator.classList.remove('active');
+            appendChatMessage('System', 'Connected onto secure P2P arena node.', 'system');
             initGame();
+        }
+
+        /* BROADCAST LOCAL TYPING ENGINE STATE TRIGGER */
+        function broadcastTypingState() {
+            if (!conn) return;
+            const myRole = playerSide === 'G' ? 'Goat' : 'Tiger';
+            
+            conn.send({ type: 'TYPING_STATE', sender: myRole, isTyping: true });
+            
+            clearTimeout(localTypingTimeout);
+            localTypingTimeout = setTimeout(() => {
+                conn.send({ type: 'TYPING_STATE', sender: myRole, isTyping: false });
+            }, 1800);
         }
 
         function sendChatMessage() {
@@ -850,12 +976,12 @@
             if (!rawMsg || !conn) return;
 
             const senderName = playerSide === 'G' ? 'Goat' : 'Tiger';
-            conn.send({
-                type: 'CHAT_MSG',
-                sender: senderName,
-                text: rawMsg
-            });
-
+            
+            // Immediately stop typing frame on submission
+            clearTimeout(localTypingTimeout);
+            conn.send({ type: 'TYPING_STATE', sender: senderName, isTyping: false });
+            
+            conn.send({ type: 'CHAT_MSG', sender: senderName, text: rawMsg });
             appendChatMessage(senderName, rawMsg, 'me');
             chatInputField.value = '';
         }
@@ -863,26 +989,9 @@
         function appendChatMessage(sender, text, tone) {
             const row = document.createElement('div');
             row.classList.add('chat-msg', tone);
-            if (tone === 'system') {
-                row.innerText = text;
-            } else {
-                row.innerText = `${sender}: ${text}`;
-            }
+            row.innerText = tone === 'system' ? text : `${sender}: ${text}`;
             chatMessagesLog.appendChild(row);
             chatMessagesLog.scrollTop = chatMessagesLog.scrollHeight;
-        }
-
-        function returnToMenu() {
-            gameScreen.style.display = 'none';
-            menuScreen.style.display = 'flex';
-            gameOverModal.classList.remove('active');
-            if (peer) {
-                peer.destroy();
-                peer = null;
-                conn = null;
-            }
-            netStatus.innerHTML = "";
-            activeRoomId = "";
         }
 
         function showGameOverModal(description) {
@@ -893,7 +1002,7 @@
 
         function closeModalAndExit() {
             gameOverModal.classList.remove('active');
-            returnToMenu();
+            returnToMainMenuHub();
         }
 
         function initGame() {
@@ -1015,11 +1124,7 @@
             if (isMyTurn()) {
                 turnIndicator.innerText = (gameMode === 'local2P') ? `${turn === 'G' ? "Goat's" : "Tiger's"} Turn` : "Your Action Phase ✨";
                 turnIndicator.style.color = turn === 'G' ? 'var(--goat-neon)' : 'var(--tiger-neon)';
-                if(turn === 'G') {
-                    turnIndicator.style.textShadow = "0 0 10px var(--goat-glow)";
-                } else {
-                    turnIndicator.style.textShadow = "0 0 10px var(--tiger-glow)";
-                }
+                turnIndicator.style.textShadow = turn === 'G' ? "0 0 10px var(--goat-glow)" : "0 0 10px var(--tiger-glow)";
             } else {
                 turnIndicator.innerText = (gameMode === 'vsAI') ? "AI Processing..." : "Opponent Turn...";
                 turnIndicator.style.color = 'var(--text-muted)';
@@ -1345,13 +1450,12 @@
         function checkWinConditions() {
             if (goatsEaten >= 5) {
                 isGameOver = true;
-                setTimeout(() => { showGameOverModal("Tigers dominate the board! 5 goats captured."); }, 300);
+                setTimeout(() => { showGameOverModal("Tigers dominate! 5 goats captured."); }, 300);
                 return;
             }
-
             if (countTotalTigerMoves() === 0) {
                 isGameOver = true;
-                setTimeout(() => { showGameOverModal("Goats form an impenetrable wall! Tigers are trapped."); }, 300);
+                setTimeout(() => { showGameOverModal("Goats win! Tigers are completely trapped."); }, 300);
             }
         }
     </script>
