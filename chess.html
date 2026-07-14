@@ -138,6 +138,56 @@
         /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; z-index: 3000; justify-content: center; align-items: center; }
         .native-modal { width: 84%; max-width: 360px; background: var(--card); border-radius: 28px; padding: 30px 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+
+        /* P2P CHAT OVERLAYS */
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 12px;
+            box-sizing: border-box;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .chat-messages {
+            height: 90px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 4px;
+            margin-bottom: 4px;
+        }
+        .chat-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .chat-field {
+            flex: 1;
+            padding: 12px;
+            background: var(--secondary);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            color: white;
+            font-size: 0.9rem;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .chat-field:focus { outline: 1px solid var(--accent); }
+        .typing-indicator {
+            font-size: 0.75rem;
+            color: var(--gold);
+            min-height: 16px;
+            font-style: italic;
+            padding-left: 2px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -241,6 +291,16 @@
             <button class="btn" style="background: var(--secondary); color: white;" onclick="resetGame()">RESET</button>
             <button class="btn" style="background: var(--card); border: 1px solid var(--secondary); color: white;" onclick="undoMove()">UNDO</button>
         </div>
+
+        <!-- INTEGRATED P2P CHAT CONTROLLER MODULE -->
+        <div class="chat-container" id="p2pChatContainer">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="typing-indicator" id="chatTypingIndicator">Opponent is typing...</div>
+            <div class="chat-input-wrapper">
+                <input type="text" class="chat-field" id="chatInputField" placeholder="Type tactical transmission..." autocomplete="off">
+                <button class="btn btn-primary" style="width: auto; padding: 12px 18px; font-size: 1rem; border-radius: 12px;" onclick="submitPlayerMessage()">⚡</button>
+            </div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="quitModal">
@@ -260,6 +320,11 @@
             <div id="modalButtons" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
     </div>
+
+    <!-- FLOATING REVIEW ACTION INTERACTION BAR -->
+    <div id="reviewBar" style="position: absolute; bottom: 24px; left: 20px; right: 20px; z-index: 2500; display: none;">
+        <button class="btn btn-primary" style="background: var(--gold); color: #022c22; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45);" onclick="showResultModal(lastResultType)">🏆 VIEW RESULT SUMMARY</button>
+    </div>
 </div>
 
 <script>
@@ -269,12 +334,14 @@
     let currentLevel = parseInt(localStorage.getItem('chess_current_level')) || 1;
     let maxLevel = parseInt(localStorage.getItem('chess_max_level')) || 1;
     let isMuted = localStorage.getItem('chess_muted') === 'true';
+    let lastResultType = null; 
 
     // --- P2P MODULE HOOKS ---
     let peer = null;
     let conn = null;
     let myPlayerColor = 'w'; 
     let myCustomIdToken = '';
+    let typingDebounceTimeout = null;
 
     // --- SOUND FRAMEWORK ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -311,6 +378,7 @@
     }
 
     function confirmQuit() { 
+        $('#reviewBar').hide();
         if(gameMode === 'online' && conn) {
             conn.send({type: 'disconnect'});
             cleanupP2P();
@@ -405,8 +473,12 @@
             gameMode = 'online';
             $('#quitModalDesc').text("Conceding early breaks room state and causes standard forfeit.");
             
-            // Hide control tray with pointers to prevent screen jumps
-            $('#controlTray').css({ 'opacity': '0', 'pointer-events': 'none' });
+            // Toggle view visibility for P2P layout
+            $('#controlTray').css({ 'opacity': '0', 'pointer-events': 'none', 'display': 'none' });
+            $('#chatMessages').empty();
+            $('#chatInputField').val('');
+            $('#chatTypingIndicator').css('opacity', '0');
+            $('#p2pChatContainer').css('display', 'flex');
             
             updateHeader();
             navigate('screen-game');
@@ -428,6 +500,10 @@
                     playMoveSound(move.captured || game.in_check());
                     updateStatus();
                 }
+            } else if (data.type === 'chat') {
+                appendChatMessage('Opponent', data.text, true);
+            } else if (data.type === 'typing') {
+                $('#chatTypingIndicator').css('opacity', data.isTyping ? '1' : '0');
             } else if (data.type === 'disconnect') {
                 alert('Opponent has explicitly severed connection strings.');
                 cleanupP2P();
@@ -446,12 +522,14 @@
         if(conn) { conn.close(); conn = null; }
         if(peer) { peer.destroy(); peer = null; }
         $('#quitModalDesc').text("Your current local positions will be preserved safely.");
-        $('#controlTray').css({ 'opacity': '1', 'pointer-events': 'auto' }); 
+        $('#p2pChatContainer').css('display', 'none');
+        $('#controlTray').css({ 'opacity': '1', 'pointer-events': 'auto', 'display': 'grid' }); 
     }
 
     // --- GAME ENGINE PROCESSORS ---
     function initGame(mode) {
         cleanupP2P();
+        $('#reviewBar').hide();
         gameMode = mode;
         game.reset();
         if(mode === 'local') currentLevel = 1;
@@ -579,6 +657,9 @@
     }
 
     function showResultModal(type) {
+        lastResultType = type;
+        $('#reviewBar').hide(); 
+
         const modal = $('#resultModal').css('display', 'flex');
         const btns = $('#modalButtons').empty();
 
@@ -625,6 +706,11 @@
             navigate('screen-home');
             if(localStorage.getItem('chess_saved_game')) $('#resume-btn').show();
         }));
+
+        btns.append($('<button class="btn btn-secondary" style="border: 1px solid rgba(255,255,255,0.08); background: #1b263b;">👁️ REVIEW BOARD</button>').click(() => {
+            modal.hide();
+            $('#reviewBar').show();
+        }));
     }
 
     // --- GAME DATA STORAGE ---
@@ -642,6 +728,7 @@
         const data = JSON.parse(localStorage.getItem('chess_saved_game'));
         if(!data) return;
         cleanupP2P();
+        $('#reviewBar').hide();
         currentLevel = data.level;
         gameMode = data.mode;
         updateHeader();
@@ -657,6 +744,7 @@
 
     function resetGame() { 
         if (gameMode === 'online') return;
+        $('#reviewBar').hide();
         game.reset(); 
         if(board) board.start(); 
         updateStatus(); 
@@ -665,12 +753,74 @@
     
     function undoMove() { 
         if (gameMode === 'online') return;
+        $('#reviewBar').hide();
         game.undo(); 
         if(gameMode === 'ai') game.undo(); 
         if(board) board.position(game.fen()); 
         updateStatus(); 
         saveGameState();
     }
+
+    // --- P2P CHAT RENDER LOGIC ---
+    function submitPlayerMessage() {
+        const field = $('#chatInputField');
+        const text = field.val().trim();
+        if(!text) return;
+        
+        if (gameMode === 'online' && conn) {
+            conn.send({ type: 'chat', text: text });
+            // Direct typing cancel immediately on transmission send
+            conn.send({ type: 'typing', isTyping: false });
+        }
+        
+        appendChatMessage('You', text, false);
+        field.val('').focus();
+    }
+
+    function appendChatMessage(sender, text, animate = false) {
+        const container = $('#chatMessages');
+        const msgBlock = $('<div></div>').css({ 'line-height': '1.4', 'word-break': 'break-word' });
+        const prefix = $('<strong></strong>').text(sender + ': ').css('color', sender === 'You' ? 'var(--accent)' : 'var(--gold)');
+        
+        msgBlock.append(prefix);
+        const textNode = $('<span></span>');
+        msgBlock.append(textNode);
+        container.append(msgBlock);
+
+        if (animate) {
+            let i = 0;
+            function runTypewriterEffect() {
+                if (i < text.length) {
+                    textNode.text(textNode.text() + text.charAt(i));
+                    i++;
+                    setTimeout(runTypewriterEffect, 25);
+                    container.scrollTop(container[0].scrollHeight);
+                }
+            }
+            runTypewriterEffect();
+        } else {
+            textNode.text(text);
+            container.scrollTop(container[0].scrollHeight);
+        }
+    }
+
+    // --- CHAT TYING LISTENER ACTION ---
+    $('#chatInputField').on('input', function() {
+        if (gameMode === 'online' && conn) {
+            conn.send({ type: 'typing', isTyping: true });
+            
+            clearTimeout(typingDebounceTimeout);
+            typingDebounceTimeout = setTimeout(() => {
+                conn.send({ type: 'typing', isTyping: false });
+            }, 1500);
+        }
+    });
+
+    $('#chatInputField').on('keydown', function(e) {
+        if(e.key === 'Enter') {
+            submitPlayerMessage();
+        }
+    });
 
     // --- INITIAL CONFIGURATION CONTROL ---
     if (isMuted) $('#muteBtn').text('🔇');
