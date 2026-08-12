@@ -243,10 +243,7 @@ const audio = new LudoAudio();
 window.addEventListener('click', () => audio.init(), { once: true });
 window.addEventListener('touchstart', () => audio.init(), { once: true });
 
-
 // Game Configuration & State
-const MAX_PLAYERS = 4; // Set your required total player count
-let players = []; // Array tracking joined players
 let isGameStarted = false;
 
 const rollDiceBtn = document.getElementById('roll-dice-btn');
@@ -254,20 +251,18 @@ const statusText = document.getElementById('status-text');
 
 // Function called whenever a player joins or leaves
 function updateRoomState(joinedPlayers) {
-  players = joinedPlayers;
+  activePlayers = joinedPlayers;
 
-  if (players.length === MAX_PLAYERS) {
+  if (activePlayers.length >= selectedPlayerCount) {
     isGameStarted = true;
-    rollDiceBtn.disabled = false; // Enable dice roll
-    statusText.innerText = "All players joined! It's time to roll.";
+    if (rollDiceBtn) rollDiceBtn.disabled = false;
+    if (statusText) statusText.innerText = "All players joined! It's time to roll.";
   } else {
     isGameStarted = false;
-    rollDiceBtn.disabled = true; // Disable dice roll
-    statusText.innerText = `Waiting for players... (${players.length}/${MAX_PLAYERS})`;
+    if (rollDiceBtn) rollDiceBtn.disabled = true;
+    if (statusText) statusText.innerText = `Waiting for players... (${activePlayers.length}/${selectedPlayerCount})`;
   }
 }
-
-
 
 function triggerHaptic(type = 15) {
   if (navigator.vibrate) {
@@ -489,7 +484,7 @@ function setOnlineAction(action) {
 function selectPlayerCount(count) {
   audio.play('click');
   selectedPlayerCount = count;
-  
+
   document.querySelectorAll('.player-opt-grid .opt-btn, .online-player-opt-grid .opt-btn').forEach(btn => {
     const btnCount = parseInt(btn.dataset.count || btn.innerText);
     btn.classList.toggle('active', btnCount === count);
@@ -997,9 +992,9 @@ function handleDiceClick() {
 function rollDice() {
   // Guard check: Prevent roll if active, moving, or waiting for online players
   if (hasRolled || isRolling || isMoving) return;
-  if (matchMode === 'online' && !allPlayersJoined) {
+  if (matchMode === 'online' && activePlayers.length < selectedPlayerCount) {
     const hintEl = document.getElementById('dice-hint');
-    if (hintEl) hintEl.innerText = "Waiting for all players to join...";
+    if (hintEl) hintEl.innerText = `Waiting for players... (${activePlayers.length}/${selectedPlayerCount})`;
     return;
   }
 
@@ -1049,8 +1044,6 @@ function executeRemoteRoll(rollValue) {
     }
   }, 50);
 }
-
-
 
 function finishRoll(rollValue) {
   const diceBtn = document.getElementById('dice');
