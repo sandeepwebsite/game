@@ -590,27 +590,10 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
-    setupHistoryState();
   });
 
-  function setupHistoryState() {
-    window.history.pushState({ page: 'game' }, '');
-    window.addEventListener('popstate', (e) => {
-      if (conn && conn.open) {
-        openQuitModal();
-        window.history.pushState({ page: 'game' }, '');
-      }
-    });
-  }
-
-  window.addEventListener('beforeunload', (e) => {
-    if (conn && conn.open) {
-      try {
-        conn.send({ action: 'quit' });
-      } catch (err) {}
-      conn.close();
-    }
-  });
+  // Unique session ID for each opened tab so they operate independently
+  const tabSessionId = 'tab_' + Math.random().toString(36).substring(2, 9);
 
   function playSound(type) {
     if (isMuted) return;
@@ -821,7 +804,7 @@
   function confirmQuit() {
     if (conn && conn.open) {
       try {
-        conn.send({ action: 'quit' });
+        conn.send({ action: 'quit', sessionId: tabSessionId });
       } catch (err) {}
       conn.close();
     }
@@ -879,11 +862,11 @@
 
     peer.on('error', (err) => {
       console.warn('PeerJS Exception:', err.type);
-      if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error') {
-        attemptServerReconnect();
-      } else if (err.type === 'unavailable-id') {
+      if (err.type === 'unavailable-id') {
         myCustomId = generate5DigitId();
         initPeer();
+      } else if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error') {
+        attemptServerReconnect();
       } else {
         showError('Connection error: ' + err.type);
       }
@@ -902,7 +885,9 @@
   function attemptServerReconnect() {
     if (peer && peer.disconnected && !peer.destroyed) {
       setTimeout(() => {
-        peer.reconnect();
+        if (peer && peer.disconnected && !peer.destroyed) {
+          peer.reconnect();
+        }
       }, 1500);
     }
   }
@@ -917,7 +902,7 @@
     document.getElementById('joinBtn').innerText = 'CONNECTING...';
     document.getElementById('joinBtn').disabled = true;
 
-    if (peer.disconnected) {
+    if (peer && peer.disconnected) {
       peer.reconnect();
     }
 
@@ -978,17 +963,8 @@
       if (conn && conn.open) {
         conn.send({ action: 'ping' });
       }
-      if (peer && peer.disconnected && !peer.destroyed) {
-        peer.reconnect();
-      }
     }, 3000);
   }
-
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && peer && peer.disconnected && !peer.destroyed) {
-      peer.reconnect();
-    }
-  });
 
   function handleDisconnect() {
     conn = null;
