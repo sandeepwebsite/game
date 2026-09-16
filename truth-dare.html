@@ -198,6 +198,33 @@
       cursor: pointer;
     }
 
+    .btn-quit-confirm {
+      width: 100%;
+      max-width: 280px;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .btn-quit-cancel {
+      width: 100%;
+      max-width: 280px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
     .error-msg {
       color: #ef4444;
       font-size: 0.8rem;
@@ -212,6 +239,9 @@
       border-bottom: 1px solid var(--glass-border);
       flex-shrink: 0;
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .app-header h1 {
@@ -219,21 +249,35 @@
       color: #f8fafc;
     }
 
+    .quit-btn {
+      position: absolute;
+      left: 14px;
+      top: 10px;
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #f43f5e;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .mute-btn {
       position: absolute;
       right: 14px;
-      top: 12px;
+      top: 10px;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid var(--glass-border);
       color: #fff;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .status-indicator {
@@ -472,11 +516,29 @@
     <div class="error-msg" id="errorMsg"></div>
   </div>
 
+  <!-- Quit Confirmation Modal -->
+  <div class="modal-overlay" id="quitModal" style="display: none;">
+    <h2>Quit Game?</h2>
+    <p>Are you sure you want to leave? Your opponent will be disconnected.</p>
+    <button class="btn-quit-confirm" onclick="confirmQuit()">YES, QUIT GAME</button>
+    <button class="btn-quit-cancel" onclick="closeQuitModal()">CANCEL</button>
+  </div>
+
+  <!-- Not Connected Alert Modal -->
+  <div class="modal-overlay" id="alertModal" style="display: none;">
+    <h2>Not Connected 🔌</h2>
+    <p id="alertModalMsg">Please connect with a partner before spinning the bottle!</p>
+    <button class="btn-connect" onclick="closeAlertModal()">OK, GOT IT</button>
+  </div>
+
   <!-- App Header -->
   <div class="app-header">
-    <h1>Truth or Dare Chat</h1>
+    <button class="quit-btn" id="quitBtn" onclick="openQuitModal()">🚪 Quit</button>
+    <div>
+      <h1>Truth or Dare</h1>
+      <div class="status-indicator" id="statusText"><span class="status-dot"></span> Disconnected</div>
+    </div>
     <button class="mute-btn" id="muteBtn" onclick="toggleMute()" title="Toggle Audio">🔊</button>
-    <div class="status-indicator" id="statusText"><span class="status-dot"></span> Disconnected</div>
   </div>
 
   <!-- Spin the Bottle Section -->
@@ -528,6 +590,26 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+    setupHistoryState();
+  });
+
+  function setupHistoryState() {
+    window.history.pushState({ page: 'game' }, '');
+    window.addEventListener('popstate', (e) => {
+      if (conn && conn.open) {
+        openQuitModal();
+        window.history.pushState({ page: 'game' }, '');
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', (e) => {
+    if (conn && conn.open) {
+      try {
+        conn.send({ action: 'quit' });
+      } catch (err) {}
+      conn.close();
+    }
   });
 
   function playSound(type) {
@@ -591,9 +673,38 @@
   }
 
   function copyRoomCode() {
-    navigator.clipboard.writeText(myCustomId);
+    const textToCopy = myCustomId;
     const copyBtn = document.getElementById('copyBtn');
-    copyBtn.innerText = '✅ Copied!';
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyBtn.innerText = '✅ Copied!';
+        setTimeout(() => { copyBtn.innerText = '📋 Copy Code'; }, 2000);
+      }).catch(() => {
+        fallbackCopyText(textToCopy, copyBtn);
+      });
+    } else {
+      fallbackCopyText(textToCopy, copyBtn);
+    }
+  }
+
+  function fallbackCopyText(text, copyBtn) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      copyBtn.innerText = '✅ Copied!';
+    } catch (err) {
+      copyBtn.innerText = '❌ Failed';
+    }
+
+    document.body.removeChild(textArea);
     setTimeout(() => { copyBtn.innerText = '📋 Copy Code'; }, 2000);
   }
 
@@ -690,6 +801,65 @@
     document.getElementById('messageInput').value = promptText;
   }
 
+  function openQuitModal() {
+    document.getElementById('quitModal').style.display = 'flex';
+  }
+
+  function closeQuitModal() {
+    document.getElementById('quitModal').style.display = 'none';
+  }
+
+  function showAlertModal(msg) {
+    document.getElementById('alertModalMsg').innerText = msg;
+    document.getElementById('alertModal').style.display = 'flex';
+  }
+
+  function closeAlertModal() {
+    document.getElementById('alertModal').style.display = 'none';
+  }
+
+  function confirmQuit() {
+    if (conn && conn.open) {
+      try {
+        conn.send({ action: 'quit' });
+      } catch (err) {}
+      conn.close();
+    }
+    conn = null;
+    closeQuitModal();
+    resetToHomeModal();
+  }
+
+  function resetToHomeModal() {
+    if (conn) {
+      try { conn.close(); } catch(e){}
+      conn = null;
+    }
+
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    document.getElementById('joinModal').style.display = 'flex';
+    document.getElementById('targetRoomId').value = '';
+    document.getElementById('errorMsg').innerText = '';
+    
+    const joinBtn = document.getElementById('joinBtn');
+    joinBtn.innerText = 'JOIN ROOM';
+    joinBtn.disabled = false;
+
+    const status = document.getElementById('statusText');
+    status.innerHTML = '<span class="status-dot"></span> Disconnected';
+    status.classList.remove('online');
+    
+    document.getElementById('chatArea').innerHTML = '<div class="message system">Connected! Spin the bottle or select Truth/Dare to begin.</div>';
+    
+    myCustomId = generate5DigitId();
+    document.getElementById('myRoomId').innerText = myCustomId;
+    initPeer();
+  }
+
   function initPeer() {
     if (peer && !peer.destroyed) peer.destroy();
 
@@ -774,6 +944,8 @@
         setTypingIndicator(false);
         playSound('receive');
         appendMessage('received', data.message, data.type);
+      } else if (data.action === 'quit') {
+        handleDisconnect();
       } else if (data.action === 'spin') {
         const isSelfTarget = data.chosenTargetForInitiator === 'OPPONENT'; 
         const opponentTargetAngle = isSelfTarget ? 270 : 90;
@@ -819,15 +991,20 @@
   });
 
   function handleDisconnect() {
+    conn = null;
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
     const status = document.getElementById('statusText');
     status.innerHTML = '<span class="status-dot"></span> Disconnected';
     status.classList.remove('online');
-    appendMessage('system', 'Partner disconnected.');
+    appendMessage('system', 'Opponent disconnected.');
   }
 
   function spinBottle() {
     if (!conn || !conn.open) {
-      alert('Please connect with a partner first!');
+      showAlertModal('You are currently disconnected. Please connect with a partner to spin the bottle!');
       return;
     }
 
