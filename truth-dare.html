@@ -39,7 +39,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      /* Using dvh/svh to avoid dynamic dynamic address bar overflows */
       height: 100dvh;
       min-height: -webkit-fill-available;
       position: relative;
@@ -75,7 +74,6 @@
       }
     }
 
-    /* Flash Banner Alert */
     .flash-banner {
       position: absolute;
       top: -70px;
@@ -105,14 +103,13 @@
     .flash-truth { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 0 20px var(--truth-glow); }
     .flash-dare { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 0 20px var(--dare-glow); }
 
-    /* Modal Overlay */
     .modal-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.95);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       z-index: 30;
@@ -148,6 +145,7 @@
       border-radius: 14px;
       margin-bottom: 16px;
       border: 1px solid var(--glass-border);
+      position: relative;
     }
 
     .room-id-display {
@@ -157,6 +155,18 @@
       letter-spacing: 4px;
       user-select: all;
       margin-top: 4px;
+    }
+
+    .btn-copy {
+      margin-top: 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-color);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .join-input {
@@ -195,18 +205,35 @@
       min-height: 18px;
     }
 
-    /* Header */
     .app-header {
       padding: 12px;
       background: rgba(15, 23, 42, 0.7);
       text-align: center;
       border-bottom: 1px solid var(--glass-border);
       flex-shrink: 0;
+      position: relative;
     }
 
     .app-header h1 {
       font-size: 1.1rem;
       color: #f8fafc;
+    }
+
+    .mute-btn {
+      position: absolute;
+      right: 14px;
+      top: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
     }
 
     .status-indicator {
@@ -229,7 +256,6 @@
     .status-indicator.online { color: #22c55e; }
     .status-indicator.online .status-dot { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
 
-    /* Bottle Arena Section */
     .bottle-section {
       padding: 8px 12px;
       background: rgba(15, 23, 42, 0.4);
@@ -311,7 +337,6 @@
       cursor: not-allowed;
     }
 
-    /* Chat Area Flexible Scroll Settings */
     .chat-area {
       flex: 1;
       min-height: 0;
@@ -355,7 +380,6 @@
     .tag-truth { background: var(--truth-color); color: #fff; }
     .tag-dare { background: var(--dare-color); color: #fff; }
 
-    /* Typing Bar */
     .typing-bar {
       padding: 2px 14px;
       font-size: 0.75rem;
@@ -369,11 +393,10 @@
 
     .typing-bar.active { opacity: 1; }
 
-    /* Controls */
     .game-controls {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 6px;
       padding: 8px 12px;
       background: rgba(15, 23, 42, 0.7);
       border-top: 1px solid var(--glass-border);
@@ -381,11 +404,11 @@
     }
 
     .btn {
-      padding: 10px;
+      padding: 10px 4px;
       border: none;
       border-radius: 10px;
       font-weight: 800;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       cursor: pointer;
       opacity: 0.6;
       transition: all 0.2s;
@@ -394,8 +417,8 @@
     .btn.active { opacity: 1; transform: scale(1.02); }
     .btn-truth { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
     .btn-dare { background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff; }
+    .btn-random { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; opacity: 1; }
 
-    /* Message Input Box */
     .chat-input-area {
       display: flex;
       padding: 8px 12px 12px 12px;
@@ -441,6 +464,7 @@
     <div class="room-box">
       <div>Your 5-Digit Code:</div>
       <div class="room-id-display" id="myRoomId">-----</div>
+      <button class="btn-copy" id="copyBtn" onclick="copyRoomCode()">📋 Copy Code</button>
     </div>
 
     <input type="text" id="targetRoomId" class="join-input" maxlength="5" placeholder="5-DIGIT CODE">
@@ -451,6 +475,7 @@
   <!-- App Header -->
   <div class="app-header">
     <h1>Truth or Dare Chat</h1>
+    <button class="mute-btn" id="muteBtn" onclick="toggleMute()" title="Toggle Audio">🔊</button>
     <div class="status-indicator" id="statusText"><span class="status-dot"></span> Disconnected</div>
   </div>
 
@@ -478,6 +503,7 @@
   <div class="game-controls">
     <button class="btn btn-truth" id="truthBtn" onclick="selectType('truth')">TRUTH</button>
     <button class="btn btn-dare" id="dareBtn" onclick="selectType('dare')">DARE</button>
+    <button class="btn btn-random" onclick="generateRandomPrompt()">🎲 RANDOM</button>
   </div>
 
   <div class="chat-input-area">
@@ -496,6 +522,64 @@
   let isTypingSent = false;
   let currentBottleRotation = 0;
   let heartbeatInterval = null;
+  let isMuted = localStorage.getItem('app_muted') === 'true';
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+  });
+
+  function playSound(type) {
+    if (isMuted) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'spin') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } else if (type === 'send') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } else if (type === 'receive') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    } else if (type === 'fanfare') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    }
+  }
+
+  function toggleMute() {
+    isMuted = !isMuted;
+    localStorage.setItem('app_muted', isMuted);
+    document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+  }
 
   function generate5DigitId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -506,15 +590,128 @@
     return result;
   }
 
+  function copyRoomCode() {
+    navigator.clipboard.writeText(myCustomId);
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.innerText = '✅ Copied!';
+    setTimeout(() => { copyBtn.innerText = '📋 Copy Code'; }, 2000);
+  }
+
+  const truthPrompts = [
+    "What was your very first impression of me when we first met?",
+    "If we had to go on a spontaneous 24-hour trip anywhere right now, where are you taking me?",
+    "What is the single most attractive quality or trait someone can have?",
+    "Have you ever had a dream about me? If so, what happened?",
+    "What is a secret talent or habit of yours that almost nobody knows about?",
+    "What was the last thing you checked on your phone before looking at me?",
+    "What is the biggest turn-on for you in a conversation?",
+    "What is one outfit or style you think I would look amazing in?",
+    "Have you ever stayed up late at night just to keep talking to someone?",
+    "What is your ideal version of a perfect first date?",
+    "If you could change one thing about your romantic history, what would it be?",
+    "What is the flirtiest message you’ve ever received or sent?",
+    "What is one romantic cliché that you secretly love?",
+    "If I let you ask me any single question right now and I had to answer honestly, what would you ask?",
+    "What’s the longest you’ve ever spent getting ready for a date?",
+    "What is your favorite physical feature on a person?",
+    "Do you believe in love at first sight, or should I walk by again?",
+    "What is the worst pickup line you’ve ever used or heard?",
+    "What’s one song that always puts you in a romantic mood?",
+    "If we were stuck on a deserted island together, what role would you take on?",
+    "What is the most adventurous thing you’ve ever done for someone you liked?",
+    "What’s one thing I do that subtly makes you smile?",
+    "Are you more of a soft romantic or a bold flirt?",
+    "What is your biggest dating pet peeve?",
+    "If you had to describe our current vibe in three words, what would they be?",
+    "What is the most chaotic, unhinged thought you’ve had in the last 24 hours?",
+    "If you were arrested right now with zero context, what would your friends automatically assume you did?",
+    "What is the absolute worst advice you have ever given someone that they actually took?",
+    "If you had to delete every app on your phone except three, which three survive the purge?",
+    "What is the most embarrassing thing you’ve ever done just to get someone’s attention?",
+    "Have you ever faked knowing something completely to avoid looking clueless? What was it?",
+    "What is a weird food combination you swear by, but everyone else thinks is gross?",
+    "If we were in a horror movie, who gets eliminated first and who survives to the end?",
+    "What’s the dumbest argument you’ve ever gotten into that you refused to back down from?",
+    "If you had to swap lives with any villain for a day, who are you picking and why?"
+  ];
+
+  const darePrompts = [
+    "Send me the last photo in your camera roll without giving any context.",
+    "Give me your absolute best 5-second pitch on why someone should date you.",
+    "Text your best friend right now saying 'I have a huge confession to make,' then don't reply for two minutes.",
+    "Drop your best, most smooth pickup line on me with complete seriousness.",
+    "Let me choose a nickname for you that you have to use for the rest of the day.",
+    "Show me the most used emoji on your keyboard right now.",
+    "Speak in your best smooth, dramatic voice for the next three turns.",
+    "Send a voice note singing the chorus of your current favorite song.",
+    "Hold eye contact with me for 15 seconds without smiling or looking away.",
+    "Write a quick, dramatic 2-line poem about me off the top of your head.",
+    "Show me your current phone lock screen background and explain why you chose it.",
+    "Whisper your favorite compliment to me as if it's a deep secret.",
+    "Try to make me laugh in under 10 seconds using only gestures or facial expressions.",
+    "Tell me one thing you genuinely admire about me, but deliver it like a movie hero.",
+    "Send a random GIF to the third person in your recent messages list.",
+    "Let me pick a song, and you have to do a 10-second lip-sync performance to it.",
+    "Give yourself a dramatic slow-motion entrance into the room or space.",
+    "Reveal the last thing you searched for on YouTube or Spotify.",
+    "Reenact your favorite romantic movie moment in 5 seconds.",
+    "Say five nice things about yourself without stopping or hesitating.",
+    "Deliver a 10-second dramatic monologue declaring yourself the ultimate villain of this chat.",
+    "Text a random contact in your phone just the word 'It's done.' and don't reply for 5 minutes.",
+    "Act out an infomercial for an imaginary product using only hand gestures and zero words.",
+    "Speak like a medieval knight trying to order fast food for your next two turns.",
+    "Send a voice note apologizing profusely for something completely fake and absurd.",
+    "Type a sentence with your eyes closed and send it without editing a single letter.",
+    "Give a passionate 15-second motivational speech about something utterly mundane (like a spoon or a sock).",
+    "Pick up the nearest random object next to you and analyze it like it’s a million-dollar museum piece.",
+    "Answer every question in your best robotic voice until your next turn.",
+    "Dramatically propose to an inanimate object in your room with full emotion and zero shame."
+  ];
+
+  let unusedTruths = [...truthPrompts];
+  let unusedDares = [...darePrompts];
+
+  function generateRandomPrompt() {
+    const isTruth = selectedType ? (selectedType === 'truth') : (Math.random() < 0.5);
+    const type = isTruth ? 'truth' : 'dare';
+    selectType(type);
+    
+    let promptText = '';
+    if (isTruth) {
+      if (unusedTruths.length === 0) unusedTruths = [...truthPrompts];
+      const index = Math.floor(Math.random() * unusedTruths.length);
+      promptText = unusedTruths.splice(index, 1)[0];
+    } else {
+      if (unusedDares.length === 0) unusedDares = [...darePrompts];
+      const index = Math.floor(Math.random() * unusedDares.length);
+      promptText = unusedDares.splice(index, 1)[0];
+    }
+    
+    document.getElementById('messageInput').value = promptText;
+  }
+
   function initPeer() {
-    peer = new Peer(myCustomId, { debug: 1 });
+    if (peer && !peer.destroyed) peer.destroy();
+
+    peer = new Peer(myCustomId, {
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ]
+      }
+    });
 
     peer.on('open', (id) => {
       document.getElementById('myRoomId').innerText = id;
     });
 
     peer.on('error', (err) => {
-      if (err.type === 'unavailable-id') {
+      console.warn('PeerJS Exception:', err.type);
+      if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error') {
+        attemptServerReconnect();
+      } else if (err.type === 'unavailable-id') {
         myCustomId = generate5DigitId();
         initPeer();
       } else {
@@ -522,10 +719,22 @@
       }
     });
 
+    peer.on('disconnected', () => {
+      attemptServerReconnect();
+    });
+
     peer.on('connection', (incomingConn) => {
       conn = incomingConn;
       bindConnectionEvents();
     });
+  }
+
+  function attemptServerReconnect() {
+    if (peer && peer.disconnected && !peer.destroyed) {
+      setTimeout(() => {
+        peer.reconnect();
+      }, 1500);
+    }
   }
 
   function connectToPeer() {
@@ -538,6 +747,10 @@
     document.getElementById('joinBtn').innerText = 'CONNECTING...';
     document.getElementById('joinBtn').disabled = true;
 
+    if (peer.disconnected) {
+      peer.reconnect();
+    }
+
     conn = peer.connect(targetId, { reliable: true });
     bindConnectionEvents();
   }
@@ -549,6 +762,7 @@
       status.innerHTML = '<span class="status-dot"></span> Online with Partner';
       status.classList.add('online');
       startHeartbeat();
+      playSound('fanfare');
     });
 
     conn.on('data', (data) => {
@@ -558,11 +772,21 @@
         setTypingIndicator(data.isTyping);
       } else if (data.action === 'message') {
         setTypingIndicator(false);
+        playSound('receive');
         appendMessage('received', data.message, data.type);
       } else if (data.action === 'spin') {
-        executeBottleSpin(data.degrees, data.chosenTarget, false);
-      } else if (data.action === 'ping') {
-        // Keep connection active
+        const isSelfTarget = data.chosenTargetForInitiator === 'OPPONENT'; 
+        const opponentTargetAngle = isSelfTarget ? 270 : 90;
+        
+        const fullSpins = data.spins;
+        const currentMod = ((currentBottleRotation % 360) + 360) % 360;
+        let degreeDiff = opponentTargetAngle - currentMod;
+        if (degreeDiff <= 0) {
+          degreeDiff += 360;
+        }
+        
+        const totalDegrees = currentBottleRotation + (fullSpins * 360) + degreeDiff;
+        executeBottleSpin(totalDegrees, isSelfTarget ? 'YOU' : 'OPPONENT');
       }
     });
 
@@ -582,11 +806,14 @@
       if (conn && conn.open) {
         conn.send({ action: 'ping' });
       }
-    }, 2000);
+      if (peer && peer.disconnected && !peer.destroyed) {
+        peer.reconnect();
+      }
+    }, 3000);
   }
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && peer && peer.disconnected) {
+    if (!document.hidden && peer && peer.disconnected && !peer.destroyed) {
       peer.reconnect();
     }
   });
@@ -605,20 +832,27 @@
     }
 
     const spins = 5 + Math.floor(Math.random() * 5);
-    const isSelf = Math.random() < 0.5;
-    const targetAngle = isSelf ? 270 : 90; 
-    const totalDegrees = currentBottleRotation + (spins * 360) + (targetAngle - (currentBottleRotation % 360));
+    const landsOnSelf = Math.random() < 0.5;
+    const initiatorTargetAngle = landsOnSelf ? 270 : 90;
+    
+    const currentMod = ((currentBottleRotation % 360) + 360) % 360;
+    let degreeDiff = initiatorTargetAngle - currentMod;
+    if (degreeDiff <= 0) {
+      degreeDiff += 360;
+    }
+
+    const totalDegrees = currentBottleRotation + (spins * 360) + degreeDiff;
 
     conn.send({
       action: 'spin',
-      degrees: totalDegrees,
-      chosenTarget: isSelf ? 'OPPONENT' : 'YOU'
+      spins: spins,
+      chosenTargetForInitiator: landsOnSelf ? 'YOU' : 'OPPONENT'
     });
 
-    executeBottleSpin(totalDegrees, isSelf ? 'YOU' : 'OPPONENT', true);
+    executeBottleSpin(totalDegrees, landsOnSelf ? 'YOU' : 'OPPONENT');
   }
 
-  function executeBottleSpin(degrees, winnerText, isInitiator) {
+  function executeBottleSpin(degrees, winnerText) {
     const bottle = document.getElementById('bottle');
     const spinBtn = document.getElementById('spinBtn');
     
@@ -626,8 +860,12 @@
     currentBottleRotation = degrees;
     bottle.style.transform = `rotate(${degrees}deg)`;
 
+    let spinAudioInterval = setInterval(() => playSound('spin'), 200);
+
     setTimeout(() => {
+      clearInterval(spinAudioInterval);
       spinBtn.disabled = false;
+      playSound('fanfare');
       const bannerText = winnerText === 'YOU' ? '🍾 Bottle landed on YOU! Pick Truth or Dare.' : '🍾 Bottle landed on OPPONENT!';
       showFlashMessage(bannerText, winnerText === 'YOU' ? 'truth' : 'dare');
       appendMessage('system', bannerText);
@@ -687,6 +925,7 @@
       conn.send({ action: 'typing', isTyping: false });
     }
 
+    playSound('send');
     appendMessage('sent', text, selectedType);
     input.value = '';
     selectedType = null;
