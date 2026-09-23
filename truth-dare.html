@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
         :root {
@@ -719,7 +720,7 @@
                 </div>
 
                 <div id="sync-engine-badge" style="font-size: 10px; color: var(--text-sub);">
-                    Multi-Sync: Universal Storage + Broadcast Mesh + Firestore
+                    Multi-Sync: PeerJS WebRTC Direct Mesh + Local Broadcast Channel
                 </div>
             </section>
 
@@ -819,28 +820,17 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sd2p-spin-dare';
-        let firebaseConfig = null;
-        if (typeof __firebase_config !== 'undefined') {
-            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}
-        }
-
-        let app, db, auth;
         let myPlayerId = 'p_' + Math.random().toString(36).substring(2, 8);
         let myRole = 'p1'; // 'p1' (Host) or 'p2' (Guest)
         let currentRoomCode = null;
-        let roomDocRef = null;
-        let roomUnsub = null;
-        let chatUnsub = null;
+        let peer = null;
+        let activeConnection = null;
         let broadcastChannel = null;
         let localPollInterval = null;
         let typingTimeout = null;
-
         let animationFrameId = null;
+
+        const PEER_PREFIX = 'spindare_room_v2_';
 
         // State Machine
         let gameState = {
@@ -993,20 +983,6 @@
 
         renderBottle(0);
 
-        async function setupFirebase() {
-            if (!firebaseConfig) return;
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                await signInAnonymously(auth);
-            } catch (err) {
-                console.warn("Firebase initialized with local fallback mesh", err);
-            }
-        }
-
-        setupFirebase();
-
         window.switchTab = function(tab) {
             playTone('tick');
             const formCreate = document.getElementById('form-create');
@@ -1027,7 +1003,7 @@
             }
         };
 
-        window.createRoom = async function() {
+        window.createRoom = function() {
             initAudio();
             const nameVal = document.getElementById('create-name-input').value.trim() || 'Rahul';
             localStorage.setItem('sd_name', nameVal);
@@ -1055,26 +1031,25 @@
 
             setupLocalFallback(code, initialRoom);
 
-            if (db) {
-                try {
-                    // Try multiple path strategies for absolute compatibility across environments
-                    const refs = [
-                        doc(db, 'truth_dare_rooms', code),
-                        doc(db, 'rooms', code),
-                        doc(db, 'artifacts', appId, 'public', 'data', `sd2p_${code}`)
-                    ];
-                    for (const r of refs) {
-                        setDoc(r, initialRoom).catch(() => {});
-                    }
-                    roomDocRef = refs[0];
-                    bindRoomListener(code);
-                } catch(e) {
-                    console.log("Using local event mesh for room", code);
-                }
-            }
+            // Initialize PeerJS Host listener with explicit room code ID
+            if (peer) peer.destroy();
+            peer = new Peer(PEER_PREFIX + code);
+
+            peer.on('open', (id) => {
+                console.log('Host room created on P2P network:', id);
+            });
+
+            peer.on('connection', (conn) => {
+                activeConnection = conn;
+                setupConnectionHandlers(conn);
+            });
+
+            peer.on('error', (err) => {
+                console.warn('Peer error (host):', err);
+            });
         };
 
-        window.joinRoom = async function() {
+        window.joinRoom = function() {
             initAudio();
             const nameVal = document.getElementById('join-name-input').value.trim() || 'Priya';
             localStorage.setItem('sd_name', nameVal);
@@ -1094,60 +1069,80 @@
             joinBtnText.textContent = "Connecting...";
 
             currentRoomCode = inputCode;
-            let roomJoined = false;
+            setupLocalFallback(inputCode);
 
-            // 1. Check local storage / same device tab mesh
-            const localRoomRaw = localStorage.getItem(`sd2p_room_${inputCode}`) || 
-                                 localStorage.getItem(`td_room_${inputCode}`) || 
-                                 localStorage.getItem(`room_${inputCode}`);
+            // Check if room exists in same-browser tabs first
+            const localRoomRaw = localStorage.getItem(`sd2p_room_${inputCode}`);
             if (localRoomRaw) {
                 try {
                     const localData = JSON.parse(localRoomRaw);
                     localData.p2 = { id: myPlayerId, name: nameVal };
                     localData.status = 'READY_TO_SPIN';
-                    
-                    setupLocalFallback(inputCode, localData);
                     broadcastStateUpdate(localData);
-                    roomJoined = true;
-                    showToast("Joined room successfully!");
+                    joinBtn.disabled = false;
+                    joinBtnText.textContent = "Join Room";
+                    showToast("Joined local room successfully!");
+                    return;
                 } catch(e) {}
             }
 
-            // 2. Query Firestore cross-device room stores if not already found
-            if (db && !roomJoined) {
-                try {
-                    const candidateRefs = [
-                        doc(db, 'truth_dare_rooms', inputCode),
-                        doc(db, 'rooms', inputCode),
-                        doc(db, 'artifacts', appId, 'public', 'data', `sd2p_${inputCode}`)
-                    ];
+            // Connect to Host via PeerJS P2P Mesh
+            if (peer) peer.destroy();
+            peer = new Peer();
 
-                    for (const cRef of candidateRefs) {
-                        const snap = await getDoc(cRef);
-                        if (snap.exists()) {
-                            roomDocRef = cRef;
-                            await updateDoc(cRef, {
-                                p2: { id: myPlayerId, name: nameVal },
-                                status: 'READY_TO_SPIN'
-                            });
-                            bindRoomListener(inputCode);
-                            roomJoined = true;
-                            showToast("Joined online room!");
-                            break;
-                        }
-                    }
-                } catch(e) {
-                    console.warn("Firestore lookup error, checking fallback", e);
-                }
-            }
+            peer.on('open', () => {
+                const conn = peer.connect(PEER_PREFIX + inputCode);
+                activeConnection = conn;
 
-            joinBtn.disabled = false;
-            joinBtnText.textContent = "Join Room";
+                const connectionTimeout = setTimeout(() => {
+                    joinBtn.disabled = false;
+                    joinBtnText.textContent = "Join Room";
+                    showToast("Room code not found or Host disconnected.");
+                }, 8000);
 
-            if (!roomJoined) {
-                showToast("Room code not found! Please check code or try again.");
-            }
+                conn.on('open', () => {
+                    clearTimeout(connectionTimeout);
+                    joinBtn.disabled = false;
+                    joinBtnText.textContent = "Join Room";
+                    
+                    // Notify host of join
+                    conn.send({
+                        type: 'JOIN_REQ',
+                        p2: { id: myPlayerId, name: nameVal }
+                    });
+
+                    setupConnectionHandlers(conn);
+                    showToast("Connected to room!");
+                });
+            });
+
+            peer.on('error', (err) => {
+                joinBtn.disabled = false;
+                joinBtnText.textContent = "Join Room";
+                showToast("Room code not found. Check code & try again.");
+            });
         };
+
+        function setupConnectionHandlers(conn) {
+            conn.on('data', (msg) => {
+                if (msg.type === 'JOIN_REQ' && myRole === 'p1') {
+                    const updatedState = {
+                        ...gameState,
+                        p2: msg.p2,
+                        status: 'READY_TO_SPIN'
+                    };
+                    broadcastStateUpdate(updatedState);
+                } else if (msg.type === 'STATE_UPDATE') {
+                    handleIncomingStateUpdate(msg.state);
+                } else if (msg.type === 'CHAT_MSG') {
+                    renderChatMessage(msg.chat);
+                }
+            });
+
+            conn.on('close', () => {
+                showToast("Opponent disconnected.");
+            });
+        }
 
         window.copyGeneratedCode = function() {
             const code = document.getElementById('generated-code-display').textContent;
@@ -1168,8 +1163,6 @@
             if (initialData) {
                 gameState = initialData;
                 localStorage.setItem(`sd2p_room_${code}`, JSON.stringify(initialData));
-                localStorage.setItem(`td_room_${code}`, JSON.stringify(initialData));
-                localStorage.setItem(`room_${code}`, JSON.stringify(initialData));
             }
 
             broadcastChannel.onmessage = (e) => {
@@ -1177,7 +1170,7 @@
             };
 
             window.addEventListener('storage', (e) => {
-                if ((e.key === `sd2p_room_${code}` || e.key === `td_room_${code}` || e.key === `room_${code}`) && e.newValue) {
+                if (e.key === `sd2p_room_${code}` && e.newValue) {
                     try {
                         const parsed = JSON.parse(e.newValue);
                         handleIncomingStateUpdate(parsed);
@@ -1193,9 +1186,7 @@
 
             if (localPollInterval) clearInterval(localPollInterval);
             localPollInterval = setInterval(() => {
-                const polledRaw = localStorage.getItem(`sd2p_room_${code}`) || 
-                                  localStorage.getItem(`td_room_${code}`) || 
-                                  localStorage.getItem(`room_${code}`);
+                const polledRaw = localStorage.getItem(`sd2p_room_${code}`);
                 if (polledRaw) {
                     try {
                         const polled = JSON.parse(polledRaw);
@@ -1219,13 +1210,14 @@
         function broadcastStateUpdate(data) {
             gameState = data;
             localStorage.setItem(`sd2p_room_${currentRoomCode}`, JSON.stringify(data));
-            localStorage.setItem(`td_room_${currentRoomCode}`, JSON.stringify(data));
-            localStorage.setItem(`room_${currentRoomCode}`, JSON.stringify(data));
             
             if (broadcastChannel) broadcastChannel.postMessage(data);
-            
-            if (db && roomDocRef) {
-                updateDoc(roomDocRef, data).catch(() => {});
+
+            if (activeConnection && activeConnection.open) {
+                activeConnection.send({
+                    type: 'STATE_UPDATE',
+                    state: data
+                });
             }
             syncUI();
         }
@@ -1241,8 +1233,7 @@
 
         window.leaveRoom = function() {
             playTone('tick');
-            if (roomUnsub) roomUnsub();
-            if (chatUnsub) chatUnsub();
+            if (peer) peer.destroy();
             if (localPollInterval) clearInterval(localPollInterval);
 
             document.getElementById('view-game').classList.add('hidden');
@@ -1253,27 +1244,6 @@
             document.getElementById('created-code-container').style.display = 'none';
             document.getElementById('create-room-btn').style.display = 'flex';
         };
-
-        function bindRoomListener(code) {
-            if (!db) return;
-            if (!roomDocRef) {
-                roomDocRef = doc(db, 'truth_dare_rooms', code);
-            }
-            
-            roomUnsub = onSnapshot(roomDocRef, (snap) => {
-                if (snap.exists()) {
-                    handleIncomingStateUpdate(snap.data());
-                }
-            });
-
-            const chatCol = collection(db, 'truth_dare_rooms', code, 'messages');
-            chatUnsub = onSnapshot(query(chatCol, orderBy('timestamp', 'asc')), (snap) => {
-                const feed = document.getElementById('chat-feed');
-                feed.innerHTML = '';
-                snap.docs.forEach(d => renderChatMessage(d.data()));
-                feed.scrollTop = feed.scrollHeight;
-            });
-        }
 
         const chatInputEl = document.getElementById('chat-input');
 
@@ -1457,7 +1427,7 @@
                 } else {
                     playTone('cheer');
                     
-                    if (myRole === 'p1' || !db) {
+                    if (myRole === 'p1') {
                         const nextState = {
                             ...gameState,
                             status: 'AWAITING_CHOICE'
@@ -1491,19 +1461,21 @@
             if (typingTimeout) clearTimeout(typingTimeout);
             setTypingStatus(false);
 
+            const chatMsg = {
+                sender: myName,
+                text: gameState.status === 'AWAITING_CHALLENGE_INPUT' && myRole === gameState.challengerRole 
+                    ? `[${gameState.selectedChoice ? gameState.selectedChoice.toUpperCase() : 'CHALLENGE'}]: ${text}`
+                    : text,
+                isChallenge: gameState.status === 'AWAITING_CHALLENGE_INPUT' && myRole === gameState.challengerRole,
+                timestamp: Date.now()
+            };
+
             if (gameState.status === 'AWAITING_CHALLENGE_INPUT' && myRole === gameState.challengerRole) {
                 playTone('cheer');
                 const challengeObj = {
                     type: gameState.selectedChoice,
                     text: text,
                     author: myName
-                };
-
-                const chatMsg = {
-                    sender: myName,
-                    text: `[${gameState.selectedChoice ? gameState.selectedChoice.toUpperCase() : 'CHALLENGE'}]: ${text}`,
-                    isChallenge: true,
-                    timestamp: Date.now()
                 };
 
                 const nextState = {
@@ -1514,22 +1486,13 @@
                 };
 
                 broadcastStateUpdate(nextState);
-                
-                if (db && currentRoomCode) {
-                    addDoc(collection(db, 'truth_dare_rooms', currentRoomCode, 'messages'), chatMsg);
-                } else {
-                    localStorage.setItem(`sd2p_chat_${currentRoomCode}`, JSON.stringify(chatMsg));
-                    renderChatMessage(chatMsg);
-                }
-            } else {
-                const chatMsg = { sender: myName, text: text, timestamp: Date.now() };
-                if (db && currentRoomCode) {
-                    addDoc(collection(db, 'truth_dare_rooms', currentRoomCode, 'messages'), chatMsg);
-                } else {
-                    localStorage.setItem(`sd2p_chat_${currentRoomCode}`, JSON.stringify(chatMsg));
-                    renderChatMessage(chatMsg);
-                }
             }
+
+            if (activeConnection && activeConnection.open) {
+                activeConnection.send({ type: 'CHAT_MSG', chat: chatMsg });
+            }
+            localStorage.setItem(`sd2p_chat_${currentRoomCode}`, JSON.stringify(chatMsg));
+            renderChatMessage(chatMsg);
 
             input.value = '';
         };
