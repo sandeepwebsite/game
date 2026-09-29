@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Truth & Dare - Realtime</title>
+    <title>Spin & Dare - Cyberpunk 2-Player Realtime</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- PeerJS CDN for true cross-device WebRTC connection -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * {
@@ -61,7 +63,7 @@
     <div class="app-container flex flex-col relative overflow-hidden">
         
         <!-- Toast Notification (Fixed Top Position with Safe-Area Padding) -->
-        <div id="toast" class="absolute top-10 left-1/2 -translate-x-1/2 -translate-y-24 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-full font-bold text-sm shadow-xl shadow-pink-500/20 transition-all duration-300 z-50 pointer-events-none text-center max-w-[90%]">
+        <div id="toast" class="absolute top-50 left-1/2 -translate-x-1/2 -translate-y-24 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-full font-bold text-sm shadow-xl shadow-pink-500/20 transition-all duration-300 z-50 pointer-events-none text-center max-w-[90%]">
             Notice
         </div>
 
@@ -70,7 +72,7 @@
             <!-- Header -->
             <div class="text-center my-4">
                 <h1 class="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent tracking-tight">
-                    TRUTH & DARE
+                    SPIN & DARE
                 </h1>
                 <p class="text-xs text-slate-400 tracking-widest uppercase mt-1 font-semibold">2-Player Realtime Cyber Arena</p>
             </div>
@@ -227,7 +229,8 @@
             myName: '',
             opponentName: '',
             roomCode: '',
-            channel: null,
+            peer: null,
+            conn: null,
             gameState: 'LOBBY',
             targetPlayerId: null,
             selectedChoice: null,
@@ -391,7 +394,7 @@
             spinAnimationId = requestAnimationFrame(step);
         }
 
-        /* LOBBY & SIGNALING */
+        /* LOBBY & PEERJS SIGNALING */
         function switchLobbyTab(tab) {
             const createBtn = document.getElementById('tab-create');
             const joinBtn = document.getElementById('tab-join');
@@ -418,7 +421,6 @@
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
-            // Slide down safely below top status bar / notch area
             toast.style.transform = 'translateX(-50%) translateY(0)';
             setTimeout(() => {
                 toast.style.transform = 'translateX(-50%) translateY(-100px)';
@@ -437,7 +439,7 @@
             document.getElementById('created-room-code').textContent = AppState.roomCode;
             document.getElementById('host-code-display').style.display = 'flex';
 
-            initSignalingChannel(AppState.roomCode);
+            initPeerServer(AppState.roomCode);
             showToast('Room created! Waiting for partner...');
         }
 
@@ -453,59 +455,83 @@
             AppState.myName = name;
             AppState.roomCode = code;
 
-            initSignalingChannel(code);
-            
-            setTimeout(() => {
-                sendSignalingMessage({
-                    type: 'JOIN_REQUEST',
-                    name: AppState.myName
-                });
-            }, 500);
-            
+            initPeerServer(null, code);
             showToast('Connecting to room...');
         }
 
-        function initSignalingChannel(roomCode) {
-            if (AppState.channel) {
-                AppState.channel.close();
+        function initPeerServer(hostRoomCode, joinRoomCode = null) {
+            if (AppState.peer) {
+                AppState.peer.destroy();
             }
 
-            AppState.channel = new BroadcastChannel(`spin-dare-room-${roomCode}`);
+            // Using PeerJS public cloud server with a unique prefix to avoid ID collisions
+            const peerId = hostRoomCode ? `spindare-${hostRoomCode}` : null;
+            AppState.peer = new Peer(peerId, {
+                debug: 1
+            });
 
-            AppState.channel.onmessage = (event) => {
-                handleIncomingSignalingData(event.data);
-            };
+            AppState.peer.on('open', (id) => {
+                if (joinRoomCode) {
+                    // Connect to Host
+                    const targetId = `spindare-${joinRoomCode}`;
+                    AppState.conn = AppState.peer.connect(targetId);
+                    setupConnectionEvents();
+                }
+            });
+
+            AppState.peer.on('connection', (connection) => {
+                if (AppState.role === 'HOST') {
+                    AppState.conn = connection;
+                    setupConnectionEvents();
+                }
+            });
+
+            AppState.peer.on('error', (err) => {
+                showToast('Connection error: Room not found or offline');
+            });
         }
 
-        function sendSignalingMessage(data) {
-            if (AppState.channel) {
-                AppState.channel.postMessage({
-                    ...data,
-                    senderRole: AppState.role
+        function setupConnectionEvents() {
+            AppState.conn.on('open', () => {
+                // Send handshake with my name
+                sendPeerMessage({
+                    type: 'HANDSHAKE',
+                    name: AppState.myName
                 });
+            });
+
+            AppState.conn.on('data', (data) => {
+                handleIncomingPeerData(data);
+            });
+
+            AppState.conn.on('close', () => {
+                showToast('Partner disconnected!');
+            });
+        }
+
+        function sendPeerMessage(data) {
+            if (AppState.conn && AppState.conn.open) {
+                AppState.conn.send(data);
             }
         }
 
-        function handleIncomingSignalingData(data) {
-            if (data.senderRole === AppState.role) return;
-
+        function handleIncomingPeerData(data) {
             switch (data.type) {
-                case 'JOIN_REQUEST':
+                case 'HANDSHAKE':
+                    AppState.opponentName = data.name;
                     if (AppState.role === 'HOST') {
-                        AppState.opponentName = data.name;
-                        sendSignalingMessage({
-                            type: 'JOIN_RESPONSE',
+                        // Echo handshake back so guest gets host's name
+                        sendPeerMessage({
+                            type: 'HANDSHAKE_RESPONSE',
                             name: AppState.myName
                         });
-                        startGameSession();
                     }
+                    startGameSession();
                     break;
 
-                case 'JOIN_RESPONSE':
-                    if (AppState.role === 'GUEST') {
-                        AppState.opponentName = data.name;
-                        startGameSession();
-                    }
+                case 'HANDSHAKE_RESPONSE':
+                    AppState.opponentName = data.name;
+                    startGameSession();
                     break;
 
                 case 'SPIN_ACTION':
@@ -560,7 +586,7 @@
 
             initCanvas();
             updateTurnUI();
-            showToast('Secure connection active! Game started.');
+            showToast('Secure cross-device connection active!');
         }
 
         function updateTurnUI() {
@@ -600,7 +626,7 @@
             const targetOffset = targetId === 'P1' ? -Math.PI / 2 : Math.PI / 2;
             const finalAngle = baseRotations + targetOffset;
 
-            sendSignalingMessage({
+            sendPeerMessage({
                 type: 'SPIN_ACTION',
                 targetId: targetId,
                 angle: finalAngle
@@ -631,7 +657,7 @@
             modal.style.opacity = '0';
             modal.style.pointerEvents = 'none';
 
-            sendSignalingMessage({
+            sendPeerMessage({
                 type: 'CHOICE_SELECTED',
                 choice: choice
             });
@@ -648,7 +674,7 @@
             const isChallenge = (AppState.myPlayerId === AppState.turnOwnerId && AppState.selectedChoice !== null);
 
             appendChatMessage(AppState.myName, text, isChallenge);
-            sendSignalingMessage({
+            sendPeerMessage({
                 type: 'CHAT_MESSAGE',
                 sender: AppState.myName,
                 text: text,
@@ -697,12 +723,12 @@
         function handleTypingInput() {
             if (!AppState.isTyping) {
                 AppState.isTyping = true;
-                sendSignalingMessage({ type: 'TYPING', isTyping: true });
+                sendPeerMessage({ type: 'TYPING', isTyping: true });
             }
             clearTimeout(AppState.typingTimeout);
             AppState.typingTimeout = setTimeout(() => {
                 AppState.isTyping = false;
-                sendSignalingMessage({ type: 'TYPING', isTyping: false });
+                sendPeerMessage({ type: 'TYPING', isTyping: false });
             }, 1500);
         }
 
@@ -721,7 +747,7 @@
             updateTurnUI();
 
             if (sendSignal) {
-                sendSignalingMessage({ type: 'NEXT_TURN' });
+                sendPeerMessage({ type: 'NEXT_TURN' });
             }
             showToast('Next turn started!');
         }
