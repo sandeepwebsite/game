@@ -163,7 +163,7 @@
                 <div class="font-bold text-slate-400">
                     ROOM: <span id="game-room-code" class="text-cyan-400 font-mono text-sm font-extrabold">-----</span>
                 </div>
-                <div id="status-text" class="font-bold text-cyan-400 text-center truncate max-w-[150px]">Tap SPIN BOTTLE!</div>
+                
                 <div class="font-bold text-slate-300">
                     Turn: <span id="current-turn-label" class="text-pink-400 text-sm font-extrabold">P1</span>
                 </div>
@@ -188,11 +188,16 @@
                 <!-- Increased canvas dimensions for a bigger bottle -->
                 <canvas id="bottle-canvas" width="180" height="180" class="w-[155px] h-[155px]"></canvas>
 
+
                 <button id="spin-btn" class="absolute bottom-2 bg-gradient-to-r from-cyan-500 to-purple-600 border border-white/20 text-white px-5 py-2 rounded-full text-xs font-extrabold shadow-md active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none z-20" onclick="requestSpin()">
                     SPIN BOTTLE
                 </button>
             </div>
 
+
+            
+            <div id="status-text" class="font-bold text-cyan-400 text-center truncate max-w-[150px]" style="text-align: center;">Tap SPIN BOTTLE!</div>
+            
             <!-- CHAT SECTION -->
             <div class="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[200px]">
                 <div id="chat-messages" class="flex-1 p-3.5 overflow-y-auto flex flex-col gap-2.5">
@@ -366,7 +371,6 @@
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 4;
 
-            // Scaled up proportions for a larger, prominent bottle
             const bodyGrad = ctx.createLinearGradient(-16, -54, 16, 54);
             bodyGrad.addColorStop(0, 'rgba(6, 182, 212, 0.95)');
             bodyGrad.addColorStop(0.3, 'rgba(15, 23, 42, 0.5)');
@@ -576,13 +580,13 @@
 
                 case 'CHOICE_SELECTED':
                     AppState.selectedChoice = data.choice;
-                    const chooserName = AppState.myPlayerId === AppState.targetPlayerId ? AppState.myName : AppState.opponentName;
+                    const chooserName = (AppState.targetPlayerId === AppState.myPlayerId) ? AppState.myName : AppState.opponentName;
                     
                     if (AppState.myPlayerId === AppState.turnOwnerId) {
-                        document.getElementById('status-text').textContent = `${chooserName} chose ${data.choice}!`;
-                        appendSystemMessage(`${chooserName} chose ${data.choice}! Send your challenge in chat.`);
+                        document.getElementById('status-text').textContent = `${chooserName} chose ${data.choice}! Send challenge.`;
+                        appendSystemMessage(`${chooserName} selected ${data.choice}! Type your challenge in chat.`);
                     } else {
-                        document.getElementById('status-text').textContent = `You chose ${data.choice}! Waiting for challenge...`;
+                        document.getElementById('status-text').textContent = `You selected ${data.choice}. Waiting for challenge...`;
                         appendSystemMessage(`You selected ${data.choice}. Waiting for challenge...`);
                     }
                     break;
@@ -690,7 +694,7 @@
 
             sendPeerMessage({ type: 'CHOICE_SELECTED', choice: choice });
 
-            document.getElementById('status-text').textContent = `Selected ${choice}. Waiting for challenge...`;
+            document.getElementById('status-text').textContent = `You selected ${choice}. Waiting for challenge...`;
             appendSystemMessage(`You selected ${choice}. Waiting for challenge...`);
         }
 
