@@ -1,744 +1,571 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>GameVerse Pro</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 -10 100 80%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GameVerse Pro</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 -10 100 80%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#6366f1',
+              dark: '#4f46e5',
+              light: '#818cf8',
+            },
+            accent: {
+              DEFAULT: '#22d3ee',
+              dark: '#06b6d4',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
-<style>
-/* ================= GLOBAL VARIABLES ================= */
-:root {
-  --bg: #0b0d17;
-  --card-bg: #161a2e;
-  --primary: #6366f1;
-  --accent: #22d3ee;
-  --text-main: #ffffff;
-  --text-dim: #94a3b8;
-  --nav-bg: rgba(11, 13, 23, 0.95);
-  --skeleton: rgba(255, 255, 255, 0.05);
-  --container-max: 1200px;
-  --danger: #ef4444;
-  --success: #10b981;
-}
-
-body.light {
-  --bg: #f1f5f9;
-  --card-bg: #ffffff;
-  --text-main: #0f172a;
-  --text-dim: #64748b;
-  --nav-bg: rgba(241, 245, 249, 0.95);
-  --skeleton: rgba(0, 0, 0, 0.05);
-}
-
-/* ================= RESET & BASE ================= */
-* { 
-  margin: 0; 
-  padding: 0; 
-  box-sizing: border-box; 
-  -webkit-tap-highlight-color: transparent; 
-  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
-}
-
-body {
-  background-color: var(--bg);
-  color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  padding-bottom: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
-}
-
-.app-container { 
-  width: 100%; 
-  max-width: var(--container-max); 
-  padding: 0 1.5rem; 
-}
-
-/* ================= SKELETON ANIMATION ================= */
-.skeleton {
-  background: linear-gradient(90deg, var(--skeleton) 25%, rgba(150,150,150,0.1) 50%, var(--skeleton) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 12px;
-  color: transparent !important;
-  pointer-events: none;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* ================= HEADER & SEARCH ================= */
-.header { 
-  padding: 3rem 0 1.5rem; 
-  width: 100%; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-}
-
-.logo { 
-  font-size: 2rem; 
-  font-weight: 900; 
-  color: var(--accent); 
-  letter-spacing: -1.5px; 
-  text-transform: lowercase;
-}
-
-.search-area { 
-  padding: 1rem 0; 
-  position: sticky; 
-  top: 0; 
-  background: var(--bg); 
-  z-index: 100; 
-  width: 100%; 
-}
-
-.search-wrapper { position: relative; width: 100%; }
-
-.search-icon {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.5;
-  font-size: 1.2rem;
-}
-
-.search-input { 
-  width: 100%; 
-  padding: 16px 20px 16px 50px; 
-  border-radius: 20px; 
-  border: 1px solid rgba(128,128,128,0.2); 
-  background: var(--card-bg); 
-  color: var(--text-main); 
-  outline: none; 
-  font-size: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-
-.search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-
-/* ================= CATEGORY CHIPS ================= */
-.filter-scroll { 
-  display: flex; 
-  gap: 12px; 
-  overflow-x: auto; 
-  padding: 20px 0; 
-  scrollbar-width: none; 
-}
-.filter-scroll::-webkit-scrollbar { display: none; }
-
-.chip { 
-  padding: 10px 24px; 
-  background: var(--card-bg); 
-  border-radius: 30px; 
-  font-size: 0.9rem; 
-  font-weight: 600;
-  border: 1px solid rgba(128,128,128,0.2); 
-  cursor: pointer; 
-  white-space: nowrap;
-}
-
-.chip.active { 
-  background: var(--primary); 
-  color: white; 
-  border-color: var(--primary); 
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-/* ================= RECENT SECTION ================= */
-.section-title { 
-  font-size: 0.85rem; 
-  color: var(--text-dim); 
-  margin: 2rem 0 15px; 
-  font-weight: 800; 
-  letter-spacing: 1.5px; 
-  text-transform: uppercase; 
-}
-
-.recent-card {
-  background: linear-gradient(135deg, var(--primary), #8b5cf6);
-  border-radius: 28px; 
-  padding: 1.8rem; 
-  display: flex; 
-  align-items: center; 
-  gap: 20px;
-  text-decoration: none; 
-  color: white; 
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
-  margin-bottom: 10px;
-}
-
-/* ================= POKI BENTO GRID ================= */
-.game-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); 
-  grid-auto-rows: 115px;
-  gap: 14px; 
-  width: 100%; 
-}
-
-@media (min-width: 768px) {
-  .game-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    grid-auto-rows: 160px;
-    gap: 20px;
-  }
-}
-
-.game-item { 
-  background: var(--card-bg); 
-  border-radius: 26px; 
-  border: 1px solid rgba(128,128,128,0.1); 
-  position: relative; 
-  overflow: hidden;
-}
-
-/* Bento Sizing Classes */
-.game-item.featured { grid-column: span 2; grid-row: span 2; }
-.game-item.wide { grid-column: span 2; grid-row: span 1; }
-.game-item.tall { grid-column: span 1; grid-row: span 2; }
-
-.game-item:hover { 
-  transform: scale(1.05) translateY(-5px); 
-  border-color: var(--accent); 
-  z-index: 10; 
-  box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
-}
-
-.game-item a { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  height: 100%; 
-  width: 100%; 
-  text-decoration: none; 
-  color: inherit; 
-  padding: 15px; 
-}
-
-.icon-box { font-size: 2.5rem; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.game-item.featured .icon-box { font-size: 5rem; }
-.game-item.wide .icon-box, .game-item.tall .icon-box { font-size: 3.5rem; }
-
-.game-item:hover .icon-box { transform: scale(1.2) rotate(5deg); }
-
-.title-box { font-size: 0.9rem; font-weight: 800; margin-top: 10px; text-align: center; line-height: 1.1; }
-.play-count-box { font-size: 0.7rem; color: var(--accent); margin-top: 6px; font-weight: 800; opacity: 0.9; }
-
-/* ================= MODALS ================= */
-.modal { 
-  position: fixed; 
-  top: 0; left: 0; 
-  width: 100%; height: 100%; 
-  background: rgba(0,0,0,0.85); 
-  backdrop-filter: blur(12px); 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  z-index: 2000; 
-  visibility: hidden; 
-  opacity: 0; 
-  transition: all 0.4s ease; 
-}
-
-.modal.show { visibility: visible; opacity: 1; }
-
-.modal-content { 
-  background: var(--card-bg); 
-  width: 92%; 
-  max-width: 480px; 
-  border-radius: 35px; 
-  padding: 2.5rem; 
-  color: var(--text-main); 
-  max-height: 85vh; 
-  overflow-y: auto; 
-  position: relative;
-  transform: translateY(30px);
-  transition: transform 0.4s ease;
-}
-
-.modal.show .modal-content { transform: translateY(0); }
-
-/* ================= BOTTOM NAV ================= */
-.bottom-nav { 
-  position: fixed; 
-  bottom: 25px; 
-  width: auto; 
-  min-width: 300px; 
-  background: var(--nav-bg); 
-  display: flex; 
-  justify-content: space-around; 
-  padding: 1rem 2.5rem; 
-  border-radius: 60px; 
-  border: 1px solid rgba(128,128,128,0.2); 
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-  z-index: 1000; 
-  backdrop-filter: blur(15px);
-}
-
-.nav-btn { 
-  background: none; 
-  border: none; 
-  font-size: 1.6rem; 
-  color: var(--text-dim); 
-  cursor: pointer; 
-  transition: 0.2s;
-}
-
-.nav-btn:hover { color: var(--primary); transform: scale(1.2); }
-.nav-btn.active { color: var(--primary); }
-
-/* ================= UTILITIES ================= */
-.btn-danger { 
-  background: var(--danger); 
-  color: white; 
-  width: 100%; 
-  margin-top: 20px; 
-  padding: 16px; 
-  border-radius: 18px; 
-  border: none; 
-  font-weight: 800; 
-  cursor: pointer; 
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.hidden { display: none !important; }
-</style>
+  <style>
+    /* Custom scrollbar hiding for smooth horizontal chips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Shimmer animation for skeleton loading */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton-shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite linear;
+      color: transparent !important;
+      pointer-events: none;
+      user-select: none;
+    }
+    .dark .skeleton-shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+      background-size: 200% 100%;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-36 flex flex-col items-center transition-colors duration-300">
 
-<div class="app-container">
-  <div class="header">
-    <div class="logo">🎮 GameVerse</div>
-    <div id="dateDisplay" style="font-size: 0.9rem; color: var(--text-dim); font-weight: 900; text-transform: uppercase;">March 2026</div>
-  </div>
-
-  <div class="search-area">
-    <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search for games..." onkeyup="runFilters()">
-    </div>
-    <div class="filter-scroll">
-      <div class="chip active" onclick="setCategory('all', this)">All Games</div>
-      <div class="chip" onclick="setCategory('puzzle', this)">Puzzles</div>
-      <div class="chip" onclick="setCategory('action', this)">Action</div>
-      <div class="chip" onclick="setCategory('race', this)">Racing</div>
-    </div>
-  </div>
-
-  <div class="recent-section" id="recentSection">
-    <p class="section-title">Jump Back In</p>
-    <a href="#" class="recent-card" id="lastPlayedLink">
-      <span id="lpIcon" style="font-size: 2.8rem;">🎮</span>
-      <div>
-        <h4 id="lpName" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 2px;">Ready to play?</h4>
-        <span id="lpTime" style="font-size: 0.75rem; font-weight: 700; opacity: 0.9; text-transform: uppercase;">No recent history</span>
+  <!-- Main Container -->
+  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mx-auto">
+    
+    <!-- Header -->
+    <header class="py-6 sm:py-8 flex justify-between items-center w-full">
+      <div class="flex items-center gap-3 group cursor-pointer">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand to-accent flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+          🎮
+        </div>
+        <span class="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-accent">
+          gameverse<span class="text-accent">.</span>
+        </span>
       </div>
-    </a>
+      <div id="dateDisplay" class="text-xs sm:text-sm font-extrabold text-slate-400 tracking-wider uppercase bg-slate-900/80 border border-slate-800/80 px-3.5 py-1.5 rounded-full shadow-inner">
+        March 2026
+      </div>
+    </header>
+
+    <!-- Search & Filters Area -->
+    <div class="sticky top-0 bg-slate-950/90 backdrop-blur-md py-3 z-30 w-full transition-colors duration-300">
+      <div class="relative w-full shadow-xl rounded-2xl">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">🔍</span>
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="w-full pl-12 pr-4 py-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl text-slate-100 placeholder-slate-500 text-sm sm:text-base focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all shadow-inner"
+          placeholder="Search through games..." 
+          onkeyup="runFilters()"
+        >
+      </div>
+
+      <!-- Category Filter Chips -->
+      <div class="flex gap-2.5 overflow-x-auto py-3 no-scrollbar">
+        <button onclick="setCategory('all', this)" class="chip active px-5 py-2.5 bg-brand text-white rounded-full text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/25 border border-brand whitespace-nowrap transition-all hover:scale-105 active:scale-95">All Games</button>
+        <button onclick="setCategory('puzzle', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Puzzles</button>
+        <button onclick="setCategory('action', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Action</button>
+        <button onclick="setCategory('race', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Racing</button>
+      </div>
+    </div>
+
+    <!-- Recent Section / Jump Back In -->
+    <section class="mt-4 mb-8" id="recentSection">
+      <p class="text-xs font-black tracking-widest text-slate-400 uppercase mb-3">Jump Back In</p>
+      <a href="#" id="lastPlayedLink" class="recent-card group relative bg-gradient-to-r from-brand via-indigo-600 to-purple-600 rounded-3xl p-5 sm:p-6 flex items-center gap-5 text-white shadow-xl shadow-indigo-500/15 overflow-hidden border border-indigo-400/20 hover:scale-[1.01] transition-all">
+        <div class="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-125 transition-transform pointer-events-none select-none" id="lpBgIcon">🎮</div>
+        <div id="lpIcon" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:rotate-6 transition-transform">🎮</div>
+        <div class="z-10">
+          <h4 id="lpName" class="text-lg sm:text-xl font-extrabold tracking-tight mb-1">Ready to play?</h4>
+          <span id="lpTime" class="inline-block text-[10px] sm:text-xs font-bold tracking-wider uppercase bg-black/25 px-2.5 py-1 rounded-md text-indigo-100">No recent history</span>
+        </div>
+      </a>
+    </section>
+
+    <!-- Trending Now Header -->
+    <p class="text-xs font-black tracking-widest text-slate-400 uppercase mb-4">Trending Now</p>
+
+    <!-- Bento Grid Container -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4 auto-rows-[130px] sm:auto-rows-[150px] w-full" id="gameGrid">
+      
+      <!-- Snake Pro (Featured: 2x2) -->
+      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="snake pro" data-cat="action" data-id="snake">
+        <a href="snake.html" onclick="trackPlay('snake', 'Snake Pro', '🐍')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
+          <span class="icon-box text-6xl sm:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300 drop-shadow-md">🐍</span>
+          <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Snake Pro</h4>
+          <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+      </div>
+
+      <!-- Water Sort (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
+        <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧪</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Water Sort</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Space Impact (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="space impact" data-cat="action" data-id="space-impact">
+        <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🚀</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Space</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Ace Horizon Pro (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
+        <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🂡')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🂡</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ace Horizon</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Block 8 (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
+        <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧱</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Block 8</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Chess Pro (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="chess grandmaster" data-cat="puzzle" data-id="chess">
+        <a href="chess.html" onclick="trackPlay('chess', 'Chess Pro', '♟')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">♟</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Chess Pro</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Bird Sort (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="bird sort puzzle" data-cat="puzzle" data-id="bird-sort">
+        <a href="bird-sort" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🦜</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Bird Sort</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- One Line (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
+        <a href="line-drawing.html" onclick="trackPlay('line-drawing', 'One Line', '✏️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">✏️</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">One Line</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Remember the Pattern (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Remember the Pattern" data-cat="puzzle" data-id="pattern">
+        <a href="pattern.html" onclick="trackPlay('pattern', 'pattern', '💠')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">💠</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors leading-tight">Remember Pattern</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Math Operator (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Quick Logic" data-cat="puzzle" data-id="math-operator">
+        <a href="math-operator.html" onclick="trackPlay('math-operator', 'Math Operator', '🧮')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧮</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Math Operator</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Gravity Pulse (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Gravity Pulse" data-cat="race" data-id="gravity-pulse">
+        <a href="gravity-pulse.html" onclick="trackPlay('gravity-pulse', 'Gravity Pulse', '💨')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:translate-x-1 transition-transform duration-300">💨</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Gravity Pulse</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Neon Dash (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Neon Dash" data-cat="race" data-id="neon-dash">
+        <a href="neon-dash.html" onclick="trackPlay('neon-dash', 'Neon Dash', '🔺')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-translate-y-1 transition-transform duration-300">🔺</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Neon Dash</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Frog Whacker (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Frog Whacker" data-cat="action" data-id="frog-whacker">
+        <a href="frog-whacker.html" onclick="trackPlay('frog-whacker', 'Frog Whacker', '🐸')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🐸</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Frog Whacker</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Fruit Basket (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Fruit Basket" data-cat="action" data-id="fruit-basket">
+        <a href="fruit-basket.html" onclick="trackPlay('fruit-basket', 'Fruit Basket', '🍓')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🍓</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Fruit Basket</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Cyber Punk Runner (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Cyber Punk Runner" data-cat="action" data-id="cyberpunk-runner">
+        <a href="cyberpunk-runner.html" onclick="trackPlay('cyberpunk-runner', 'Cyber Punk Runner', '🏃‍♂️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🏃‍♂️</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Cyber Runner</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Hangman (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="hangman" data-cat="puzzle" data-id="hangman">
+        <a href="hangman.html" onclick="trackPlay('hangman', 'Hangman', '🪢🕺')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">🪢🕺</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Hangman</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Brick Game (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="brick-game" data-cat="puzzle" data-id="brick-game">
+        <a href="brick-game.html" onclick="trackPlay('brick-game', 'brick-game', '🧩')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧩</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Brick Game</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Tank Battle (Tall: 1x2) -->
+      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="tank-battle" data-cat="action" data-id="tank-battle">
+        <a href="tank-battle.html" onclick="trackPlay('tank-battle', 'Tank Battle', '🚜')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🚜</span>
+          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Tank Battle</h4>
+          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Bagh Chal (Featured: 2x2) -->
+      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="baghchal" data-cat="puzzle" data-id="baghchal">
+        <a href="baghchal-game.html" onclick="trackPlay('baghchal', 'Bagh Chal', '🐯')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
+          <span class="icon-box text-5xl sm:text-6xl group-hover:scale-125 transition-transform duration-300">🐯🆚🐐</span>
+          <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Bagh Chal</h4>
+          <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Criss Cross (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="criss cross" data-cat="puzzle" data-id="criss-cross">
+        <a href="criss-cross-game.html" onclick="trackPlay('criss-cross', 'Criss Cross', '❌ ⭕')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">❌ ⭕</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Criss Cross</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Pac Man Game (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="pac man" data-cat="action" data-id="pac-man">
+        <a href="pac-man-game.html" onclick="trackPlay('pac man', 'Pac Man', '👻')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">👻</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Pac Man</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Ludo Game (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ludo" data-cat="action" data-id="ludo">
+        <a href="ludo" onclick="trackPlay('ludo', 'Ludo Game', '🎲')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">🎲</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ludo Game</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+      <!-- Truth and Dare (Normal: 1x1) -->
+      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="truth dare" data-cat="action" data-id="truth-dare">
+        <a href="truth-dare" onclick="trackPlay('truth dare', 'truth dare', '🎯')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🎯</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Truth & Dare</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+            <!-- Frog Whacker (Normal: 1x1) -->
+      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Frog Whacker" data-cat="action" data-id="frog-whacker">
+        <a href="word-antakshari.html" onclick="trackPlay('word-antakshari', 'Word Antakshari', '🐸')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🐸</span>
+          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Word Antakshari</h4>
+          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
+        </a>
+      </div>
+
+    </div>
   </div>
 
-  <p class="section-title">Trending Now</p>
-  <div class="game-grid" id="gameGrid">
-    
-    <div class="game-item featured" data-name="snake pro" data-cat="action" data-id="snake">
-      <a href="snake.html" onclick="trackPlay('snake', 'Snake Pro', '🐍')">
-        <span class="icon-box">🐍</span>
-        <h4 class="title-box">Snake Pro</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
+  <!-- Floating Bottom Navigation -->
+  <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 px-6 py-3 rounded-full shadow-2xl shadow-black/60 flex items-center gap-8 z-40">
+    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="location.reload()" title="Home">🏠</button>
+    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
+    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="toggleModal('settingsModal', true)" title="Settings">⚙️</button>
+  </nav>
 
-    <div class="game-item tall" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
-      <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')">
-        <span class="icon-box">🧪</span>
-        <h4 class="title-box">Water Sort</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
+  <!-- Leaderboard Modal -->
+  <div class="modal fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 invisible opacity-0 transition-all duration-300 p-4" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
+    <div class="modal-content bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 shadow-2xl max-h-[85vh] overflow-y-auto transform translate-y-8 transition-transform duration-300" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">🏆 Global Rankings</h2>
+        <button onclick="toggleModal('leaderboardModal', false)" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">✕</button>
+      </div>
+      <div id="leaderboardList" class="space-y-3 mb-6">
+        <!-- Dynamically injected ranking items -->
+      </div>
+      <button onclick="toggleModal('leaderboardModal', false)" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-extrabold tracking-wide transition-colors">Dismiss</button>
     </div>
-
-    <div class="game-item" data-name="space impact" data-cat="action" data-id="space-impact">
-      <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')">
-        <span class="icon-box">🚀</span>
-        <h4 class="title-box">Space</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <!-- <div class="game-item" data-name="ace of spades" data-cat="puzzle" data-id="ace-spades">
-      <a href="ace.html" onclick="trackPlay('ace-spades', 'Ace Spades', '🂡')">
-        <span class="icon-box">🂡</span>
-        <h4 class="title-box">Ace Spades</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div> -->
-
-    <div class="game-item" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
-      <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🂡')">
-        <span class="icon-box">🂡</span>
-        <h4 class="title-box">Ace Horizon Pro</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
-      <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')">
-        <span class="icon-box">🧱</span>
-        <h4 class="title-box">Block 8</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item tall" data-name="chess grandmaster" data-cat="puzzle" data-id="chess">
-      <a href="chess.html" onclick="trackPlay('chess', 'Chess Pro', '♟')">
-        <span class="icon-box">♟</span>
-        <h4 class="title-box">Chess Pro</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="bird sort puzzle" data-cat="puzzle" data-id="bird-sort">
-      <a href="bird-sort" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')">
-        <span class="icon-box">🦜</span>
-        <h4 class="title-box">Bird Sort</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
-      <a href="line-drawing.html" onclick="trackPlay('line-drawing', 'One Line', '✏️')">
-        <span class="icon-box">✏️</span>
-        <h4 class="title-box">One Line</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item tall" data-name="Remember the Pattern" data-cat="puzzle" data-id="pattern">
-      <a href="pattern.html" onclick="trackPlay('pattern', 'pattern', '💠')">
-        <span class="icon-box">💠</span>
-        <h4 class="title-box">Remember the Pattern</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="Quick Logic" data-cat="puzzle" data-id="math-operator">
-      <a href="math-operator.html" onclick="trackPlay('math-operator', 'Math Operator', '🧮')">
-        <span class="icon-box">🧮</span>
-        <h4 class="title-box">Math Operator</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item tall" data-name="Gravity Pulse" data-cat="race" data-id="gravity-pulse">
-      <a href="gravity-pulse.html" onclick="trackPlay('gravity-pulse', 'Gravity Pulse', '💨')">
-        <span class="icon-box">💨</span>
-        <h4 class="title-box">Gravity Pulse</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-    <div class="game-item tall" data-name="Neon Dash" data-cat="race" data-id="neon-dash">
-      <a href="neon-dash.html" onclick="trackPlay('neon-dash', 'Neon Dash', '🔺')">
-        <span class="icon-box">🔺</span>
-        <h4 class="title-box">Neon Dash</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="Frog Whacker" data-cat="action" data-id="frog-whacker">
-      <a href="frog-whacker.html" onclick="trackPlay('frog-whacker', 'Frog Whacker', '🐸')">
-        <span class="icon-box">🐸</span>
-        <h4 class="title-box">Frog Whacker</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="Fruit Basket" data-cat="action" data-id="fruit-basket">
-      <a href="fruit-basket.html" onclick="trackPlay('fruit-basket', 'Fruit Basket', '🍓')">
-        <span class="icon-box">🍓</span>
-        <h4 class="title-box">Fruit Basket</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="Cyber Punk Runner" data-cat="action" data-id="cyberpunk-runner">
-      <a href="cyberpunk-runner.html" onclick="trackPlay('cyberpunk-runner', 'Cyber Punk Runner', '🏃‍♂️')">
-        <span class="icon-box">🏃‍♂️</span>
-        <h4 class="title-box">Cyber Punk Runner</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="hangman" data-cat="puzzle" data-id="hangman">
-      <a href="hangman.html" onclick="trackPlay('hangman', 'Hangman', '🪢🕺')">
-        <span class="icon-box">🪢🕺</span>
-        <h4 class="title-box">Hangman</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-        <div class="game-item tall" data-name="brick-game" data-cat="puzzle" data-id="brick-game">
-      <a href="brick-game.html" onclick="trackPlay('brick-game', 'brick-game', '🧩')">
-        <span class="icon-box">🧩</span>
-        <h4 class="title-box">Brick Game</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-        <div class="game-item tall" data-name="tank-battle" data-cat="action" data-id="tank-battle">
-      <a href="tank-battle.html" onclick="trackPlay('tank-battle', 'Tank Battle', '🚜')">
-        <span class="icon-box">🚜</span>
-        <h4 class="title-box">Tank Battle</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-    
-      <div class="game-item featured" data-name="baghchal" data-cat="puzzle" data-id="baghchal">
-      <a href="baghchal-game.html" onclick="trackPlay('baghchal', 'Bagh Chal', '🐯')">
-        <span class="icon-box">🐯🆚🐐</span>
-        <h4 class="title-box">Bagh Chal</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-        <div class="game-item" data-name="criss cross" data-cat="puzzle" data-id="criss-cross">
-      <a href="criss-cross-game.html" onclick="trackPlay('criss-cross', 'Criss Cross', '❌ ⭕')">
-        <span class="icon-box">❌ ⭕</span>
-        <h4 class="title-box">Criss Cross Game</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-
-    <div class="game-item" data-name="pac man" data-cat="action" data-id="pac-man">
-      <a href="pac-man-game.html" onclick="trackPlay('pac man', 'Pac Man', '👻')">
-        <span class="icon-box">👻</span>
-        <h4 class="title-box">Pac Man Game</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="ludo" data-cat="action" data-id="pac-man">
-      <a href="ludo" onclick="trackPlay('ludo', 'Ludo Game', '🎲')">
-        <span class="icon-box">🎲</span>
-        <h4 class="title-box">Ludo Game</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-
-    <div class="game-item" data-name="truth dare" data-cat="action" data-id="truth-dare">
-      <a href="truth-dare" onclick="trackPlay('truth dare', 'truth dare', '🎲')">
-        <span class="icon-box">🎲</span>
-        <h4 class="title-box">Truth and Dare</h4>
-        <div class="play-count-box">🔥 <span class="count-val">0</span> plays</div>
-      </a>
-    </div>
-    
-
-    
   </div>
-</div>
 
-<nav class="bottom-nav">
-  <button class="nav-btn" onclick="location.reload()" title="Home">🏠</button>
-  <button class="nav-btn" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
-  <button class="nav-btn" onclick="toggleModal('settingsModal', true)" title="Settings">⚙️</button>
-</nav>
+  <!-- Settings Modal -->
+  <div class="modal fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 invisible opacity-0 transition-all duration-300 p-4" id="settingsModal" onclick="toggleModal('settingsModal', false)">
+    <div class="modal-content bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 shadow-2xl max-h-[85vh] overflow-y-auto transform translate-y-8 transition-transform duration-300" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl sm:text-2xl font-black tracking-tight">App Settings</h2>
+        <button onclick="toggleModal('settingsModal', false)" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">✕</button>
+      </div>
+      
+      <div class="space-y-4 divide-y divide-slate-800/80">
+        <div class="flex justify-between items-center py-4">
+          <span class="font-bold text-slate-300 text-sm sm:text-base">Sound Effects</span>
+          <button id="muteBtn" onclick="toggleMute()" class="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-indigo-500/20 transition-all min-w-[88px]">OFF</button>
+        </div>
 
-<div class="modal" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 25px; font-weight: 900;">🏆 Global Ranking</h2>
-    <div id="leaderboardList"></div>
-    <button onclick="toggleModal('leaderboardModal', false)" style="width: 100%; margin-top: 1rem; padding: 15px; border: none; background: #333; color: white; border-radius: 15px; font-weight: 700;">Dismiss</button>
+        <div class="flex justify-between items-center pt-4">
+          <span class="font-bold text-slate-300 text-sm sm:text-base">Visual Theme</span>
+          <button onclick="toggleTheme()" class="px-5 py-2.5 rounded-xl border-2 border-slate-700 hover:border-slate-500 bg-slate-950 text-slate-200 font-extrabold text-xs sm:text-sm tracking-wider transition-all">SWITCH</button>
+        </div>
+      </div>
+      
+      <div class="mt-8 bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
+        <p class="text-[11px] text-rose-400 font-black tracking-widest uppercase mb-2">Danger Zone</p>
+        <button class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-rose-600/20 transition-all uppercase" onclick="resetAllData()">Reset All Progress</button>
+      </div>
+      
+      <button onclick="toggleModal('settingsModal', false)" class="w-full mt-6 py-4 bg-brand hover:bg-brand-dark text-white rounded-2xl font-black text-sm tracking-wider shadow-xl shadow-indigo-500/25 transition-all">CLOSE</button>
+    </div>
   </div>
-</div>
 
-<div class="modal" id="settingsModal" onclick="toggleModal('settingsModal', false)">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-bottom: 25px; font-weight: 900;">App Settings</h2>
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(128,128,128,0.15);">
-      <span style="font-weight: 700;">Sound</span>
-      <button id="muteBtn" onclick="toggleMute()" style="padding: 10px 24px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 800; min-width: 80px;">OFF</button>
-    </div>
+  <!-- JavaScript Logic -->
+  <script>
+    let currentCategory = 'all';
+    let isMuted = localStorage.getItem('isMuted') === 'true';
 
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(128,128,128,0.15);">
-      <span style="font-weight: 700;">Visual Theme</span>
-      <button onclick="toggleTheme()" style="padding: 10px 24px; border-radius: 14px; border: 1.5px solid var(--text-dim); background: none; color: var(--text-main); font-weight: 800;">SWITCH</button>
-    </div>
-    
-    <div style="margin-top: 30px; background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 20px;">
-      <p style="font-size: 0.75rem; color: var(--danger); font-weight: 900; margin-bottom: 5px;">DANGER ZONE</p>
-      <button class="btn-danger" onclick="resetAllData()">Reset All Progress</button>
-    </div>
-    
-    <button onclick="toggleModal('settingsModal', false)" style="width: 100%; margin-top: 2rem; padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 900;">CLOSE</button>
-  </div>
-</div>
-
-<script>
-// ================= INITIALIZATION & STATE =================
-let currentCategory = 'all';
-let isMuted = localStorage.getItem('isMuted') === 'true';
-
-// Theme Persistence
-if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
-
-// ================= DATE & TIME LOGIC =================
-function formatLastPlayed() {
-  const ts = localStorage.getItem('lastPlayedTime');
-  if (!ts) return "No history yet";
-  
-  const date = new Date(parseInt(ts));
-  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  
-  let hours = date.getHours();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12; // Handle 12-hour format logic
-  const mins = date.getMinutes().toString().padStart(2, '0');
-  
-  return `${days[date.getDay()]} ${hours}:${mins} ${ampm}`;
-}
-
-// ================= DATA STORAGE =================
-function trackPlay(id, name, icon) {
-  // Update play counts
-  let count = parseInt(localStorage.getItem('plays_' + id) || 0);
-  localStorage.setItem('plays_' + id, count + 1);
-  
-  // Update "Last Played" metadata
-  localStorage.setItem('lastPlayedName', name);
-  localStorage.setItem('lastPlayedIcon', icon);
-  localStorage.setItem('lastPlayedTime', new Date().getTime());
-  localStorage.setItem('lastPlayedID', id);
-}
-
-function resetAllData() {
-  if(confirm("CRITICAL: This will permanently delete all high scores and local history. Continue?")) {
-    localStorage.clear();
-    location.reload();
-  }
-}
-
-// ================= FILTERING & SEARCH =================
-function runFilters() {
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  const items = document.querySelectorAll('.game-item');
-  
-  // Hide recent section if searching
-  document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
-  
-  items.forEach(item => {
-    const name = item.getAttribute('data-name').toLowerCase();
-    const cat = item.getAttribute('data-cat');
-    const matchesSearch = name.includes(query);
-    const matchesCat = (currentCategory === 'all' || cat === currentCategory);
-    
-    if (matchesSearch && matchesCat) {
-      item.classList.remove('hidden');
-    } else {
-      item.classList.add('hidden');
+    // Theme Persistence & Support for Light/Dark classes
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.add('light');
+      document.body.classList.remove('bg-slate-950', 'text-slate-100');
+      document.body.classList.add('bg-slate-100', 'text-slate-900');
     }
-  });
-}
 
-function setCategory(cat, el) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  currentCategory = cat;
-  runFilters();
-}
-
-// ================= UI RENDERING =================
-function updateUI() {
-  // Update grid play counts
-  document.querySelectorAll('.game-item').forEach(item => {
-    const id = item.getAttribute('data-id');
-    const val = localStorage.getItem('plays_' + id) || 0;
-    const countEl = item.querySelector('.count-val');
-    if(countEl) countEl.textContent = val;
-  });
-
-  // Update "Jump Back In" card
-  const lastID = localStorage.getItem('lastPlayedID');
-  if (lastID) {
-    const source = document.querySelector(`.game-item[data-id="${lastID}"] a`);
-    if(source) {
-      document.getElementById('lastPlayedLink').href = source.getAttribute('href');
-      document.getElementById('lpName').textContent = localStorage.getItem('lastPlayedName');
-      document.getElementById('lpIcon').textContent = localStorage.getItem('lastPlayedIcon');
-      document.getElementById('lpTime').textContent = formatLastPlayed();
+    function formatLastPlayed() {
+      const ts = localStorage.getItem('lastPlayedTime');
+      if (!ts) return "No history yet";
+      
+      const date = new Date(parseInt(ts));
+      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      
+      let hours = date.getHours();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      const mins = date.getMinutes().toString().padStart(2, '0');
+      
+      return `${days[date.getDay()]} ${hours}:${mins} ${ampm}`;
     }
-  }
-}
 
-function openLeaderboard() {
-  const list = document.getElementById('leaderboardList');
-  list.innerHTML = '';
-  
-  // Gather and sort scores
-  const games = Array.from(document.querySelectorAll('.game-grid .game-item')).map(item => ({
-    name: item.querySelector('h4').textContent,
-    icon: item.querySelector('.icon-box').textContent,
-    total: parseInt(localStorage.getItem('plays_' + item.getAttribute('data-id')) || 0)
-  })).sort((a, b) => b.total - a.total);
+    function trackPlay(id, name, icon) {
+      let count = parseInt(localStorage.getItem('plays_' + id) || 0);
+      localStorage.setItem('plays_' + id, count + 1);
+      
+      localStorage.setItem('lastPlayedName', name);
+      localStorage.setItem('lastPlayedIcon', icon);
+      localStorage.setItem('lastPlayedTime', new Date().getTime());
+      localStorage.setItem('lastPlayedID', id);
+    }
 
-  games.forEach((g, i) => {
-    const color = i < 3 ? 'var(--accent)' : 'var(--text-dim)';
-    list.innerHTML += `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:18px; background:rgba(128,128,128,0.08); margin-bottom:12px; border-radius:20px;">
-        <span style="font-weight: 800;"><span style="color:${color}; margin-right:10px;">#${i+1}</span> ${g.icon} ${g.name}</span>
-        <span style="color:var(--primary); font-weight:900;">${g.total} PLAYS</span>
-      </div>`;
-  });
-  toggleModal('leaderboardModal', true);
-}
+    function resetAllData() {
+      if(confirm("CRITICAL: This will permanently delete all high scores and local history. Continue?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
 
-// ================= SETTINGS LOGIC =================
-function toggleTheme() {
-    document.body.classList.toggle('light');
-    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
-}
+    function runFilters() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const items = document.querySelectorAll('.game-item');
+      
+      document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
+      
+      items.forEach(item => {
+        const name = item.getAttribute('data-name').toLowerCase();
+        const cat = item.getAttribute('data-cat');
+        const matchesSearch = name.includes(query);
+        const matchesCat = (currentCategory === 'all' || cat === currentCategory);
+        
+        if (matchesSearch && matchesCat) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    }
 
-function renderMute() {
-  const btn = document.getElementById('muteBtn');
-  if(btn) {
-    btn.textContent = isMuted ? "ON" : "OFF";
-    btn.style.background = isMuted ? "#444" : "var(--primary)";
-  }
-}
+    function setCategory(cat, el) {
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.remove('active', 'bg-brand', 'text-white', 'shadow-md', 'shadow-indigo-500/25', 'border-brand');
+        c.classList.add('bg-slate-900', 'text-slate-300', 'border-slate-800');
+      });
+      el.classList.add('active', 'bg-brand', 'text-white', 'shadow-md', 'shadow-indigo-500/25', 'border-brand');
+      el.classList.remove('bg-slate-900', 'text-slate-300', 'border-slate-800');
+      currentCategory = cat;
+      runFilters();
+    }
 
-function toggleMute() {
-  isMuted = !isMuted;
-  localStorage.setItem('isMuted', isMuted);
-  renderMute();
-}
+    function updateUI() {
+      document.querySelectorAll('.game-item').forEach(item => {
+        const id = item.getAttribute('data-id');
+        const val = localStorage.getItem('plays_' + id) || 0;
+        const countEl = item.querySelector('.count-val');
+        if(countEl) countEl.textContent = val;
+      });
 
-function toggleModal(id, show) {
-  document.getElementById(id).classList.toggle('show', show);
-}
+      const lastID = localStorage.getItem('lastPlayedID');
+      if (lastID) {
+        const source = document.querySelector(`.game-item[data-id="${lastID}"] a`);
+        if(source) {
+          document.getElementById('lastPlayedLink').href = source.getAttribute('href');
+          document.getElementById('lpName').textContent = localStorage.getItem('lastPlayedName');
+          const iconVal = localStorage.getItem('lastPlayedIcon');
+          document.getElementById('lpIcon').textContent = iconVal;
+          document.getElementById('lpBgIcon').textContent = iconVal;
+          document.getElementById('lpTime').textContent = formatLastPlayed();
+        }
+      }
+    }
 
-// ================= STARTUP =================
-window.onload = () => {
-  // Apply skeleton loading
-  const targets = document.querySelectorAll('.title-box, .icon-box, .play-count-box, .search-input');
-  targets.forEach(el => el.classList.add('skeleton'));
-  
-  setTimeout(() => {
-    targets.forEach(el => el.classList.remove('skeleton'));
-    updateUI();
-    renderMute();
-  }, 1000);
-};
+    function openLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = '';
+      
+      const games = Array.from(document.querySelectorAll('.game-grid .game-item')).map(item => ({
+        name: item.querySelector('h4').textContent,
+        icon: item.querySelector('.icon-box').textContent,
+        total: parseInt(localStorage.getItem('plays_' + item.getAttribute('data-id')) || 0)
+      })).sort((a, b) => b.total - a.total);
 
-// Continuous background update
-setInterval(updateUI, 10000);
-</script>
+      games.forEach((g, i) => {
+        const rankColor = i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-slate-500';
+        list.innerHTML += `
+          <div class="flex justify-between items-center p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-800 rounded-2xl transition-colors">
+            <span class="font-extrabold flex items-center gap-3 text-sm sm:text-base">
+              <span class="${rankColor} font-black w-6 text-center">#${i+1}</span> 
+              <span class="text-xl">${g.icon}</span> 
+              <span class="text-slate-200">${g.name}</span>
+            </span>
+            <span class="text-accent font-black text-xs sm:text-sm bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">${g.total} PLAYS</span>
+          </div>`;
+      });
+      toggleModal('leaderboardModal', true);
+    }
+
+    function toggleTheme() {
+      const isLight = document.documentElement.classList.toggle('light');
+      if (isLight) {
+        localStorage.setItem('theme', 'light');
+        document.body.classList.remove('bg-slate-950', 'text-slate-100');
+        document.body.classList.add('bg-slate-100', 'text-slate-900');
+      } else {
+        localStorage.setItem('theme', 'dark');
+        document.body.classList.remove('bg-slate-100', 'text-slate-900');
+        document.body.classList.add('bg-slate-950', 'text-slate-100');
+      }
+    }
+
+    function renderMute() {
+      const btn = document.getElementById('muteBtn');
+      if(btn) {
+        btn.textContent = isMuted ? "ON" : "OFF";
+        btn.className = isMuted 
+          ? "px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs sm:text-sm tracking-wider transition-all min-w-[88px]"
+          : "px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-indigo-500/20 transition-all min-w-[88px]";
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      localStorage.setItem('isMuted', isMuted);
+      renderMute();
+    }
+
+    function toggleModal(id, show) {
+      const modal = document.getElementById(id);
+      if (show) {
+        modal.classList.remove('invisible', 'opacity-0');
+        modal.classList.add('visible', 'opacity-100');
+        modal.querySelector('.modal-content').classList.remove('translate-y-8');
+        modal.querySelector('.modal-content').classList.add('translate-y-0');
+      } else {
+        modal.classList.remove('visible', 'opacity-100');
+        modal.classList.add('invisible', 'opacity-0');
+        modal.querySelector('.modal-content').classList.remove('translate-y-0');
+        modal.querySelector('.modal-content').classList.add('translate-y-8');
+      }
+    }
+
+    window.onload = () => {
+      const targets = document.querySelectorAll('.title-box, .icon-box, .play-count-box');
+      targets.forEach(el => el.classList.add('skeleton-shimmer'));
+      
+      setTimeout(() => {
+        targets.forEach(el => el.classList.remove('skeleton-shimmer'));
+        updateUI();
+        renderMute();
+      }, 800);
+    };
+
+    setInterval(updateUI, 10000);
+  </script>
 </body>
 </html>
