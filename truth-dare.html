@@ -36,11 +36,13 @@
     }
 
     input,
-    select {
+    select,
+    textarea {
       color: #f5f0ff;
     }
 
-    input::placeholder {
+    input::placeholder,
+    textarea::placeholder {
       color: #a99bb9;
     }
 
@@ -121,9 +123,6 @@
 <body class="min-h-screen">
   <main class="mx-auto max-w-5xl px-4 py-8 sm:py-12">
     <header class="mb-8 text-center">
-      <div class="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-pink-200">
-        🍾 Two-player online game
-      </div>
       <h1 class="text-4xl font-black tracking-tight text-white sm:text-6xl">
         Truth <span class="text-pink-400">or</span> Dare
       </h1>
@@ -145,6 +144,12 @@
           <button id="disconnectBtn" class="rounded-xl border border-white/15 px-4 py-3 font-semibold text-[#e2d9ed] transition hover:bg-white/10">
             Disconnect
           </button>
+        </div>
+
+        <div class="mt-6 border-t border-white/10 pt-5">
+          <label for="playerName" class="text-sm font-semibold text-[#f5f0ff]">Your display name</label>
+          <input id="playerName" maxlength="20" placeholder="Your name"
+            class="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-pink-400" />
         </div>
 
         <div id="roomShare" class="mt-4 hidden rounded-2xl border border-pink-400/20 bg-pink-500/10 p-4">
@@ -175,12 +180,6 @@
         <div class="mt-5 flex items-center gap-2 text-sm">
           <span id="statusDot" class="h-2.5 w-2.5 rounded-full bg-white/30"></span>
           <span id="connectionStatus" class="text-[#d2c8df]">Not connected</span>
-        </div>
-
-        <div class="mt-6 border-t border-white/10 pt-5">
-          <label for="playerName" class="text-sm font-semibold text-[#f5f0ff]">Your display name</label>
-          <input id="playerName" maxlength="20" placeholder="Your name"
-            class="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-pink-400" />
         </div>
       </div>
 
@@ -252,16 +251,16 @@
           </div>
 
           <form id="chatForm" class="space-y-2">
-            <div class="grid grid-cols-[110px_1fr] gap-2">
+            <div class="grid grid-cols-[110px_1fr] items-end gap-2">
               <select id="messageType"
                 class="rounded-lg border border-white/10 bg-[#211a30] px-3 py-2 text-sm text-white outline-none focus:border-pink-400">
                 <option value="chat">Chat</option>
                 <option value="truth">Truth</option>
                 <option value="dare">Dare</option>
               </select>
-              <input id="messageInput" maxlength="300"
+              <textarea id="messageInput" rows="1" maxlength="300"
                 placeholder="Write a message or prompt…"
-                class="min-w-0 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-pink-400" />
+                class="min-w-0 max-h-32 resize-none rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-pink-400 leading-relaxed"></textarea>
             </div>
             <button id="sendBtn" disabled
               class="w-full rounded-lg bg-white/10 py-2 text-sm font-bold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40">
@@ -317,7 +316,6 @@
 
       clearTimeout(remoteTypingTimer);
 
-      // Hide it if a stopped-typing update is missed.
       if (typing) {
         remoteTypingTimer = setTimeout(() => {
           $("typingIndicator").classList.add("hidden");
@@ -439,7 +437,6 @@
       $("selectedPlayer").classList.remove("result-celebrate");
       $("bottle").classList.remove("bottle-celebrate");
 
-      // 0° points to the top label; 180° points to the bottom label.
       const targetAngle = target === "top" ? 0 : 180;
       const normalizedCurrent = ((currentRotation % 360) + 360) % 360;
       const extraTurns = 5 + Math.floor(Math.random() * 3);
@@ -629,10 +626,16 @@
       setStatus("Not connected");
     });
 
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+    }
+
     $("chatForm").addEventListener("submit", (event) => {
       event.preventDefault();
 
-      const text = $("messageInput").value.trim();
+      const inputEl = $("messageInput");
+      const text = inputEl.value.trim();
       if (!text || !connected) return;
 
       clearTimeout(typingTimer);
@@ -650,11 +653,22 @@
 
       if (sendPacket(message)) {
         addMessage(message, true);
-        $("messageInput").value = "";
+        inputEl.value = "";
+        inputEl.style.height = "auto";
       }
     });
 
-    $("messageInput").addEventListener("input", handleTypingInput);
+    $("messageInput").addEventListener("input", (event) => {
+      autoResizeTextarea(event.target);
+      handleTypingInput();
+    });
+
+    $("messageInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        $("chatForm").requestSubmit();
+      }
+    });
 
     $("messageInput").addEventListener("blur", () => {
       clearTimeout(typingTimer);
