@@ -1,571 +1,560 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GameVerse Pro</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 -10 100 80%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              DEFAULT: '#6366f1',
-              dark: '#4f46e5',
-              light: '#818cf8',
-            },
-            accent: {
-              DEFAULT: '#22d3ee',
-              dark: '#06b6d4',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    /* Custom scrollbar hiding for smooth horizontal chips */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    /* Shimmer animation for skeleton loading */
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    .skeleton-shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite linear;
-      color: transparent !important;
-      pointer-events: none;
-      user-select: none;
-    }
-    .dark .skeleton-shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-      background-size: 200% 100%;
-    }
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-36 flex flex-col items-center transition-colors duration-300">
-
-  <!-- Main Container -->
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mx-auto">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GameBox - Instant Play Games</title>
     
-    <!-- Header -->
-    <header class="py-6 sm:py-8 flex justify-between items-center w-full">
-      <div class="flex items-center gap-3 group cursor-pointer">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand to-accent flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-          🎮
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#030712">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GameBox">
+    <link rel="apple-touch-icon" href="https://api.iconify.design/lucide:gamepad-2.svg?color=%2306b6d4">
+
+    <!-- Dynamic Web App Manifest -->
+    <link rel="manifest" id="pwaManifest">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#06b6d4',
+                        darkBg: '#030712',
+                        cardBg: '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-slate-950 pb-24 md:pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:scale-105 transition-transform">
+                    <span class="text-xl">⚡</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-black text-lg tracking-wider bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">CYBERARCADE</span>
+                    <span class="text-[9px] font-extrabold tracking-widest text-slate-400 uppercase">Instant Play PWA</span>
+                </div>
+            </a>
+
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-md hidden sm:block">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+                    <input type="text" id="gameSearch" oninput="filterGames()" placeholder="Search 25+ games..." class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center gap-2">
+                <button onclick="openRandomGame()" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 px-3.5 py-2 rounded-2xl text-xs font-black tracking-wide flex items-center gap-1.5 transition-all">
+                    <span>🎲</span>
+                    <span class="hidden md:inline">Random Game</span>
+                </button>
+            </div>
         </div>
-        <span class="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-accent">
-          gameverse<span class="text-accent">.</span>
-        </span>
-      </div>
-      <div id="dateDisplay" class="text-xs sm:text-sm font-extrabold text-slate-400 tracking-wider uppercase bg-slate-900/80 border border-slate-800/80 px-3.5 py-1.5 rounded-full shadow-inner">
-        March 2026
-      </div>
+        <!-- Mobile Search Bar Row -->
+        <div class="px-4 pb-3 sm:hidden">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+                <input type="text" id="gameSearchMobile" oninput="filterGamesMobile()" placeholder="Search games..." class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
+            </div>
+        </div>
     </header>
 
-    <!-- Search & Filters Area -->
-    <div class="sticky top-0 bg-slate-950/90 backdrop-blur-md py-3 z-30 w-full transition-colors duration-300">
-      <div class="relative w-full shadow-xl rounded-2xl">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">🔍</span>
-        <input 
-          type="text" 
-          id="searchInput" 
-          class="w-full pl-12 pr-4 py-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl text-slate-100 placeholder-slate-500 text-sm sm:text-base focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all shadow-inner"
-          placeholder="Search through games..." 
-          onkeyup="runFilters()"
-        >
-      </div>
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-6">
 
-      <!-- Category Filter Chips -->
-      <div class="flex gap-2.5 overflow-x-auto py-3 no-scrollbar">
-        <button onclick="setCategory('all', this)" class="chip active px-5 py-2.5 bg-brand text-white rounded-full text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/25 border border-brand whitespace-nowrap transition-all hover:scale-105 active:scale-95">All Games</button>
-        <button onclick="setCategory('puzzle', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Puzzles</button>
-        <button onclick="setCategory('action', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Action</button>
-        <button onclick="setCategory('race', this)" class="chip px-5 py-2.5 bg-slate-900 text-slate-300 hover:text-white rounded-full text-xs sm:text-sm font-bold border border-slate-800 whitespace-nowrap transition-all hover:border-slate-700 hover:scale-105 active:scale-95">Racing</button>
-      </div>
-    </div>
-
-    <!-- Recent Section / Jump Back In -->
-    <section class="mt-4 mb-8" id="recentSection">
-      <p class="text-xs font-black tracking-widest text-slate-400 uppercase mb-3">Jump Back In</p>
-      <a href="#" id="lastPlayedLink" class="recent-card group relative bg-gradient-to-r from-brand via-indigo-600 to-purple-600 rounded-3xl p-5 sm:p-6 flex items-center gap-5 text-white shadow-xl shadow-indigo-500/15 overflow-hidden border border-indigo-400/20 hover:scale-[1.01] transition-all">
-        <div class="absolute -right-6 -bottom-6 text-8xl opacity-10 group-hover:scale-125 transition-transform pointer-events-none select-none" id="lpBgIcon">🎮</div>
-        <div id="lpIcon" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:rotate-6 transition-transform">🎮</div>
-        <div class="z-10">
-          <h4 id="lpName" class="text-lg sm:text-xl font-extrabold tracking-tight mb-1">Ready to play?</h4>
-          <span id="lpTime" class="inline-block text-[10px] sm:text-xs font-bold tracking-wider uppercase bg-black/25 px-2.5 py-1 rounded-md text-indigo-100">No recent history</span>
+        <!-- Category Filter Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="categoryFilters">
+            <button onclick="filterCategory('all', this)" class="category-btn active px-4 py-2 rounded-2xl text-xs font-extrabold tracking-wide bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 shrink-0 transition-all">🔥 All Games</button>
+            <button onclick="filterCategory('action', this)" class="category-btn px-4 py-2 rounded-2xl text-xs font-extrabold tracking-wide bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 shrink-0 transition-all">⚡ Action</button>
+            <button onclick="filterCategory('puzzle', this)" class="category-btn px-4 py-2 rounded-2xl text-xs font-extrabold tracking-wide bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 shrink-0 transition-all">🧩 Puzzle</button>
+            <button onclick="filterCategory('race', this)" class="category-btn px-4 py-2 rounded-2xl text-xs font-extrabold tracking-wide bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 shrink-0 transition-all">🚀 Racing & Runner</button>
         </div>
-      </a>
-    </section>
 
-    <!-- Trending Now Header -->
-    <p class="text-xs font-black tracking-widest text-slate-400 uppercase mb-4">Trending Now</p>
+        <!-- Bento Grid Container -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4 auto-rows-[130px] sm:auto-rows-[150px] w-full" id="gameGrid">
+            
+            <!-- Snake Pro (Featured: 2x2) -->
+            <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="snake pro" data-cat="action" data-id="snake">
+                <a href="snake.html" onclick="trackPlay('snake', 'Snake Pro', '🐍')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
+                    <span class="icon-box text-6xl sm:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300 drop-shadow-md">🐍</span>
+                    <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Snake Pro</h4>
+                    <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="snake">0</span> plays</div>
+                </a>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+            </div>
 
-    <!-- Bento Grid Container -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4 auto-rows-[130px] sm:auto-rows-[150px] w-full" id="gameGrid">
-      
-      <!-- Snake Pro (Featured: 2x2) -->
-      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="snake pro" data-cat="action" data-id="snake">
-        <a href="snake.html" onclick="trackPlay('snake', 'Snake Pro', '🐍')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
-          <span class="icon-box text-6xl sm:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300 drop-shadow-md">🐍</span>
-          <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Snake Pro</h4>
-          <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-60 pointer-events-none"></div>
-      </div>
+            <!-- Water Sort (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
+                <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧪</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Water Sort</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="water-sort-1">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Water Sort (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="water sort puzzle" data-cat="puzzle" data-id="water-sort-1">
-        <a href="water-sort-puzzle.html" onclick="trackPlay('water-sort-1', 'Water Sort', '🧪')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧪</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Water Sort</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Space Impact (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="space impact" data-cat="action" data-id="space-impact">
+                <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🚀</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Space</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="space-impact">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Space Impact (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="space impact" data-cat="action" data-id="space-impact">
-        <a href="space-impact.html" onclick="trackPlay('space-impact', 'Space Impact', '🚀')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🚀</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Space</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Ace Horizon Pro (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
+                <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🂡')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🂡</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ace Horizon</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="ace-horizon">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Ace Horizon Pro (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ace horizon racing" data-cat="race" data-id="ace-horizon">
-        <a href="ace-horizon.html" onclick="trackPlay('ace-horizon', 'Ace Horizon', '🂡')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🂡</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ace Horizon</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Block 8 (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
+                <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧱</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Block 8</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="block-8">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Block 8 (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="block 8 game" data-cat="puzzle" data-id="block-8">
-        <a href="block-8.html" onclick="trackPlay('block-8', 'Block 8', '🧱')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧱</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Block 8</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Chess Pro (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="chess grandmaster" data-cat="puzzle" data-id="chess">
+                <a href="chess.html" onclick="trackPlay('chess', 'Chess Pro', '♟')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">♟</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Chess Pro</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="chess">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Chess Pro (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="chess grandmaster" data-cat="puzzle" data-id="chess">
-        <a href="chess.html" onclick="trackPlay('chess', 'Chess Pro', '♟')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">♟</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Chess Pro</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Bird Sort (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="bird sort puzzle" data-cat="puzzle" data-id="bird-sort">
+                <a href="bird-sort.html" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🦜</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Bird Sort</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="bird-sort">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Bird Sort (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="bird sort puzzle" data-cat="puzzle" data-id="bird-sort">
-        <a href="bird-sort" onclick="trackPlay('bird-sort', 'Bird Sort', '🦜')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🦜</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Bird Sort</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- One Line (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
+                <a href="line-drawing.html" onclick="trackPlay('line-drawing', 'One Line', '✏️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">✏️</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">One Line</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="line-drawing">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- One Line (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="one line drawing" data-cat="puzzle" data-id="line-drawing">
-        <a href="line-drawing.html" onclick="trackPlay('line-drawing', 'One Line', '✏️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">✏️</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">One Line</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Remember the Pattern (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="remember the pattern" data-cat="puzzle" data-id="pattern">
+                <a href="pattern.html" onclick="trackPlay('pattern', 'Remember Pattern', '💠')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">💠</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors leading-tight">Remember Pattern</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="pattern">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Remember the Pattern (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Remember the Pattern" data-cat="puzzle" data-id="pattern">
-        <a href="pattern.html" onclick="trackPlay('pattern', 'pattern', '💠')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">💠</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors leading-tight">Remember Pattern</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Math Operator (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="quick logic math operator" data-cat="puzzle" data-id="math-operator">
+                <a href="math-operator.html" onclick="trackPlay('math-operator', 'Math Operator', '🧮')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧮</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Math Operator</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="math-operator">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Math Operator (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Quick Logic" data-cat="puzzle" data-id="math-operator">
-        <a href="math-operator.html" onclick="trackPlay('math-operator', 'Math Operator', '🧮')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🧮</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Math Operator</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Gravity Pulse (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="gravity pulse" data-cat="race" data-id="gravity-pulse">
+                <a href="gravity-pulse.html" onclick="trackPlay('gravity-pulse', 'Gravity Pulse', '💨')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:translate-x-1 transition-transform duration-300">💨</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Gravity Pulse</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="gravity-pulse">0</span> plays</div>
+                </a>
+            </div>
 
-      <!-- Gravity Pulse (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Gravity Pulse" data-cat="race" data-id="gravity-pulse">
-        <a href="gravity-pulse.html" onclick="trackPlay('gravity-pulse', 'Gravity Pulse', '💨')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:translate-x-1 transition-transform duration-300">💨</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Gravity Pulse</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Neon Dash (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="Neon Dash" data-cat="race" data-id="neon-dash">
-        <a href="neon-dash.html" onclick="trackPlay('neon-dash', 'Neon Dash', '🔺')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-translate-y-1 transition-transform duration-300">🔺</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Neon Dash</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Frog Whacker (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Frog Whacker" data-cat="action" data-id="frog-whacker">
-        <a href="frog-whacker.html" onclick="trackPlay('frog-whacker', 'Frog Whacker', '🐸')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🐸</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Frog Whacker</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Fruit Basket (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Fruit Basket" data-cat="action" data-id="fruit-basket">
-        <a href="fruit-basket.html" onclick="trackPlay('fruit-basket', 'Fruit Basket', '🍓')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🍓</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Fruit Basket</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Cyber Punk Runner (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Cyber Punk Runner" data-cat="action" data-id="cyberpunk-runner">
-        <a href="cyberpunk-runner.html" onclick="trackPlay('cyberpunk-runner', 'Cyber Punk Runner', '🏃‍♂️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🏃‍♂️</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Cyber Runner</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Hangman (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="hangman" data-cat="puzzle" data-id="hangman">
-        <a href="hangman.html" onclick="trackPlay('hangman', 'Hangman', '🪢🕺')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">🪢🕺</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Hangman</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Brick Game (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="brick-game" data-cat="puzzle" data-id="brick-game">
-        <a href="brick-game.html" onclick="trackPlay('brick-game', 'brick-game', '🧩')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧩</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Brick Game</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Tank Battle (Tall: 1x2) -->
-      <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="tank-battle" data-cat="action" data-id="tank-battle">
-        <a href="tank-battle.html" onclick="trackPlay('tank-battle', 'Tank Battle', '🚜')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
-          <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🚜</span>
-          <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Tank Battle</h4>
-          <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Bagh Chal (Featured: 2x2) -->
-      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="baghchal" data-cat="puzzle" data-id="baghchal">
-        <a href="baghchal-game.html" onclick="trackPlay('baghchal', 'Bagh Chal', '🐯')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
-          <span class="icon-box text-5xl sm:text-6xl group-hover:scale-125 transition-transform duration-300">🐯🆚🐐</span>
-          <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Bagh Chal</h4>
-          <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Criss Cross (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="criss cross" data-cat="puzzle" data-id="criss-cross">
-        <a href="criss-cross-game.html" onclick="trackPlay('criss-cross', 'Criss Cross', '❌ ⭕')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">❌ ⭕</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Criss Cross</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Pac Man Game (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="pac man" data-cat="action" data-id="pac-man">
-        <a href="pac-man-game.html" onclick="trackPlay('pac man', 'Pac Man', '👻')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">👻</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Pac Man</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Ludo Game (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ludo" data-cat="action" data-id="ludo">
-        <a href="ludo" onclick="trackPlay('ludo', 'Ludo Game', '🎲')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">🎲</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ludo Game</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
-
-      <!-- Truth and Dare (Normal: 1x1) -->
-      <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="truth dare" data-cat="action" data-id="truth-dare">
-        <a href="truth-dare" onclick="trackPlay('truth dare', 'truth dare', '🎯')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🎯</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Truth & Dare</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <!-- Neon Dash (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="neon dash" data-cat="race" data-id="neon-dash">
+                <a href="neon-dash.html" onclick="trackPlay('neon-dash', 'Neon Dash', '🔺')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-translate-y-1 transition-transform duration-300">🔺</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Neon Dash</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="neon-dash">0</span> plays</div>
+                </a>
+            </div>
 
             <!-- Frog Whacker (Normal: 1x1) -->
-      <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="Frog Whacker" data-cat="action" data-id="frog-whacker">
-        <a href="word-antakshari.html" onclick="trackPlay('word-antakshari', 'Word Antakshari', '🐸')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
-          <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🐸</span>
-          <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Word Antakshari</h4>
-          <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val">0</span> plays</div>
-        </a>
-      </div>
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="frog whacker" data-cat="action" data-id="frog-whacker">
+                <a href="frog-whacker.html" onclick="trackPlay('frog-whacker', 'Frog Whacker', '🐸')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🐸</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Frog Whacker</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="frog-whacker">0</span> plays</div>
+                </a>
+            </div>
 
-    </div>
-  </div>
+            <!-- Fruit Basket (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="fruit basket" data-cat="action" data-id="fruit-basket">
+                <a href="fruit-basket.html" onclick="trackPlay('fruit-basket', 'Fruit Basket', '🍓')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300">🍓</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Fruit Basket</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="fruit-basket">0</span> plays</div>
+                </a>
+            </div>
 
-  <!-- Floating Bottom Navigation -->
-  <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 px-6 py-3 rounded-full shadow-2xl shadow-black/60 flex items-center gap-8 z-40">
-    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="location.reload()" title="Home">🏠</button>
-    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
-    <button class="nav-btn text-xl sm:text-2xl text-slate-400 hover:text-brand hover:scale-125 active:scale-95 transition-all duration-200" onclick="toggleModal('settingsModal', true)" title="Settings">⚙️</button>
-  </nav>
+            <!-- Cyber Punk Runner (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="cyber punk runner" data-cat="action" data-id="cyberpunk-runner">
+                <a href="cyberpunk-runner.html" onclick="trackPlay('cyberpunk-runner', 'Cyber Punk Runner', '🏃‍♂️')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🏃‍♂️</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Cyber Runner</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="cyberpunk-runner">0</span> plays</div>
+                </a>
+            </div>
 
-  <!-- Leaderboard Modal -->
-  <div class="modal fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 invisible opacity-0 transition-all duration-300 p-4" id="leaderboardModal" onclick="toggleModal('leaderboardModal', false)">
-    <div class="modal-content bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 shadow-2xl max-h-[85vh] overflow-y-auto transform translate-y-8 transition-transform duration-300" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">🏆 Global Rankings</h2>
-        <button onclick="toggleModal('leaderboardModal', false)" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">✕</button>
-      </div>
-      <div id="leaderboardList" class="space-y-3 mb-6">
-        <!-- Dynamically injected ranking items -->
-      </div>
-      <button onclick="toggleModal('leaderboardModal', false)" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-extrabold tracking-wide transition-colors">Dismiss</button>
-    </div>
-  </div>
+            <!-- Hangman (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="hangman" data-cat="puzzle" data-id="hangman">
+                <a href="hangman.html" onclick="trackPlay('hangman', 'Hangman', '🪢🕺')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">🪢🕺</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Hangman</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="hangman">0</span> plays</div>
+                </a>
+            </div>
 
-  <!-- Settings Modal -->
-  <div class="modal fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 invisible opacity-0 transition-all duration-300 p-4" id="settingsModal" onclick="toggleModal('settingsModal', false)">
-    <div class="modal-content bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 shadow-2xl max-h-[85vh] overflow-y-auto transform translate-y-8 transition-transform duration-300" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl sm:text-2xl font-black tracking-tight">App Settings</h2>
-        <button onclick="toggleModal('settingsModal', false)" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">✕</button>
-      </div>
-      
-      <div class="space-y-4 divide-y divide-slate-800/80">
-        <div class="flex justify-between items-center py-4">
-          <span class="font-bold text-slate-300 text-sm sm:text-base">Sound Effects</span>
-          <button id="muteBtn" onclick="toggleMute()" class="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-indigo-500/20 transition-all min-w-[88px]">OFF</button>
+            <!-- Brick Game (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="brick game" data-cat="puzzle" data-id="brick-game">
+                <a href="brick-game.html" onclick="trackPlay('brick-game', 'Brick Game', '🧩')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300">🧩</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Brick Game</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="brick-game">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Tank Battle (Tall: 1x2) -->
+            <div class="game-item col-span-1 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="tank battle" data-cat="action" data-id="tank-battle">
+                <a href="tank-battle.html" onclick="trackPlay('tank-battle', 'Tank Battle', '🚜')" class="flex flex-col items-center justify-center h-full w-full p-4 text-center relative z-10">
+                    <span class="icon-box text-4xl sm:text-5xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300">🚜</span>
+                    <h4 class="title-box text-xs sm:text-sm font-extrabold mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Tank Battle</h4>
+                    <div class="play-count-box text-[10px] font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="tank-battle">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Bagh Chal (Featured: 2x2) -->
+            <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="bagh chal" data-cat="puzzle" data-id="baghchal">
+                <a href="baghchal-game.html" onclick="trackPlay('baghchal', 'Bagh Chal', '🐯')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
+                    <span class="icon-box text-5xl sm:text-6xl group-hover:scale-125 transition-transform duration-300">🐯🆚🐐</span>
+                    <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Bagh Chal</h4>
+                    <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="baghchal">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Criss Cross (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="criss cross tic tac toe" data-cat="puzzle" data-id="criss-cross">
+                <a href="criss-cross-game.html" onclick="trackPlay('criss-cross', 'Criss Cross', '❌ ⭕')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-2xl sm:text-3xl group-hover:scale-125 transition-transform duration-300">❌ ⭕</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Criss Cross</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="criss-cross">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Pac Man Game (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="pac man" data-cat="action" data-id="pac-man">
+                <a href="pac-man-game.html" onclick="trackPlay('pac-man', 'Pac Man', '👻')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">👻</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Pac Man</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="pac-man">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Ludo Game (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="ludo" data-cat="action" data-id="ludo">
+                <a href="ludo.html" onclick="trackPlay('ludo', 'Ludo Game', '🎲')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300">🎲</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Ludo Game</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="ludo">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Truth and Dare (Normal: 1x1) -->
+            <div class="game-item col-span-1 row-span-1 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10" data-name="truth and dare" data-cat="action" data-id="truth-dare">
+                <a href="truth-dare.html" onclick="trackPlay('truth-dare', 'Truth & Dare', '🎯')" class="flex flex-col items-center justify-center h-full w-full p-3 text-center relative z-10">
+                    <span class="icon-box text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🎯</span>
+                    <h4 class="title-box text-xs font-bold mt-2 tracking-tight text-slate-100 group-hover:text-accent transition-colors truncate w-full">Truth & Dare</h4>
+                    <div class="play-count-box text-[9px] font-extrabold text-accent mt-0.5">🔥 <span class="count-val" data-game-id="truth-dare">0</span> plays</div>
+                </a>
+            </div>
+
+            <!-- Word Antakshari (Featured: 2x2) -->
+            <div class="game-item col-span-2 row-span-2 bg-slate-900 rounded-3xl border border-slate-800/80 hover:border-accent/60 relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-cyan-500/10" data-name="word antakshari" data-cat="puzzle" data-id="word-antakshari">
+                <a href="word-antakshari.html" onclick="trackPlay('word-antakshari', 'Word Antakshari', '🎤')" class="flex flex-col items-center justify-center h-full w-full p-5 text-center relative z-10">
+                    <span class="icon-box text-5xl sm:text-6xl group-hover:scale-125 transition-transform duration-300">🎤📝</span>
+                    <h4 class="title-box text-base sm:text-lg font-black mt-3 tracking-tight text-slate-100 group-hover:text-accent transition-colors">Word Antakshari</h4>
+                    <div class="play-count-box text-xs font-extrabold text-accent mt-1 bg-cyan-950/60 border border-cyan-800/40 px-3 py-0.5 rounded-full">🔥 <span class="count-val" data-game-id="word-antakshari">0</span> plays</div>
+                </a>
+            </div>
+
         </div>
 
-        <div class="flex justify-between items-center pt-4">
-          <span class="font-bold text-slate-300 text-sm sm:text-base">Visual Theme</span>
-          <button onclick="toggleTheme()" class="px-5 py-2.5 rounded-xl border-2 border-slate-700 hover:border-slate-500 bg-slate-950 text-slate-200 font-extrabold text-xs sm:text-sm tracking-wider transition-all">SWITCH</button>
+        <!-- No Games Found State -->
+        <div id="noResults" class="hidden flex-col items-center justify-center py-16 text-center">
+            <span class="text-5xl mb-3">🔍</span>
+            <h3 class="text-lg font-bold text-slate-200">No games found</h3>
+            <p class="text-sm text-slate-400 mt-1">Try searching for a different keyword or category.</p>
         </div>
-      </div>
-      
-      <div class="mt-8 bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
-        <p class="text-[11px] text-rose-400 font-black tracking-widest uppercase mb-2">Danger Zone</p>
-        <button class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-rose-600/20 transition-all uppercase" onclick="resetAllData()">Reset All Progress</button>
-      </div>
-      
-      <button onclick="toggleModal('settingsModal', false)" class="w-full mt-6 py-4 bg-brand hover:bg-brand-dark text-white rounded-2xl font-black text-sm tracking-wider shadow-xl shadow-indigo-500/25 transition-all">CLOSE</button>
+    </main>
+
+    <!-- Mobile Install PWA Bottom Banner -->
+    <div id="installBanner" class="fixed bottom-20 left-4 right-4 z-50 bg-slate-900/95 border border-cyan-500/40 backdrop-blur-xl p-4 rounded-3xl shadow-2xl shadow-cyan-500/20 hidden items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+                ⚡
+            </div>
+            <div>
+                <h5 class="text-sm font-black text-slate-100">Install GameBox</h5>
+                <p class="text-xs text-slate-400">Play offline & launch like a native app!</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="dismissInstall()" class="text-xs font-bold text-slate-400 hover:text-slate-200 px-2 py-1">Later</button>
+            <button id="installBtn" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-2xl text-xs font-black shadow-lg shadow-cyan-500/30 transition-all">Install</button>
+        </div>
     </div>
-  </div>
 
-  <!-- JavaScript Logic -->
-  <script>
-    let currentCategory = 'all';
-    let isMuted = localStorage.getItem('isMuted') === 'true';
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800/80 sm:hidden">
+        <div class="grid grid-cols-4 h-16 px-2">
+            <button onclick="filterCategory('all', document.querySelector('#categoryFilters button'))" class="flex flex-col items-center justify-center text-cyan-400">
+                <span class="text-xl">🏠</span>
+                <span class="text-[10px] font-bold mt-1">Home</span>
+            </button>
+            <button onclick="document.getElementById('gameSearchMobile').focus()" class="flex flex-col items-center justify-center text-slate-400 hover:text-cyan-400">
+                <span class="text-xl">🔍</span>
+                <span class="text-[10px] font-bold mt-1">Search</span>
+            </button>
+            <button onclick="filterCategory('puzzle', document.querySelectorAll('#categoryFilters button')[2])" class="flex flex-col items-center justify-center text-slate-400 hover:text-cyan-400">
+                <span class="text-xl">🧩</span>
+                <span class="text-[10px] font-bold mt-1">Puzzles</span>
+            </button>
+            <button onclick="openRandomGame()" class="flex flex-col items-center justify-center text-slate-400 hover:text-cyan-400">
+                <span class="text-xl">🎲</span>
+                <span class="text-[10px] font-bold mt-1">Random</span>
+            </button>
+        </div>
+    </nav>
 
-    // Theme Persistence & Support for Light/Dark classes
-    if (localStorage.getItem('theme') === 'light') {
-      document.documentElement.classList.add('light');
-      document.body.classList.remove('bg-slate-950', 'text-slate-100');
-      document.body.classList.add('bg-slate-100', 'text-slate-900');
-    }
+    <!-- JavaScript & PWA Service Worker Logic -->
+    <script>
+        // Generate Dynamic Manifest Blob URL for Single-File PWA
+        const manifestData = {
+            "name": "GameBox Instant Play",
+            "short_name": "GameBox",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#030712",
+            "theme_color": "#030712",
+            "icons": [
+                {
+                    "src": "https://api.iconify.design/lucide:gamepad-2.svg?color=%2306b6d4",
+                    "sizes": "192x192 512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
 
-    function formatLastPlayed() {
-      const ts = localStorage.getItem('lastPlayedTime');
-      if (!ts) return "No history yet";
-      
-      const date = new Date(parseInt(ts));
-      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-      
-      let hours = date.getHours();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      const mins = date.getMinutes().toString().padStart(2, '0');
-      
-      return `${days[date.getDay()]} ${hours}:${mins} ${ampm}`;
-    }
-
-    function trackPlay(id, name, icon) {
-      let count = parseInt(localStorage.getItem('plays_' + id) || 0);
-      localStorage.setItem('plays_' + id, count + 1);
-      
-      localStorage.setItem('lastPlayedName', name);
-      localStorage.setItem('lastPlayedIcon', icon);
-      localStorage.setItem('lastPlayedTime', new Date().getTime());
-      localStorage.setItem('lastPlayedID', id);
-    }
-
-    function resetAllData() {
-      if(confirm("CRITICAL: This will permanently delete all high scores and local history. Continue?")) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    function runFilters() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const items = document.querySelectorAll('.game-item');
-      
-      document.getElementById('recentSection').style.display = query.length > 0 ? 'none' : 'block';
-      
-      items.forEach(item => {
-        const name = item.getAttribute('data-name').toLowerCase();
-        const cat = item.getAttribute('data-cat');
-        const matchesSearch = name.includes(query);
-        const matchesCat = (currentCategory === 'all' || cat === currentCategory);
-        
-        if (matchesSearch && matchesCat) {
-          item.classList.remove('hidden');
-        } else {
-          item.classList.add('hidden');
+        // Register Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => {
+                    self.skipWaiting();
+                });
+                self.addEventListener('activate', (e) => {
+                    e.waitUntil(clients.claim());
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        caches.match(e.request).then((response) => response || fetch(e.request))
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'text/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW registration failed', err));
         }
-      });
-    }
 
-    function setCategory(cat, el) {
-      document.querySelectorAll('.chip').forEach(c => {
-        c.classList.remove('active', 'bg-brand', 'text-white', 'shadow-md', 'shadow-indigo-500/25', 'border-brand');
-        c.classList.add('bg-slate-900', 'text-slate-300', 'border-slate-800');
-      });
-      el.classList.add('active', 'bg-brand', 'text-white', 'shadow-md', 'shadow-indigo-500/25', 'border-brand');
-      el.classList.remove('bg-slate-900', 'text-slate-300', 'border-slate-800');
-      currentCategory = cat;
-      runFilters();
-    }
+        // PWA Installation Prompt Logic
+        let deferredPrompt;
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
 
-    function updateUI() {
-      document.querySelectorAll('.game-item').forEach(item => {
-        const id = item.getAttribute('data-id');
-        const val = localStorage.getItem('plays_' + id) || 0;
-        const countEl = item.querySelector('.count-val');
-        if(countEl) countEl.textContent = val;
-      });
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!localStorage.getItem('pwa_dismissed')) {
+                installBanner.style.display = 'flex';
+            }
+        });
 
-      const lastID = localStorage.getItem('lastPlayedID');
-      if (lastID) {
-        const source = document.querySelector(`.game-item[data-id="${lastID}"] a`);
-        if(source) {
-          document.getElementById('lastPlayedLink').href = source.getAttribute('href');
-          document.getElementById('lpName').textContent = localStorage.getItem('lastPlayedName');
-          const iconVal = localStorage.getItem('lastPlayedIcon');
-          document.getElementById('lpIcon').textContent = iconVal;
-          document.getElementById('lpBgIcon').textContent = iconVal;
-          document.getElementById('lpTime').textContent = formatLastPlayed();
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installBanner.style.display = 'none';
+            }
+        });
+
+        function dismissInstall() {
+            installBanner.style.display = 'none';
+            localStorage.setItem('pwa_dismissed', 'true');
         }
-      }
-    }
 
-    function openLeaderboard() {
-      const list = document.getElementById('leaderboardList');
-      list.innerHTML = '';
-      
-      const games = Array.from(document.querySelectorAll('.game-grid .game-item')).map(item => ({
-        name: item.querySelector('h4').textContent,
-        icon: item.querySelector('.icon-box').textContent,
-        total: parseInt(localStorage.getItem('plays_' + item.getAttribute('data-id')) || 0)
-      })).sort((a, b) => b.total - a.total);
+        // Load play counts from localStorage
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPlayCounts();
+        });
 
-      games.forEach((g, i) => {
-        const rankColor = i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-slate-500';
-        list.innerHTML += `
-          <div class="flex justify-between items-center p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-800 rounded-2xl transition-colors">
-            <span class="font-extrabold flex items-center gap-3 text-sm sm:text-base">
-              <span class="${rankColor} font-black w-6 text-center">#${i+1}</span> 
-              <span class="text-xl">${g.icon}</span> 
-              <span class="text-slate-200">${g.name}</span>
-            </span>
-            <span class="text-accent font-black text-xs sm:text-sm bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">${g.total} PLAYS</span>
-          </div>`;
-      });
-      toggleModal('leaderboardModal', true);
-    }
+        function getPlayCounts() {
+            try {
+                const counts = localStorage.getItem('cyberarcade_plays');
+                return counts ? JSON.parse(counts) : {};
+            } catch (e) {
+                return {};
+            }
+        }
 
-    function toggleTheme() {
-      const isLight = document.documentElement.classList.toggle('light');
-      if (isLight) {
-        localStorage.setItem('theme', 'light');
-        document.body.classList.remove('bg-slate-950', 'text-slate-100');
-        document.body.classList.add('bg-slate-100', 'text-slate-900');
-      } else {
-        localStorage.setItem('theme', 'dark');
-        document.body.classList.remove('bg-slate-100', 'text-slate-900');
-        document.body.classList.add('bg-slate-950', 'text-slate-100');
-      }
-    }
+        function loadPlayCounts() {
+            const counts = getPlayCounts();
+            document.querySelectorAll('.count-val').forEach(el => {
+                const gameId = el.getAttribute('data-game-id');
+                if (gameId && counts[gameId]) {
+                    el.textContent = counts[gameId];
+                }
+            });
+        }
 
-    function renderMute() {
-      const btn = document.getElementById('muteBtn');
-      if(btn) {
-        btn.textContent = isMuted ? "ON" : "OFF";
-        btn.className = isMuted 
-          ? "px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs sm:text-sm tracking-wider transition-all min-w-[88px]"
-          : "px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-indigo-500/20 transition-all min-w-[88px]";
-      }
-    }
+        function trackPlay(gameId, gameTitle, icon) {
+            let counts = getPlayCounts();
+            counts[gameId] = (counts[gameId] || 0) + 1;
+            try {
+                localStorage.setItem('cyberarcade_plays', JSON.stringify(counts));
+            } catch (e) {}
+        }
 
-    function toggleMute() {
-      isMuted = !isMuted;
-      localStorage.setItem('isMuted', isMuted);
-      renderMute();
-    }
+        // Live Search Filtering
+        function filterGames() {
+            const query = document.getElementById('gameSearch').value.toLowerCase().trim();
+            document.getElementById('gameSearchMobile').value = query;
+            executeSearch(query);
+        }
 
-    function toggleModal(id, show) {
-      const modal = document.getElementById(id);
-      if (show) {
-        modal.classList.remove('invisible', 'opacity-0');
-        modal.classList.add('visible', 'opacity-100');
-        modal.querySelector('.modal-content').classList.remove('translate-y-8');
-        modal.querySelector('.modal-content').classList.add('translate-y-0');
-      } else {
-        modal.classList.remove('visible', 'opacity-100');
-        modal.classList.add('invisible', 'opacity-0');
-        modal.querySelector('.modal-content').classList.remove('translate-y-0');
-        modal.querySelector('.modal-content').classList.add('translate-y-8');
-      }
-    }
+        function filterGamesMobile() {
+            const query = document.getElementById('gameSearchMobile').value.toLowerCase().trim();
+            document.getElementById('gameSearch').value = query;
+            executeSearch(query);
+        }
 
-    window.onload = () => {
-      const targets = document.querySelectorAll('.title-box, .icon-box, .play-count-box');
-      targets.forEach(el => el.classList.add('skeleton-shimmer'));
-      
-      setTimeout(() => {
-        targets.forEach(el => el.classList.remove('skeleton-shimmer'));
-        updateUI();
-        renderMute();
-      }, 800);
-    };
+        function executeSearch(query) {
+            const items = document.querySelectorAll('.game-item');
+            let matchCount = 0;
 
-    setInterval(updateUI, 10000);
-  </script>
+            items.forEach(item => {
+                const name = item.getAttribute('data-name') || '';
+                if (name.includes(query)) {
+                    item.style.display = '';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResults = document.getElementById('noResults');
+            if (matchCount === 0) {
+                noResults.style.display = 'flex';
+            } else {
+                noResults.style.display = 'none';
+            }
+        }
+
+        // Category Filter
+        function filterCategory(cat, btnElement) {
+            document.querySelectorAll('#categoryFilters button').forEach(btn => {
+                btn.classList.remove('bg-cyan-500', 'text-slate-950', 'shadow-lg', 'shadow-cyan-500/20');
+                btn.classList.add('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
+            });
+            btnElement.classList.remove('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
+            btnElement.classList.add('bg-cyan-500', 'text-slate-950', 'shadow-lg', 'shadow-cyan-500/20');
+
+            const items = document.querySelectorAll('.game-item');
+            let matchCount = 0;
+            items.forEach(item => {
+                const itemCat = item.getAttribute('data-cat');
+                if (cat === 'all' || itemCat === cat) {
+                    item.style.display = '';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResults = document.getElementById('noResults');
+            if (matchCount === 0) {
+                noResults.style.display = 'flex';
+            } else {
+                noResults.style.display = 'none';
+            }
+        }
+
+        // Open Random Game
+        function openRandomGame() {
+            const items = Array.from(document.querySelectorAll('.game-item')).filter(i => i.style.display !== 'none');
+            if (items.length === 0) return;
+            const randomItem = items[Math.floor(Math.random() * items.length)];
+            const link = randomItem.querySelector('a');
+            if (link) {
+                link.click();
+            }
+        }
+    </script>
 </body>
 </html>
