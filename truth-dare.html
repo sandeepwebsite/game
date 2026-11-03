@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#090510">
 
 <title>Truth & Dare Online</title>
 
@@ -12,65 +13,149 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-* {
+*{
     box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;
 }
 
-body {
+:root{
+    --purple:#a855f7;
+    --pink:#ec4899;
+    --violet:#6d28d9;
+    --cyan:#67e8f9;
+}
+
+body{
     margin:0;
-    background:#090813;
+    background:#090510;
     color:white;
     font-family:Poppins,sans-serif;
     overflow-x:hidden;
 }
 
-button {cursor:pointer;}
+button{cursor:pointer;}
 
-.screen {
-    display:none;
-    min-height:100vh;
-    animation:screenIn .4s ease;
+body::before{
+    content:"";
+    position:fixed;
+    inset:-30%;
+    pointer-events:none;
+    z-index:-5;
+    background:
+      radial-gradient(ellipse at 20% 20%,#581c8733,transparent 45%),
+      radial-gradient(ellipse at 80% 60%,#9d174d22,transparent 45%),
+      radial-gradient(ellipse at 50% 100%,#4c1d9533,transparent 50%);
+    animation:backgroundBreath 12s ease-in-out infinite alternate;
 }
 
-.screen.active {
+@keyframes backgroundBreath{
+    from{transform:scale(1);filter:hue-rotate(0deg)}
+    to{transform:scale(1.2);filter:hue-rotate(35deg)}
+}
+
+/* BACKGROUND PARTICLES */
+
+.particles{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-2;
+    overflow:hidden;
+}
+
+.particle{
+    position:absolute;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:#e879f9;
+    box-shadow:0 0 12px #d946ef;
+    opacity:.6;
+    animation:floatParticle linear infinite;
+}
+
+@keyframes floatParticle{
+    from{transform:translateY(110vh) translateX(0) scale(.4);opacity:0}
+    10%{opacity:.7}
+    90%{opacity:.5}
+    to{transform:translateY(-15vh) translateX(80px) scale(1.5);opacity:0}
+}
+
+/* MAGIC FOG */
+
+.fog{
+    position:fixed;
+    width:150vw;
+    height:150px;
+    left:-25%;
+    border-radius:50%;
+    background:linear-gradient(90deg,transparent,#9333ea18,#ec48991c,transparent);
+    filter:blur(35px);
+    pointer-events:none;
+    z-index:-1;
+    animation:fogMove 18s linear infinite alternate;
+}
+
+.fog.one{top:25%}
+.fog.two{top:65%;animation-delay:-8s;animation-duration:24s}
+
+@keyframes fogMove{
+    from{transform:translateX(-15%) rotate(-8deg)}
+    to{transform:translateX(15%) rotate(8deg)}
+}
+
+/* SCREEN */
+
+.screen{
+    display:none;
+    min-height:100vh;
+    animation:screenIn .45s ease;
+}
+
+.screen.active{
     display:flex;
     flex-direction:column;
 }
 
-@keyframes screenIn {
-    from {opacity:0;transform:translateY(15px)}
-    to {opacity:1;transform:translateY(0)}
+@keyframes screenIn{
+    from{opacity:0;transform:translateY(15px)}
+    to{opacity:1;transform:translateY(0)}
 }
 
-.gradient-text {
-    background:linear-gradient(100deg,#ff55a5,#b46bff,#67d5ff);
+.gradient-text{
+    background:linear-gradient(100deg,#ff55a5,#c084fc,#67e8f9,#ff55a5);
+    background-size:250%;
     -webkit-background-clip:text;
     color:transparent;
+    animation:textFlow 5s linear infinite;
 }
 
-.glass {
+@keyframes textFlow{
+    to{background-position:250%}
+}
+
+.glass{
     background:rgba(255,255,255,.055);
-    border:1px solid rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.12);
     backdrop-filter:blur(20px);
     border-radius:23px;
-    box-shadow:0 10px 40px #0003;
+    box-shadow:0 10px 40px #0005,inset 0 0 20px #ffffff05;
 }
 
-.primary-btn {
+.primary-btn{
     background:linear-gradient(120deg,#ec4899,#9333ea);
     color:white;
     padding:15px;
     border-radius:15px;
     font-weight:700;
     width:100%;
-    box-shadow:0 7px 25px #9333ea44;
-    transition:.2s;
+    box-shadow:0 7px 25px #9333ea55;
+    transition:.25s;
 }
 
-.primary-btn:active {transform:scale(.96);}
+.primary-btn:active{transform:scale(.96)}
 
-.secondary-btn {
+.secondary-btn{
     background:#ffffff0c;
     border:1px solid #ffffff20;
     color:white;
@@ -78,7 +163,7 @@ button {cursor:pointer;}
     border-radius:14px;
 }
 
-.input {
+.input{
     width:100%;
     background:#171526;
     color:white;
@@ -88,64 +173,43 @@ button {cursor:pointer;}
     border-radius:13px;
 }
 
-.input:focus {
+.input:focus{
     border-color:#c084fc;
-    box-shadow:0 0 15px #a855f733;
+    box-shadow:0 0 20px #a855f755;
 }
 
-.logo {
+.logo{
     width:90px;
     height:90px;
     border-radius:27px;
-    background:linear-gradient(135deg,#ec4899,#9333ea);
+    background:linear-gradient(135deg,#ec4899,#9333ea,#4c1d95);
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:45px;
     margin:auto;
-    box-shadow:0 0 40px #9333ea66;
-    animation:logoFloat 3s ease-in-out infinite;
+    box-shadow:0 0 35px #9333ea88,0 0 80px #ec489944;
+    animation:logoFloat 3s ease-in-out infinite,logoGlow 2s infinite alternate;
 }
 
-@keyframes logoFloat {
-    50% {transform:translateY(-10px) rotate(4deg)}
+@keyframes logoFloat{
+    50%{transform:translateY(-10px) rotate(5deg)}
 }
 
-/* PARTICLES */
-
-.particles {
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:-1;
-    overflow:hidden;
+@keyframes logoGlow{
+    to{box-shadow:0 0 55px #ec4899aa,0 0 100px #9333ea77}
 }
 
-.particle {
-    position:absolute;
-    width:5px;
-    height:5px;
-    background:#d946ef;
-    border-radius:50%;
-    opacity:.5;
-    animation:floatParticle 9s linear infinite;
-}
+/* EMOJI GRID */
 
-@keyframes floatParticle {
-    from {transform:translateY(110vh) scale(.5)}
-    to {transform:translateY(-10vh) scale(1.5)}
-}
-
-/* PROFILE EMOJI */
-
-.emoji-grid {
+.emoji-grid{
     display:grid;
     grid-template-columns:repeat(6,1fr);
     gap:9px;
     margin-top:12px;
 }
 
-.emoji-option {
+.emoji-option{
     height:45px;
     border-radius:13px;
     background:#ffffff09;
@@ -154,28 +218,29 @@ button {cursor:pointer;}
     display:flex;
     align-items:center;
     justify-content:center;
-    transition:.2s;
+    transition:.25s;
 }
 
-.emoji-option.selected {
+.emoji-option.selected{
     background:#9333ea44;
     border:2px solid #d946ef;
-    box-shadow:0 0 15px #9333ea66;
-    transform:scale(1.08);
+    box-shadow:0 0 20px #9333ea88;
+    transform:scale(1.1);
 }
 
 /* ROOM */
 
-.room-code {
+.room-code{
     font-size:27px;
     font-weight:800;
     letter-spacing:7px;
     color:#e9a8ff;
+    text-shadow:0 0 20px #c026d3;
 }
 
-/* PLAYER */
+/* PLAYERS */
 
-.player-card {
+.player-card{
     position:relative;
     flex:1;
     padding:13px 5px;
@@ -186,17 +251,17 @@ button {cursor:pointer;}
     transition:.3s;
 }
 
-.player-card.selected {
+.player-card.selected{
     border:1px solid #f0abfc;
-    box-shadow:0 0 25px #d946ef66;
-    animation:selectedGlow 1s infinite alternate;
+    box-shadow:0 0 30px #d946ef88;
+    animation:selectedGlow .8s infinite alternate;
 }
 
-@keyframes selectedGlow {
-    to {box-shadow:0 0 30px #ec489966}
+@keyframes selectedGlow{
+    to{box-shadow:0 0 40px #ec4899aa}
 }
 
-.avatar {
+.avatar{
     width:48px;
     height:48px;
     border-radius:50%;
@@ -209,61 +274,149 @@ button {cursor:pointer;}
     box-shadow:0 0 20px #a855f755;
 }
 
-.player-name {
+.player-name{
     font-size:12px;
     font-weight:700;
     margin-top:8px;
     overflow-wrap:anywhere;
 }
 
-.player-status {
+.player-status{
     font-size:10px;
     color:#22c55e;
     margin-top:3px;
 }
 
-/* ARENA */
+/* DARK FANTASY ARENA */
 
-.spin-arena {
+.spin-arena{
     position:relative;
     margin-top:20px;
     padding:20px 10px 25px;
     border-radius:25px;
-    background:radial-gradient(ellipse at center,#342044 0%,#191427 55%,#100e1c 100%);
-    border:1px solid #ffffff12;
+    background:
+      radial-gradient(ellipse at center,#39204e 0%,#20142f 45%,#100b1b 100%);
+    border:1px solid #ffffff20;
     overflow:hidden;
-    box-shadow:inset 0 0 50px #a855f722;
+    box-shadow:inset 0 0 60px #a855f733,0 0 30px #9333ea22;
+    isolation:isolate;
 }
 
-.arena-title {
+.spin-arena::before{
+    content:"";
+    position:absolute;
+    inset:-50%;
+    background:conic-gradient(
+      from 0deg,
+      transparent,
+      #9333ea22,
+      transparent,
+      #ec489922,
+      transparent
+    );
+    animation:arenaRotate 18s linear infinite;
+    z-index:-1;
+}
+
+@keyframes arenaRotate{
+    to{transform:rotate(360deg)}
+}
+
+.spin-arena::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center,transparent 30%,#08051188 100%);
+    z-index:-1;
+}
+
+.arena-title{
     text-align:center;
     font-weight:700;
     font-size:18px;
+    text-shadow:0 0 15px #e879f9;
 }
 
-.arena-subtitle {
+.arena-subtitle{
     text-align:center;
     font-size:11px;
-    color:#a5a0b7;
+    color:#c4b5d7;
     margin-top:5px;
 }
 
-.direction-labels {
+/* RUNE CIRCLE */
+
+.rune-circle{
+    position:absolute;
+    width:280px;
+    height:280px;
+    border:1px solid #c084fc25;
+    border-radius:50%;
+    left:50%;
+    top:53%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    opacity:.65;
+    z-index:0;
+}
+
+.rune-circle::before,
+.rune-circle::after{
+    content:"";
+    position:absolute;
+    inset:13px;
+    border:1px dashed #e879f944;
+    border-radius:50%;
+}
+
+.rune-circle::before{
+    animation:arenaRotate 25s linear infinite;
+}
+
+.rune-circle::after{
+    inset:28px;
+    border-color:#67e8f933;
+    animation:arenaRotate 18s linear infinite reverse;
+}
+
+.rune-symbol{
+    position:absolute;
+    color:#e9a8ff;
+    font-size:19px;
+    text-shadow:0 0 15px #d946ef;
+    animation:runePulse 3s infinite alternate;
+}
+
+.rune-symbol:nth-child(1){top:0;left:48%}
+.rune-symbol:nth-child(2){right:0;top:48%}
+.rune-symbol:nth-child(3){bottom:0;left:48%}
+.rune-symbol:nth-child(4){left:0;top:48%}
+
+@keyframes runePulse{
+    to{opacity:.3;text-shadow:0 0 25px #ec4899;transform:scale(1.3)}
+}
+
+/* DIRECTION PLAYERS */
+
+.direction-labels{
     display:flex;
     justify-content:space-between;
     align-items:center;
     margin:25px 3px 12px;
     gap:15px;
+    position:relative;
+    z-index:3;
 }
 
-.direction-player {
+.direction-player{
     width:105px;
     text-align:center;
     position:relative;
     z-index:3;
 }
 
-.direction-avatar {
+.direction-avatar{
     width:58px;
     height:58px;
     margin:auto;
@@ -275,30 +428,35 @@ button {cursor:pointer;}
     font-size:26px;
     border:3px solid #d8b4fe;
     box-shadow:0 0 20px #a855f766;
-    transition:.3s;
+    transition:.4s;
 }
 
-.direction-player.winner .direction-avatar {
-    transform:scale(1.2);
-    box-shadow:0 0 35px #f0abfc;
+.direction-player.winner .direction-avatar{
+    transform:scale(1.35);
+    box-shadow:0 0 25px #fff,0 0 60px #e879f9;
     border-color:white;
+    animation:winnerAvatar 1s infinite alternate;
 }
 
-.direction-name {
+@keyframes winnerAvatar{
+    to{transform:scale(1.45) rotate(8deg)}
+}
+
+.direction-name{
     font-size:12px;
     font-weight:700;
     margin-top:9px;
     overflow-wrap:anywhere;
 }
 
-.direction-role {
+.direction-role{
     font-size:9px;
     color:#aaa1bd;
 }
 
-/* BOTTLE */
+/* BOTTLE TRACK */
 
-.bottle-track {
+.bottle-track{
     position:relative;
     width:100%;
     height:125px;
@@ -306,26 +464,34 @@ button {cursor:pointer;}
     align-items:center;
     justify-content:center;
     margin:10px 0;
+    z-index:2;
+    perspective:700px;
 }
 
-.track-line {
+.track-line{
     position:absolute;
     height:2px;
     width:75%;
     background:linear-gradient(90deg,#a855f7,#ec4899,#a855f7);
-    opacity:.3;
+    opacity:.6;
+    box-shadow:0 0 12px #e879f9;
 }
 
-.track-glow {
+.track-glow{
     position:absolute;
     width:85%;
     height:55px;
-    background:#c026d322;
-    filter:blur(25px);
+    background:#c026d355;
+    filter:blur(30px);
     border-radius:50%;
+    animation:trackPulse 2s infinite alternate;
 }
 
-.bottle-wrapper {
+@keyframes trackPulse{
+    to{opacity:.3;transform:scale(.8)}
+}
+
+.bottle-wrapper{
     width:145px;
     height:65px;
     position:absolute;
@@ -335,16 +501,17 @@ button {cursor:pointer;}
     transform-origin:center center;
     transition:transform 5s cubic-bezier(.12,.65,.12,1);
     z-index:5;
+    filter:drop-shadow(0 0 15px #e879f9);
 }
 
-.bottle-svg {
+.bottle-svg{
     width:100%;
     height:100%;
     overflow:visible;
     filter:drop-shadow(0 5px 7px #0009) drop-shadow(0 0 10px #d946ef66);
 }
 
-.bottle-pin {
+.bottle-pin{
     width:17px;
     height:17px;
     border-radius:50%;
@@ -358,7 +525,138 @@ button {cursor:pointer;}
     box-shadow:0 0 15px #e879f9;
 }
 
-.spin-button {
+/* SPINNING EFFECTS */
+
+.spin-arena.spinning{
+    animation:arenaShake .35s infinite;
+}
+
+.spin-arena.spinning .rune-circle{
+    opacity:1;
+    animation:arenaRotate 3s linear infinite;
+}
+
+.spin-arena.spinning .track-glow{
+    animation:trackPulse .3s infinite alternate;
+}
+
+.spin-arena.spinning .bottle-wrapper{
+    filter:drop-shadow(0 0 20px #fff) drop-shadow(0 0 35px #ec4899);
+}
+
+@keyframes arenaShake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(1px)}
+    75%{transform:translateX(-1px)}
+}
+
+/* MAGIC BURST */
+
+.magic-burst{
+    position:absolute;
+    width:20px;
+    height:20px;
+    left:50%;
+    top:50%;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:10;
+    animation:burstExpand .8s ease-out forwards;
+    box-shadow:0 0 25px 12px #e879f9,0 0 60px 20px #9333ea;
+}
+
+@keyframes burstExpand{
+    from{transform:translate(-50%,-50%) scale(.1);opacity:1}
+    to{transform:translate(-50%,-50%) scale(12);opacity:0}
+}
+
+/* EMBERS */
+
+.ember{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#f0abfc;
+    box-shadow:0 0 12px #ec4899;
+    pointer-events:none;
+    z-index:10;
+    animation:emberFly 1.2s ease-out forwards;
+}
+
+@keyframes emberFly{
+    to{
+        transform:translate(var(--x),var(--y)) scale(0);
+        opacity:0;
+    }
+}
+
+/* BATS */
+
+.bat{
+    position:fixed;
+    top:20%;
+    left:-50px;
+    font-size:22px;
+    pointer-events:none;
+    z-index:30;
+    animation:batFly 4s linear forwards;
+    filter:drop-shadow(0 0 10px #a855f7);
+}
+
+@keyframes batFly{
+    0%{transform:translateX(0) translateY(0) scale(.6) rotate(-10deg);opacity:0}
+    10%{opacity:.9}
+    50%{transform:translateX(55vw) translateY(-40px) scale(1.1) rotate(10deg)}
+    100%{transform:translateX(115vw) translateY(25px) scale(.7);opacity:0}
+}
+
+/* LIGHTNING */
+
+#magicFlash{
+    position:fixed;
+    inset:0;
+    background:white;
+    opacity:0;
+    pointer-events:none;
+    z-index:150;
+}
+
+#magicFlash.flash{
+    animation:lightningFlash .55s ease-out;
+}
+
+@keyframes lightningFlash{
+    0%,100%{opacity:0}
+    10%{opacity:.55}
+    20%{opacity:.05}
+    35%{opacity:.35}
+    50%{opacity:0}
+}
+
+/* WINNER REVEAL */
+
+.spin-status{
+    min-height:27px;
+    text-align:center;
+    color:#e9a8ff;
+    font-size:12px;
+    margin:12px 0;
+}
+
+.winner-reveal{
+    animation:winnerReveal .8s cubic-bezier(.2,1.5,.5,1);
+}
+
+@keyframes winnerReveal{
+    0%{transform:scale(.6);opacity:0}
+    70%{transform:scale(1.15)}
+    100%{transform:scale(1);opacity:1}
+}
+
+.spin-button{
     background:linear-gradient(110deg,#ec4899,#9333ea,#6d28d9);
     background-size:200%;
     animation:buttonShine 3s linear infinite;
@@ -368,30 +666,27 @@ button {cursor:pointer;}
     width:100%;
     font-weight:800;
     letter-spacing:1px;
-    box-shadow:0 0 30px #9333ea55;
+    box-shadow:0 0 30px #9333ea77;
+    transition:.2s;
+    position:relative;
+    z-index:3;
 }
 
-@keyframes buttonShine {
-    0% {background-position:0%}
-    100% {background-position:200%}
+@keyframes buttonShine{
+    0%{background-position:0%}
+    100%{background-position:200%}
 }
 
-.spin-button:disabled {
+.spin-button:active{transform:scale(.96)}
+
+.spin-button:disabled{
     opacity:.4;
     animation:none;
 }
 
 /* TABS */
 
-.spin-status {
-    min-height:27px;
-    text-align:center;
-    color:#d8b4fe;
-    font-size:12px;
-    margin:12px 0;
-}
-
-.tabs {
+.tabs{
     display:flex;
     gap:5px;
     padding:5px;
@@ -401,7 +696,7 @@ button {cursor:pointer;}
     margin:20px 0;
 }
 
-.tab {
+.tab{
     flex:1;
     padding:12px;
     border-radius:11px;
@@ -411,15 +706,15 @@ button {cursor:pointer;}
     position:relative;
 }
 
-.tab.active {
+.tab.active{
     color:white;
     background:linear-gradient(120deg,#9333ea,#db2777);
-    box-shadow:0 5px 15px #9333ea44;
+    box-shadow:0 5px 20px #9333ea66;
 }
 
-/* UNREAD BADGE */
+/* UNREAD */
 
-.unread-badge {
+.unread-badge{
     display:none;
     position:absolute;
     top:3px;
@@ -435,22 +730,21 @@ button {cursor:pointer;}
     padding:0 4px;
     font-weight:800;
     box-shadow:0 0 12px #ff315d99;
-    border:1px solid #fff5;
+}
+
+.unread-badge.show{
+    display:block;
     animation:badgePop .3s ease;
 }
 
-.unread-badge.show {
-    display:block;
-}
-
-@keyframes badgePop {
-    from {transform:scale(0)}
-    to {transform:scale(1)}
+@keyframes badgePop{
+    from{transform:scale(0)}
+    to{transform:scale(1)}
 }
 
 /* CHAT */
 
-.chat-box {
+.chat-box{
     height:340px;
     overflow-y:auto;
     display:flex;
@@ -460,7 +754,7 @@ button {cursor:pointer;}
     scroll-behavior:smooth;
 }
 
-.message {
+.message{
     max-width:82%;
     padding:11px 14px;
     border-radius:15px;
@@ -469,24 +763,24 @@ button {cursor:pointer;}
     animation:messageIn .25s ease;
 }
 
-@keyframes messageIn {
-    from {opacity:0;transform:translateY(10px)}
-    to {opacity:1;transform:translateY(0)}
+@keyframes messageIn{
+    from{opacity:0;transform:translateY(10px) scale(.95)}
+    to{opacity:1;transform:translateY(0) scale(1)}
 }
 
-.my-message {
+.my-message{
     align-self:flex-end;
     background:linear-gradient(120deg,#9333ea,#db2777);
     border-bottom-right-radius:3px;
 }
 
-.other-message {
+.other-message{
     align-self:flex-start;
     background:#302a44;
     border-bottom-left-radius:3px;
 }
 
-.system-message {
+.system-message{
     align-self:center;
     font-size:10px;
     color:#aaa;
@@ -498,21 +792,27 @@ button {cursor:pointer;}
     border-radius:12px;
 }
 
-.spin-notice {
+.spin-notice{
     color:#f0abfc;
-    background:#a855f722;
-    border:1px solid #a855f755;
-    padding:12px;
+    background:linear-gradient(120deg,#a855f722,#ec489922);
+    border:1px solid #a855f766;
+    padding:15px;
     border-radius:13px;
     text-align:center;
     font-size:12px;
-    line-height:1.7;
-    animation:messageIn .4s ease;
+    line-height:1.8;
+    animation:noticeReveal .8s ease;
+    box-shadow:0 0 25px #9333ea33;
 }
 
-/* DYNAMIC CHAT INPUT */
+@keyframes noticeReveal{
+    from{opacity:0;transform:scale(.85) translateY(20px)}
+    to{opacity:1;transform:scale(1) translateY(0)}
+}
 
-.chat-input-wrapper {
+/* CHAT INPUT */
+
+.chat-input-wrapper{
     display:flex;
     align-items:flex-end;
     gap:10px;
@@ -520,7 +820,7 @@ button {cursor:pointer;}
     border-top:1px solid #ffffff15;
 }
 
-.chat-input {
+.chat-input{
     flex:1;
     width:100%;
     min-height:48px;
@@ -536,19 +836,16 @@ button {cursor:pointer;}
     font-family:Poppins,sans-serif;
     font-size:13px;
     line-height:21px;
-    transition:border-color .2s;
 }
 
-.chat-input:focus {
+.chat-input:focus{
     border-color:#c084fc;
     box-shadow:0 0 15px #a855f733;
 }
 
-.chat-input::placeholder {
-    color:#88839b;
-}
+.chat-input::placeholder{color:#88839b}
 
-.chat-send-btn {
+.chat-send-btn{
     width:48px;
     height:48px;
     flex-shrink:0;
@@ -559,16 +856,14 @@ button {cursor:pointer;}
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 5px 20px #9333ea44;
+    box-shadow:0 5px 20px #9333ea66;
 }
 
-.chat-send-btn:active {
-    transform:scale(.92);
-}
+.chat-send-btn:active{transform:scale(.92)}
 
-/* TYPING INDICATOR */
+/* TYPING */
 
-.typing-indicator {
+.typing-indicator{
     display:none;
     align-self:flex-start;
     align-items:center;
@@ -581,23 +876,21 @@ button {cursor:pointer;}
     animation:messageIn .25s ease;
 }
 
-.typing-indicator.show {
-    display:flex;
-}
+.typing-indicator.show{display:flex}
 
-.typing-name {
+.typing-name{
     font-size:10px;
     color:#d8b4fe;
     font-weight:600;
 }
 
-.typing-dots {
+.typing-dots{
     display:flex;
     align-items:center;
     gap:4px;
 }
 
-.typing-dots span {
+.typing-dots span{
     width:5px;
     height:5px;
     border-radius:50%;
@@ -605,29 +898,17 @@ button {cursor:pointer;}
     animation:typingBounce .8s infinite ease-in-out;
 }
 
-.typing-dots span:nth-child(2) {
-    animation-delay:.15s;
-}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
 
-.typing-dots span:nth-child(3) {
-    animation-delay:.3s;
-}
-
-@keyframes typingBounce {
-    0%,60%,100% {
-        transform:translateY(0);
-        opacity:.5;
-    }
-
-    30% {
-        transform:translateY(-5px);
-        opacity:1;
-    }
+@keyframes typingBounce{
+    0%,60%,100%{transform:translateY(0);opacity:.5}
+    30%{transform:translateY(-5px);opacity:1}
 }
 
 /* TOAST */
 
-.toast {
+.toast{
     position:fixed;
     bottom:25px;
     left:50%;
@@ -641,12 +922,27 @@ button {cursor:pointer;}
     display:none;
     white-space:nowrap;
     box-shadow:0 5px 30px #0008;
+    animation:toastIn .3s ease;
 }
 
-@media(max-width:360px) {
-    .direction-player {width:85px}
-    .direction-avatar {width:50px;height:50px}
-    .bottle-wrapper {width:125px}
+@keyframes toastIn{
+    from{opacity:0;transform:translate(-50%,20px)}
+    to{opacity:1;transform:translate(-50%,0)}
+}
+
+@media(max-width:360px){
+    .direction-player{width:85px}
+    .direction-avatar{width:50px;height:50px}
+    .bottle-wrapper{width:125px}
+    .rune-circle{width:230px;height:230px}
+}
+
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+    }
 }
 </style>
 </head>
@@ -654,136 +950,98 @@ button {cursor:pointer;}
 <body>
 
 <div class="particles" id="particles"></div>
+<div class="fog one"></div>
+<div class="fog two"></div>
+<div id="magicFlash"></div>
 
 <!-- NAME SCREEN -->
 
 <section id="nameScreen" class="screen active justify-center items-center px-6">
 
-    <div class="w-full max-w-sm text-center">
+<div class="w-full max-w-sm text-center">
 
-        <div class="logo mb-7">🍾</div>
+<div class="logo mb-7">🍾</div>
 
-        <h1 class="text-4xl font-extrabold gradient-text">
-            Truth & Dare
-        </h1>
+<h1 class="text-4xl font-extrabold gradient-text">Truth & Dare</h1>
 
-        <p class="text-gray-400 text-sm mt-3">
-            Two players. One bottle. Endless fun.
-        </p>
+<p class="text-gray-400 text-sm mt-3">Two players. One bottle. Endless fun.</p>
 
-        <div class="glass p-5 mt-10 text-left">
+<div class="glass p-5 mt-10 text-left">
 
-            <label class="text-sm text-gray-300 block mb-3">
-                Enter your name
-            </label>
+<label class="text-sm text-gray-300 block mb-3">Enter your name</label>
 
-            <input id="playerName"
-                   class="input"
-                   maxlength="18"
-                   placeholder="Your name">
+<input id="playerName" class="input" maxlength="18" placeholder="Your name">
 
-            <label class="text-sm text-gray-300 block mt-5">
-                Choose your profile emoji
-            </label>
+<label class="text-sm text-gray-300 block mt-5">Choose your profile emoji</label>
 
-            <div class="emoji-grid" id="emojiGrid">
+<div class="emoji-grid" id="emojiGrid">
+<button class="emoji-option selected" data-emoji="😎">😎</button>
+<button class="emoji-option" data-emoji="🥰">🥰</button>
+<button class="emoji-option" data-emoji="😈">😈</button>
+<button class="emoji-option" data-emoji="🤩">🤩</button>
+<button class="emoji-option" data-emoji="🦋">🦋</button>
+<button class="emoji-option" data-emoji="🐼">🐼</button>
+<button class="emoji-option" data-emoji="🐯">🐯</button>
+<button class="emoji-option" data-emoji="🦊">🦊</button>
+<button class="emoji-option" data-emoji="🐸">🐸</button>
+<button class="emoji-option" data-emoji="👻">👻</button>
+<button class="emoji-option" data-emoji="💀">💀</button>
+<button class="emoji-option" data-emoji="👑">👑</button>
+<button class="emoji-option" data-emoji="❤️">❤️</button>
+<button class="emoji-option" data-emoji="🔥">🔥</button>
+<button class="emoji-option" data-emoji="🌸">🌸</button>
+<button class="emoji-option" data-emoji="🐱">🐱</button>
+<button class="emoji-option" data-emoji="🧸">🧸</button>
+<button class="emoji-option" data-emoji="💜">💜</button>
+</div>
 
-                <button class="emoji-option selected" data-emoji="😎">😎</button>
-                <button class="emoji-option" data-emoji="🥰">🥰</button>
-                <button class="emoji-option" data-emoji="😈">😈</button>
-                <button class="emoji-option" data-emoji="🤩">🤩</button>
-                <button class="emoji-option" data-emoji="🦋">🦋</button>
-                <button class="emoji-option" data-emoji="🐼">🐼</button>
-                <button class="emoji-option" data-emoji="🐯">🐯</button>
-                <button class="emoji-option" data-emoji="🦊">🦊</button>
-                <button class="emoji-option" data-emoji="🐸">🐸</button>
-                <button class="emoji-option" data-emoji="👻">👻</button>
-                <button class="emoji-option" data-emoji="💀">💀</button>
-                <button class="emoji-option" data-emoji="👑">👑</button>
-                <button class="emoji-option" data-emoji="❤️">❤️</button>
-                <button class="emoji-option" data-emoji="🔥">🔥</button>
-                <button class="emoji-option" data-emoji="🌸">🌸</button>
-                <button class="emoji-option" data-emoji="🐱">🐱</button>
-                <button class="emoji-option" data-emoji="🧸">🧸</button>
-                <button class="emoji-option" data-emoji="💜">💜</button>
+<button onclick="saveName()" class="primary-btn mt-6">Let's Play ✨</button>
 
-            </div>
-
-            <button onclick="saveName()" class="primary-btn mt-6">
-                Let's Play ✨
-            </button>
-
-        </div>
-
-    </div>
-
+</div>
+</div>
 </section>
 
 <!-- HOME -->
 
 <section id="homeScreen" class="screen px-5 pt-12">
 
-    <div class="flex justify-between items-center mb-9">
+<div class="flex justify-between items-center mb-9">
+<div>
+<p class="text-xs text-gray-400">WELCOME BACK</p>
+<h2 id="welcomeName" class="text-2xl font-bold"></h2>
+</div>
+<div id="homeEmoji" class="text-4xl">😎</div>
+</div>
 
-        <div>
-            <p class="text-xs text-gray-400">WELCOME BACK</p>
-            <h2 id="welcomeName" class="text-2xl font-bold"></h2>
-        </div>
+<div class="glass p-6 text-center mb-7">
+<div class="text-6xl mb-4">💜</div>
+<h1 class="text-3xl font-extrabold gradient-text">Ready to Play?</h1>
+<p class="text-xs text-gray-400 mt-3">Invite your favourite person and let the fun begin!</p>
+</div>
 
-        <div id="homeEmoji" class="text-4xl">😎</div>
+<div class="glass p-5 mb-5">
+<div class="flex items-center gap-4">
+<span class="text-4xl">🏠</span>
+<div>
+<h3 class="font-bold">Create Room</h3>
+<p class="text-xs text-gray-400">Host a new game.</p>
+</div>
+</div>
+<button onclick="createRoom()" class="primary-btn mt-5">Create New Room</button>
+</div>
 
-    </div>
+<div class="glass p-5">
+<div class="flex items-center gap-4">
+<span class="text-4xl">🚪</span>
+<div>
+<h3 class="font-bold">Join Room</h3>
+<p class="text-xs text-gray-400">Enter your friend's code.</p>
+</div>
+</div>
 
-    <div class="glass p-6 text-center mb-7">
-
-        <div class="text-6xl mb-4">💜</div>
-
-        <h1 class="text-3xl font-extrabold gradient-text">
-            Ready to Play?
-        </h1>
-
-        <p class="text-xs text-gray-400 mt-3">
-            Invite your favourite person and let the fun begin!
-        </p>
-
-    </div>
-
-    <div class="glass p-5 mb-5">
-
-        <div class="flex items-center gap-4">
-            <span class="text-4xl">🏠</span>
-            <div>
-                <h3 class="font-bold">Create Room</h3>
-                <p class="text-xs text-gray-400">Host a new game.</p>
-            </div>
-        </div>
-
-        <button onclick="createRoom()" class="primary-btn mt-5">
-            Create New Room
-        </button>
-
-    </div>
-
-    <div class="glass p-5">
-
-        <div class="flex items-center gap-4">
-            <span class="text-4xl">🚪</span>
-            <div>
-                <h3 class="font-bold">Join Room</h3>
-                <p class="text-xs text-gray-400">Enter your friend's code.</p>
-            </div>
-        </div>
-
-        <input id="roomInput"
-               class="input mt-5 text-center uppercase"
-               placeholder="ENTER ROOM CODE"
-               maxlength="6">
-
-        <button onclick="joinRoom()" class="primary-btn mt-3">
-            Join Game →
-        </button>
-
-    </div>
+<input id="roomInput" class="input mt-5 text-center uppercase" placeholder="ENTER ROOM CODE" maxlength="6">
+<button onclick="joinRoom()" class="primary-btn mt-3">Join Game →</button>
+</div>
 
 </section>
 
@@ -791,335 +1049,191 @@ button {cursor:pointer;}
 
 <section id="waitingScreen" class="screen justify-center items-center px-6 text-center">
 
-    <div class="logo mb-8">🍾</div>
+<div class="logo mb-8">🍾</div>
 
-    <h2 class="text-2xl font-bold">Room Created!</h2>
+<h2 class="text-2xl font-bold">Room Created!</h2>
 
-    <p class="text-sm text-gray-400 mt-3">
-        Share your room code with your friend.
-    </p>
+<p class="text-sm text-gray-400 mt-3">Share your room code with your friend.</p>
 
-    <div class="glass p-6 mt-7 w-full max-w-sm">
+<div class="glass p-6 mt-7 w-full max-w-sm">
+<div id="displayRoomCode" class="room-code">ABCDEF</div>
+<button onclick="copyCode()" class="secondary-btn w-full mt-5">📋 Copy Code</button>
+<div id="waitingStatus" class="text-sm text-gray-400 mt-6">Waiting for your friend...</div>
+<div class="text-4xl mt-6 animate-pulse">💜</div>
+</div>
 
-        <div id="displayRoomCode" class="room-code">ABCDEF</div>
-
-        <button onclick="copyCode()" class="secondary-btn w-full mt-5">
-            📋 Copy Code
-        </button>
-
-        <div id="waitingStatus" class="text-sm text-gray-400 mt-6">
-            Waiting for your friend...
-        </div>
-
-        <div class="text-4xl mt-6 animate-pulse">💜</div>
-
-    </div>
-
-    <button onclick="backHome()" class="text-gray-400 text-sm mt-8">
-        ← Cancel
-    </button>
+<button onclick="backHome()" class="text-gray-400 text-sm mt-8">← Cancel</button>
 
 </section>
 
-<!-- GAME ROOM -->
+<!-- GAME -->
 
 <section id="gameScreen" class="screen px-4 pt-5 pb-8">
 
-    <div class="flex justify-between items-center">
+<div class="flex justify-between items-center">
+<div>
+<h2 class="text-xl font-extrabold gradient-text">Truth & Dare 🍾</h2>
+<p id="gameRoomCode" class="text-xs text-gray-500"></p>
+</div>
+<button onclick="leaveRoom()" class="secondary-btn text-xs">Exit ↗</button>
+</div>
 
-        <div>
-            <h2 class="text-xl font-extrabold gradient-text">
-                Truth & Dare 🍾
-            </h2>
-            <p id="gameRoomCode" class="text-xs text-gray-500"></p>
-        </div>
+<div class="glass p-3 mt-5">
+<div class="flex items-center gap-2">
 
-        <button onclick="leaveRoom()" class="secondary-btn text-xs">
-            Exit ↗
-        </button>
+<div class="player-card" id="leftPlayerCard">
+<div class="avatar" id="leftAvatar">👤</div>
+<div class="player-name" id="leftPlayerName">Host</div>
+<div class="player-status">● LEFT PLAYER</div>
+</div>
 
-    </div>
+<div class="font-extrabold text-pink-400 text-sm px-1">VS</div>
 
-    <!-- PLAYER DETAILS -->
+<div class="player-card" id="rightPlayerCard">
+<div class="avatar" id="rightAvatar">👤</div>
+<div class="player-name" id="rightPlayerName">Guest</div>
+<div class="player-status" id="rightPlayerStatus">● WAITING</div>
+</div>
 
-    <div class="glass p-3 mt-5">
+</div>
+</div>
 
-        <div class="flex items-center gap-2">
+<div class="tabs">
+<button id="spinTab" class="tab active" onclick="switchTab('spin')">🍾 Spin Bottle</button>
+<button id="chatTab" class="tab" onclick="switchTab('chat')">
+💬 Chat
+<sup id="unreadBadge" class="unread-badge">0</sup>
+</button>
+</div>
 
-            <div class="player-card" id="leftPlayerCard">
+<!-- SPIN -->
 
-                <div class="avatar" id="leftAvatar">👤</div>
+<div id="spinSection">
 
-                <div class="player-name" id="leftPlayerName">Host</div>
+<div class="spin-arena" id="spinArena">
 
-                <div class="player-status">● LEFT PLAYER</div>
+<div class="rune-circle">
+<span class="rune-symbol">✦</span>
+<span class="rune-symbol">☽</span>
+<span class="rune-symbol">✧</span>
+<span class="rune-symbol">☯</span>
+</div>
 
-            </div>
+<h3 class="arena-title">✦ Spin The Bottle ✦</h3>
+<p class="arena-subtitle">Who will destiny choose?</p>
 
-            <div class="font-extrabold text-pink-400 text-sm px-1">
-                VS
-            </div>
+<div class="direction-labels">
 
-            <div class="player-card" id="rightPlayerCard">
+<div class="direction-player" id="leftDirection">
+<div class="direction-avatar" id="leftDirectionEmoji">😎</div>
+<div class="direction-name" id="leftCircleName">Host</div>
+<div class="direction-role">LEFT PLAYER</div>
+</div>
 
-                <div class="avatar" id="rightAvatar">👤</div>
+<div class="direction-player" id="rightDirection">
+<div class="direction-avatar" id="rightDirectionEmoji">🥰</div>
+<div class="direction-name" id="rightCircleName">Guest</div>
+<div class="direction-role">RIGHT PLAYER</div>
+</div>
 
-                <div class="player-name" id="rightPlayerName">Guest</div>
+</div>
 
-                <div class="player-status" id="rightPlayerStatus">
-                    ● WAITING
-                </div>
+<div class="bottle-track">
 
-            </div>
+<div class="track-glow"></div>
+<div class="track-line"></div>
 
-        </div>
+<div class="bottle-wrapper" id="bottle">
 
-    </div>
+<svg class="bottle-svg" viewBox="0 0 180 75" xmlns="http://www.w3.org/2000/svg">
 
-    <!-- TABS -->
+<defs>
+<linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#fbcfe8"/>
+<stop offset="30%" stop-color="#ec4899"/>
+<stop offset="65%" stop-color="#9333ea"/>
+<stop offset="100%" stop-color="#4c1d95"/>
+</linearGradient>
 
-    <div class="tabs">
+<linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#fff" stop-opacity=".9"/>
+<stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+</linearGradient>
+</defs>
 
-        <button id="spinTab" class="tab active"
-                onclick="switchTab('spin')">
-            🍾 Spin Bottle
-        </button>
+<path d="M24 20 Q14 20 14 30 L14 45 Q14 55 24 55 L112 55 Q122 55 128 49 L142 43 L142 32 L128 26 Q122 20 112 20 Z"
+fill="url(#glass)" stroke="#f5d0fe" stroke-width="2"/>
 
-        <button id="chatTab" class="tab"
-                onclick="switchTab('chat')">
+<path d="M124 27 L157 31 L157 44 L124 48 Z" fill="#c084fc" stroke="#f5d0fe" stroke-width="1.5"/>
 
-            💬 Chat
+<rect x="155" y="29" width="12" height="17" rx="3" fill="#f0abfc" stroke="white" stroke-width="1.5"/>
 
-            <sup id="unreadBadge" class="unread-badge">0</sup>
+<path d="M158 32 L164 32 M158 36 L164 36 M158 40 L164 40" stroke="#9333ea" stroke-width="1.5"/>
 
-        </button>
+<path d="M23 24 Q18 30 21 47" stroke="url(#shine)" stroke-width="5" fill="none" stroke-linecap="round"/>
 
-    </div>
+<path d="M35 23 L103 23" stroke="white" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
 
-    <!-- SPIN SECTION -->
+<path d="M30 43 Q70 48 110 42" stroke="#fce7f3" stroke-opacity=".5" stroke-width="3" fill="none"/>
 
-    <div id="spinSection">
+<rect x="55" y="29" width="42" height="17" rx="4" fill="#fdf4ff" opacity=".9"/>
 
-        <div class="spin-arena">
+<text x="76" y="40" font-size="7" text-anchor="middle" font-weight="bold" fill="#9333ea">LOVE</text>
 
-            <h3 class="arena-title">Spin The Bottle</h3>
+</svg>
+</div>
 
-            <p class="arena-subtitle">
-                Who will the bottle choose?
-            </p>
+<div class="bottle-pin"></div>
 
-            <div class="direction-labels">
+</div>
 
-                <div class="direction-player" id="leftDirection">
+<div id="spinStatus" class="spin-status">Waiting for both players...</div>
 
-                    <div class="direction-avatar" id="leftDirectionEmoji">
-                        😎
-                    </div>
+<button id="spinButton" class="spin-button" onclick="requestSpin()" disabled>
+🍾 SPIN THE BOTTLE
+</button>
 
-                    <div class="direction-name" id="leftCircleName">
-                        Host
-                    </div>
+</div>
 
-                    <div class="direction-role">LEFT PLAYER</div>
+<div class="glass p-4 mt-4 text-center">
+<p class="text-xs text-gray-400">LAST RESULT</p>
+<h3 id="lastResult" class="font-bold mt-2">No spin yet</h3>
+</div>
 
-                </div>
+</div>
 
-                <div class="direction-player" id="rightDirection">
+<!-- CHAT -->
 
-                    <div class="direction-avatar" id="rightDirectionEmoji">
-                        🥰
-                    </div>
+<div id="chatSection" style="display:none;">
 
-                    <div class="direction-name" id="rightCircleName">
-                        Guest
-                    </div>
+<div class="glass overflow-hidden">
 
-                    <div class="direction-role">RIGHT PLAYER</div>
+<div class="p-4 border-b border-white/10">
+<h3 class="font-bold">💬 Live Chat</h3>
+<p class="text-xs text-green-400 mt-1">● Connected to your friend</p>
+</div>
 
-                </div>
+<div id="chatMessages" class="chat-box">
 
-            </div>
+<div class="system-message">Welcome! Start chatting ❤️</div>
 
-            <div class="bottle-track">
+<div id="typingIndicator" class="typing-indicator">
+<span id="typingName" class="typing-name">Friend is typing</span>
+<div class="typing-dots"><span></span><span></span><span></span></div>
+</div>
 
-                <div class="track-glow"></div>
+</div>
 
-                <div class="track-line"></div>
+<div class="chat-input-wrapper">
 
-                <div class="bottle-wrapper" id="bottle">
+<textarea id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="500" rows="1" oninput="handleTyping()" onkeydown="handleChatKeydown(event)"></textarea>
 
-                    <svg class="bottle-svg"
-                         viewBox="0 0 180 75"
-                         xmlns="http://www.w3.org/2000/svg">
+<button onclick="sendMessage()" class="chat-send-btn" aria-label="Send message">➤</button>
 
-                        <defs>
+</div>
 
-                            <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#fbcfe8"/>
-                                <stop offset="30%" stop-color="#ec4899"/>
-                                <stop offset="65%" stop-color="#9333ea"/>
-                                <stop offset="100%" stop-color="#4c1d95"/>
-                            </linearGradient>
-
-                            <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#fff" stop-opacity=".9"/>
-                                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-                            </linearGradient>
-
-                        </defs>
-
-                        <path d="
-                            M24 20 Q14 20 14 30
-                            L14 45 Q14 55 24 55
-                            L112 55 Q122 55 128 49
-                            L142 43 L142 32
-                            L128 26 Q122 20 112 20 Z"
-                            fill="url(#glass)"
-                            stroke="#f5d0fe"
-                            stroke-width="2"/>
-
-                        <path d="M124 27 L157 31 L157 44 L124 48 Z"
-                              fill="#c084fc"
-                              stroke="#f5d0fe"
-                              stroke-width="1.5"/>
-
-                        <rect x="155" y="29" width="12" height="17"
-                              rx="3"
-                              fill="#f0abfc"
-                              stroke="white"
-                              stroke-width="1.5"/>
-
-                        <path d="M158 32 L164 32 M158 36 L164 36 M158 40 L164 40"
-                              stroke="#9333ea"
-                              stroke-width="1.5"/>
-
-                        <path d="M23 24 Q18 30 21 47"
-                              stroke="url(#shine)"
-                              stroke-width="5"
-                              fill="none"
-                              stroke-linecap="round"/>
-
-                        <path d="M35 23 L103 23"
-                              stroke="white"
-                              stroke-opacity=".5"
-                              stroke-width="2"
-                              stroke-linecap="round"/>
-
-                        <path d="M30 43 Q70 48 110 42"
-                              stroke="#fce7f3"
-                              stroke-opacity=".5"
-                              stroke-width="3"
-                              fill="none"/>
-
-                        <rect x="55" y="29" width="42" height="17"
-                              rx="4"
-                              fill="#fdf4ff"
-                              opacity=".9"/>
-
-                        <text x="76" y="40"
-                              font-size="7"
-                              text-anchor="middle"
-                              font-weight="bold"
-                              fill="#9333ea">
-                            LOVE
-                        </text>
-
-                    </svg>
-
-                </div>
-
-                <div class="bottle-pin"></div>
-
-            </div>
-
-            <div id="spinStatus" class="spin-status">
-                Waiting for both players...
-            </div>
-
-            <button id="spinButton"
-                    class="spin-button"
-                    onclick="requestSpin()"
-                    disabled>
-                🍾 SPIN THE BOTTLE
-            </button>
-
-        </div>
-
-        <div class="glass p-4 mt-4 text-center">
-
-            <p class="text-xs text-gray-400">LAST RESULT</p>
-
-            <h3 id="lastResult" class="font-bold mt-2">
-                No spin yet
-            </h3>
-
-        </div>
-
-    </div>
-
-    <!-- CHAT SECTION -->
-
-    <div id="chatSection" style="display:none;">
-
-        <div class="glass overflow-hidden">
-
-            <div class="p-4 border-b border-white/10">
-
-                <h3 class="font-bold">💬 Live Chat</h3>
-
-                <p class="text-xs text-green-400 mt-1">
-                    ● Connected to your friend
-                </p>
-
-            </div>
-
-            <div id="chatMessages" class="chat-box">
-
-                <div class="system-message">
-                    Welcome! Start chatting ❤️
-                </div>
-
-                <div id="typingIndicator" class="typing-indicator">
-
-                    <span id="typingName" class="typing-name">
-                        Friend is typing
-                    </span>
-
-                    <div class="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="chat-input-wrapper">
-
-                <textarea
-                    id="chatInput"
-                    class="chat-input"
-                    placeholder="Type a message..."
-                    maxlength="500"
-                    rows="1"
-                    oninput="handleTyping()"
-                    onkeydown="handleChatKeydown(event)"
-                ></textarea>
-
-                <button
-                    onclick="sendMessage()"
-                    class="chat-send-btn"
-                    aria-label="Send message"
-                >
-                    ➤
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
+</div>
+</div>
 
 </section>
 
@@ -1127,9 +1241,9 @@ button {cursor:pointer;}
 
 <script>
 
-// =========================================
-// GLOBAL VARIABLES
-// =========================================
+/* =========================================
+   GLOBAL VARIABLES
+========================================= */
 
 let myName="";
 let myEmoji="😎";
@@ -1175,28 +1289,28 @@ let connectionSetupFor=null;
 let joiningRoom=false;
 
 
-// =========================================
-// PEERJS CONFIGURATION
-// =========================================
+/* =========================================
+   PEERJS CONFIGURATION
+========================================= */
 
-const PEER_OPTIONS = {
-    debug: 1,
-    secure: true,
-    config: {
-        iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "stun:stun2.l.google.com:19302" }
+const PEER_OPTIONS={
+    debug:1,
+    secure:true,
+    config:{
+        iceServers:[
+            {urls:"stun:stun.l.google.com:19302"},
+            {urls:"stun:stun1.l.google.com:19302"},
+            {urls:"stun:stun2.l.google.com:19302"}
         ]
     }
 };
 
 
-// =========================================
-// BACKGROUND PARTICLES
-// =========================================
+/* =========================================
+   FANTASY PARTICLES
+========================================= */
 
-for(let i=0;i<25;i++){
+for(let i=0;i<45;i++){
 
     const p=document.createElement("div");
 
@@ -1204,18 +1318,123 @@ for(let i=0;i<25;i++){
 
     p.style.left=Math.random()*100+"%";
 
-    p.style.animationDuration=(6+Math.random()*10)+"s";
+    p.style.animationDuration=(7+Math.random()*12)+"s";
 
-    p.style.animationDelay=Math.random()*8+"s";
+    p.style.animationDelay=Math.random()*10+"s";
+
+    p.style.width=(2+Math.random()*4)+"px";
+
+    p.style.height=p.style.width;
 
     document.getElementById("particles").appendChild(p);
 
 }
 
 
-// =========================================
-// PROFILE EMOJI SELECTION
-// =========================================
+/* =========================================
+   MAGIC ANIMATION HELPERS
+========================================= */
+
+function triggerMagicFlash(){
+
+    const flash=document.getElementById("magicFlash");
+
+    flash.classList.remove("flash");
+
+    void flash.offsetWidth;
+
+    flash.classList.add("flash");
+
+}
+
+
+function createMagicBurst(){
+
+    const arena=document.getElementById("spinArena");
+
+    if(!arena)return;
+
+    const burst=document.createElement("div");
+
+    burst.className="magic-burst";
+
+    arena.appendChild(burst);
+
+    setTimeout(()=>burst.remove(),900);
+
+}
+
+
+function createMagicEmbers(count=28){
+
+    const arena=document.getElementById("spinArena");
+
+    if(!arena)return;
+
+    for(let i=0;i<count;i++){
+
+        const ember=document.createElement("div");
+
+        ember.className="ember";
+
+        const angle=Math.random()*Math.PI*2;
+
+        const distance=45+Math.random()*140;
+
+        ember.style.setProperty("--x",Math.cos(angle)*distance+"px");
+
+        ember.style.setProperty("--y",Math.sin(angle)*distance+"px");
+
+        ember.style.animationDelay=Math.random()*.2+"s";
+
+        arena.appendChild(ember);
+
+        setTimeout(()=>ember.remove(),1500);
+
+    }
+
+}
+
+
+function summonBats(){
+
+    for(let i=0;i<4;i++){
+
+        const bat=document.createElement("div");
+
+        bat.className="bat";
+
+        bat.textContent="🦇";
+
+        bat.style.top=(10+Math.random()*65)+"%";
+
+        bat.style.animationDelay=(i*.25)+"s";
+
+        document.body.appendChild(bat);
+
+        setTimeout(()=>bat.remove(),4500);
+
+    }
+
+}
+
+
+function playFantasyEffects(){
+
+    triggerMagicFlash();
+
+    createMagicBurst();
+
+    createMagicEmbers(38);
+
+    summonBats();
+
+}
+
+
+/* =========================================
+   PROFILE EMOJI SELECTION
+========================================= */
 
 document.querySelectorAll(".emoji-option").forEach(button=>{
 
@@ -1234,9 +1453,9 @@ document.querySelectorAll(".emoji-option").forEach(button=>{
 });
 
 
-// =========================================
-// SCREEN NAVIGATION
-// =========================================
+/* =========================================
+   SCREEN NAVIGATION
+========================================= */
 
 function showScreen(id){
 
@@ -1246,33 +1465,27 @@ function showScreen(id){
 
     const target=document.getElementById(id);
 
-    if(target){
-        target.classList.add("active");
-    }
+    if(target)target.classList.add("active");
 
 }
 
 
-// =========================================
-// SAVE NAME
-// =========================================
+/* =========================================
+   SAVE NAME
+========================================= */
 
 function saveName(){
 
     const name=document.getElementById("playerName").value.trim();
 
     if(!name){
-
         showToast("Please enter your name!");
-
         return;
-
     }
 
     myName=name.substring(0,18);
 
-    document.getElementById("welcomeName").textContent=
-        "Hey, "+myName+" 👋";
+    document.getElementById("welcomeName").textContent="Hey, "+myName+" 👋";
 
     document.getElementById("homeEmoji").textContent=myEmoji;
 
@@ -1281,9 +1494,9 @@ function saveName(){
 }
 
 
-// =========================================
-// CREATE PEER WITH TIMEOUT AND ERROR HANDLING
-// =========================================
+/* =========================================
+   CREATE PEER
+========================================= */
 
 function createPeer(id){
 
@@ -1299,9 +1512,7 @@ function createPeer(id){
 
             settled=true;
 
-            try{
-                if(peer)peer.destroy();
-            }catch(e){}
+            try{if(peer)peer.destroy()}catch(e){}
 
             reject(new Error("Peer connection timed out."));
 
@@ -1309,9 +1520,7 @@ function createPeer(id){
 
         try{
 
-            peer=id
-                ? new Peer(id,PEER_OPTIONS)
-                : new Peer(PEER_OPTIONS);
+            peer=id?new Peer(id,PEER_OPTIONS):new Peer(PEER_OPTIONS);
 
         }catch(error){
 
@@ -1323,7 +1532,7 @@ function createPeer(id){
 
         }
 
-        peer.on("open",peerId=>{
+        peer.on("open",()=>{
 
             if(settled)return;
 
@@ -1360,9 +1569,9 @@ function createPeer(id){
 }
 
 
-// =========================================
-// PEER ERROR HANDLER
-// =========================================
+/* =========================================
+   PEER ERROR HANDLER
+========================================= */
 
 function handlePeerError(error){
 
@@ -1371,71 +1580,50 @@ function handlePeerError(error){
     console.error("Peer error:",error.type,error);
 
     if(error.type==="peer-unavailable"){
-
         showToast("Room not found. Check the code.");
-
         return;
-
     }
 
     if(error.type==="network"){
-
         showToast("Network problem. Check your internet.");
-
         return;
-
     }
 
     if(error.type==="disconnected"){
 
         showToast("Signalling server disconnected.");
 
-        if(myPeer && !myPeer.destroyed){
+        if(myPeer&&!myPeer.destroyed){
 
             setTimeout(()=>{
-
-                try{
-                    myPeer.reconnect();
-                }catch(e){
-                    console.error(e);
-                }
-
+                try{myPeer.reconnect()}catch(e){console.error(e)}
             },1500);
 
         }
 
         return;
-
     }
 
     if(error.type==="unavailable-id"){
-
         showToast("Room code already exists. Try again.");
-
         return;
-
     }
 
     if(error.type==="server-error"){
-
         showToast("Peer server error. Please retry.");
-
         return;
-
     }
 
-    if(error.type==="socket-error" || error.type==="socket-closed"){
-
+    if(error.type==="socket-error"||error.type==="socket-closed"){
         showToast("Connection server unavailable.");
-
     }
 
 }
 
 
-// =========================================
-// CREATE ROOM
-// =========================================
+/* =========================================
+   CREATE ROOM
+========================================= */
 
 async function createRoom(){
 
@@ -1465,14 +1653,12 @@ async function createRoom(){
     guestName="";
     guestEmoji="🥰";
 
-    for(let attempt=0;attempt<4 && !created;attempt++){
+    for(let attempt=0;attempt<4&&!created;attempt++){
 
         roomCode="";
 
         for(let i=0;i<6;i++){
-
             roomCode+=chars[Math.floor(Math.random()*chars.length)];
-
         }
 
         try{
@@ -1485,11 +1671,7 @@ async function createRoom(){
 
             console.error("Room creation attempt failed:",error);
 
-            if(error.type==="unavailable-id"){
-
-                continue;
-
-            }
+            if(error.type==="unavailable-id")continue;
 
             cleanupPeer();
 
@@ -1515,24 +1697,18 @@ async function createRoom(){
 
         console.log("Incoming room connection:",conn.peer);
 
-        if(connection && connection!==conn){
+        if(connection&&connection!==conn){
 
             if(connection.open){
-
                 conn.close();
-
                 return;
-
             }
 
         }
 
         if(isConnected){
-
             conn.close();
-
             return;
-
         }
 
         connection=conn;
@@ -1545,17 +1721,16 @@ async function createRoom(){
 
     document.getElementById("displayRoomCode").textContent=roomCode;
 
-    document.getElementById("waitingStatus").textContent=
-        "Waiting for your friend...";
+    document.getElementById("waitingStatus").textContent="Waiting for your friend...";
 
     showScreen("waitingScreen");
 
 }
 
 
-// =========================================
-// JOIN ROOM
-// =========================================
+/* =========================================
+   JOIN ROOM
+========================================= */
 
 async function joinRoom(){
 
@@ -1598,17 +1773,14 @@ async function joinRoom(){
 
     showToast("Connecting to room...");
 
-    document.getElementById("spinStatus").textContent=
-        "Connecting to your friend...";
+    document.getElementById("spinStatus").textContent="Connecting to your friend...";
 
     try{
 
         myPeer=await createPeer(null);
 
-        if(!myPeer || myPeer.destroyed){
-
+        if(!myPeer||myPeer.destroyed){
             throw new Error("Could not initialize connection.");
-
         }
 
         myPeer.on("error",handlePeerError);
@@ -1619,9 +1791,7 @@ async function joinRoom(){
         });
 
         if(!connection){
-
             throw new Error("Could not create room connection.");
-
         }
 
         setupConnection(connection);
@@ -1662,9 +1832,9 @@ async function joinRoom(){
 }
 
 
-// =========================================
-// CONNECTION SETUP
-// =========================================
+/* =========================================
+   CONNECTION SETUP
+========================================= */
 
 function setupConnection(conn){
 
@@ -1682,9 +1852,7 @@ function setupConnection(conn){
 
             const status=document.getElementById("waitingStatus");
 
-            if(status){
-                status.textContent="Friend connecting...";
-            }
+            if(status)status.textContent="Friend connecting...";
 
         }else{
 
@@ -1695,9 +1863,7 @@ function setupConnection(conn){
     });
 
     conn.on("data",data=>{
-
         handleData(data);
-
     });
 
     conn.on("close",()=>{
@@ -1709,11 +1875,8 @@ function setupConnection(conn){
         clearHandshake();
 
         if(joinTimeout){
-
             clearTimeout(joinTimeout);
-
             joinTimeout=null;
-
         }
 
         isConnected=false;
@@ -1726,17 +1889,9 @@ function setupConnection(conn){
 
         updatePlayers();
 
-        const status=document.getElementById("spinStatus");
+        document.getElementById("spinStatus").textContent="Opponent disconnected!";
 
-        if(status){
-            status.textContent="Opponent disconnected!";
-        }
-
-        const button=document.getElementById("spinButton");
-
-        if(button){
-            button.disabled=true;
-        }
+        document.getElementById("spinButton").disabled=true;
 
         addSystemMessage("Your friend disconnected.");
 
@@ -1755,13 +1910,13 @@ function setupConnection(conn){
 }
 
 
-// =========================================
-// JOIN HANDSHAKE
-// =========================================
+/* =========================================
+   JOIN HANDSHAKE
+========================================= */
 
 function startJoinHandshake(){
 
-    if(isHost || !connection || !connection.open)return;
+    if(isHost||!connection||!connection.open)return;
 
     clearHandshake();
 
@@ -1772,25 +1927,15 @@ function startJoinHandshake(){
     handshakeTimer=setInterval(()=>{
 
         if(isConnected){
-
             clearHandshake();
-
             return;
-
         }
 
-        if(!connection || !connection.open){
-
-            return;
-
-        }
+        if(!connection||!connection.open)return;
 
         if(handshakeAttempts>=8){
-
             clearHandshake();
-
             return;
-
         }
 
         sendJoinHandshake();
@@ -1802,23 +1947,17 @@ function startJoinHandshake(){
 
 function sendJoinHandshake(){
 
-    if(!connection || !connection.open || isConnected)return;
+    if(!connection||!connection.open||isConnected)return;
 
     handshakeAttempts++;
 
     try{
 
         connection.send({
-
             type:"join",
-
             name:myName,
-
             emoji:myEmoji
-
         });
-
-        console.log("Join handshake sent:",handshakeAttempts);
 
     }catch(error){
 
@@ -1832,27 +1971,20 @@ function sendJoinHandshake(){
 function clearHandshake(){
 
     if(handshakeTimer){
-
         clearInterval(handshakeTimer);
-
         handshakeTimer=null;
-
     }
 
 }
 
 
-// =========================================
-// SEND DATA SAFELY
-// =========================================
+/* =========================================
+   SEND DATA
+========================================= */
 
 function sendData(data){
 
-    if(!connection || !connection.open){
-
-        return false;
-
-    }
+    if(!connection||!connection.open)return false;
 
     try{
 
@@ -1871,34 +2003,28 @@ function sendData(data){
 }
 
 
-// =========================================
-// HANDLE RECEIVED DATA
-// =========================================
+/* =========================================
+   HANDLE RECEIVED DATA
+========================================= */
 
 function handleData(data){
 
-    if(!data || typeof data!=="object")return;
+    if(!data||typeof data!=="object")return;
 
     switch(data.type){
 
         case "join":
 
-            if(!isHost || !connection || !connection.open)return;
+            if(!isHost||!connection||!connection.open)return;
 
             if(isConnected){
 
                 sendData({
-
                     type:"welcome",
-
                     hostName:hostName,
-
                     hostEmoji:hostEmoji,
-
                     guestName:guestName,
-
                     guestEmoji:guestEmoji
-
                 });
 
                 return;
@@ -1914,17 +2040,11 @@ function handleData(data){
             joiningRoom=false;
 
             sendData({
-
                 type:"welcome",
-
                 hostName:hostName,
-
                 hostEmoji:hostEmoji,
-
                 guestName:guestName,
-
                 guestEmoji:guestEmoji
-
             });
 
             enterGame();
@@ -1951,11 +2071,8 @@ function handleData(data){
             clearHandshake();
 
             if(joinTimeout){
-
                 clearTimeout(joinTimeout);
-
                 joinTimeout=null;
-
             }
 
             enterGame();
@@ -1965,10 +2082,8 @@ function handleData(data){
 
         case "spinRequest":
 
-            if(isHost && isConnected && !isSpinning){
-
+            if(isHost&&isConnected&&!isSpinning){
                 hostStartSpin();
-
             }
 
             break;
@@ -1994,9 +2109,7 @@ function handleData(data){
             addMessage(data.name,data.text,false);
 
             if(currentTab!=="chat"){
-
                 incrementUnread();
-
             }
 
             break;
@@ -2005,13 +2118,9 @@ function handleData(data){
         case "typing":
 
             if(data.typing){
-
                 showRemoteTyping(data.name);
-
             }else{
-
                 hideRemoteTyping();
-
             }
 
             break;
@@ -2021,9 +2130,9 @@ function handleData(data){
 }
 
 
-// =========================================
-// ENTER GAME
-// =========================================
+/* =========================================
+   ENTER GAME
+========================================= */
 
 function enterGame(){
 
@@ -2039,42 +2148,36 @@ function enterGame(){
 
     showScreen("gameScreen");
 
-    document.getElementById("gameRoomCode").textContent=
-        "ROOM: "+roomCode;
+    document.getElementById("gameRoomCode").textContent="ROOM: "+roomCode;
 
     updatePlayers();
 
     addSystemMessage("Both players connected! ❤️");
 
-    document.getElementById("waitingStatus").textContent=
-        "Connected!";
+    document.getElementById("waitingStatus").textContent="Connected!";
 
-    document.getElementById("spinStatus").textContent=
-        "Both players are ready!";
+    document.getElementById("spinStatus").textContent="Both players are ready!";
 
     showToast("Welcome to the game!");
+
+    createMagicEmbers(18);
 
 }
 
 
-// =========================================
-// UPDATE PLAYER PROFILES
-// =========================================
+/* =========================================
+   UPDATE PLAYER PROFILES
+========================================= */
 
 function updatePlayers(){
 
-    document.getElementById("leftPlayerName").textContent=
-        hostName||"Host";
+    document.getElementById("leftPlayerName").textContent=hostName||"Host";
 
-    document.getElementById("rightPlayerName").textContent=
-        guestName||"Waiting...";
+    document.getElementById("rightPlayerName").textContent=guestName||"Waiting...";
 
-    document.getElementById("leftCircleName").textContent=
-        hostName||"Host";
+    document.getElementById("leftCircleName").textContent=hostName||"Host";
 
-    document.getElementById("rightCircleName").textContent=
-        guestName||"Guest";
-
+    document.getElementById("rightCircleName").textContent=guestName||"Guest";
 
     document.getElementById("leftAvatar").textContent=hostEmoji;
 
@@ -2084,26 +2187,20 @@ function updatePlayers(){
 
     document.getElementById("rightDirectionEmoji").textContent=guestEmoji;
 
+    document.getElementById("rightPlayerStatus").textContent=isConnected?"● ONLINE":"● WAITING";
 
-    document.getElementById("rightPlayerStatus").textContent=
-        isConnected?"● ONLINE":"● WAITING";
+    document.getElementById("rightPlayerStatus").style.color=isConnected?"#22c55e":"#999";
 
-    document.getElementById("rightPlayerStatus").style.color=
-        isConnected?"#22c55e":"#999";
+    document.getElementById("spinButton").disabled=!isConnected||isSpinning;
 
-
-    document.getElementById("spinButton").disabled=
-        !isConnected || isSpinning;
-
-    document.getElementById("spinStatus").textContent=
-        isConnected?"Both players are ready!":"Waiting for opponent...";
+    document.getElementById("spinStatus").textContent=isConnected?"Both players are ready!":"Waiting for opponent...";
 
 }
 
 
-// =========================================
-// TAB SWITCHING
-// =========================================
+/* =========================================
+   TAB SWITCHING
+========================================= */
 
 function switchTab(tab){
 
@@ -2111,16 +2208,13 @@ function switchTab(tab){
 
     const spin=tab==="spin";
 
-    document.getElementById("spinSection").style.display=
-        spin?"block":"none";
+    document.getElementById("spinSection").style.display=spin?"block":"none";
 
-    document.getElementById("chatSection").style.display=
-        spin?"none":"block";
+    document.getElementById("chatSection").style.display=spin?"none":"block";
 
     document.getElementById("spinTab").classList.toggle("active",spin);
 
     document.getElementById("chatTab").classList.toggle("active",!spin);
-
 
     if(!spin){
 
@@ -2129,9 +2223,7 @@ function switchTab(tab){
         updateUnreadBadge();
 
         setTimeout(()=>{
-
             scrollChatToBottom(false);
-
         },50);
 
     }
@@ -2139,9 +2231,9 @@ function switchTab(tab){
 }
 
 
-// =========================================
-// CHAT SCROLL HELPER
-// =========================================
+/* =========================================
+   CHAT SCROLL
+========================================= */
 
 function scrollChatToBottom(smooth=true){
 
@@ -2152,11 +2244,8 @@ function scrollChatToBottom(smooth=true){
     requestAnimationFrame(()=>{
 
         box.scrollTo({
-
             top:box.scrollHeight,
-
             behavior:smooth?"smooth":"auto"
-
         });
 
     });
@@ -2164,28 +2253,22 @@ function scrollChatToBottom(smooth=true){
 }
 
 
-// =========================================
-// INSERT CHAT ITEM IN CORRECT ORDER
-// =========================================
+/* =========================================
+   APPEND CHAT ITEM
+========================================= */
 
 function appendChatItem(element){
 
     const box=document.getElementById("chatMessages");
 
-    if(!box || !element)return;
+    if(!box||!element)return;
 
     const indicator=document.getElementById("typingIndicator");
 
-    // Keep the typing indicator as the last chat element.
-
-    if(indicator && indicator.parentNode===box){
-
+    if(indicator&&indicator.parentNode===box){
         box.insertBefore(element,indicator);
-
     }else{
-
         box.appendChild(element);
-
     }
 
     scrollChatToBottom(true);
@@ -2193,9 +2276,9 @@ function appendChatItem(element){
 }
 
 
-// =========================================
-// UNREAD MESSAGE COUNTER
-// =========================================
+/* =========================================
+   UNREAD COUNTER
+========================================= */
 
 function incrementUnread(){
 
@@ -2227,15 +2310,15 @@ function updateUnreadBadge(){
 }
 
 
-// =========================================
-// REQUEST SPIN
-// =========================================
+/* =========================================
+   REQUEST SPIN
+========================================= */
 
 function requestSpin(){
 
-    if(!isConnected || isSpinning)return;
+    if(!isConnected||isSpinning)return;
 
-    if(!connection || !connection.open){
+    if(!connection||!connection.open){
 
         showToast("Friend disconnected!");
 
@@ -2249,16 +2332,11 @@ function requestSpin(){
 
     }else{
 
-        const sent=sendData({
-
-            type:"spinRequest"
-
-        });
+        const sent=sendData({type:"spinRequest"});
 
         if(sent){
 
-            document.getElementById("spinStatus").textContent=
-                "Requesting host to spin...";
+            document.getElementById("spinStatus").textContent="Requesting host to spin...";
 
         }else{
 
@@ -2271,28 +2349,24 @@ function requestSpin(){
 }
 
 
-// =========================================
-// HOST DECIDES RESULT
-// =========================================
+/* =========================================
+   HOST DECIDES RESULT
+========================================= */
 
 function hostStartSpin(){
 
-    if(isSpinning || !isConnected)return;
+    if(isSpinning||!isConnected)return;
 
-    if(!connection || !connection.open)return;
+    if(!connection||!connection.open)return;
 
     const selected=Math.random()<0.5?"host":"guest";
 
     spinSequence++;
 
     const data={
-
         type:"spin",
-
         selected:selected,
-
         sequence:spinSequence
-
     };
 
     if(!sendData(data)){
@@ -2308,19 +2382,21 @@ function hostStartSpin(){
 }
 
 
-// =========================================
-// BOTTLE ANIMATION
-// =========================================
+/* =========================================
+   BOTTLE SPIN ANIMATION
+========================================= */
 
 function animateSpin(selected){
 
     if(isSpinning)return;
 
-    if(selected!=="host" && selected!=="guest")return;
+    if(selected!=="host"&&selected!=="guest")return;
 
     isSpinning=true;
 
     const bottle=document.getElementById("bottle");
+
+    const arena=document.getElementById("spinArena");
 
     const left=document.getElementById("leftDirection");
 
@@ -2336,31 +2412,45 @@ function animateSpin(selected){
 
     document.getElementById("spinButton").disabled=true;
 
-    document.getElementById("spinStatus").textContent=
-        "Bottle is spinning... 🍾";
+    arena.classList.add("spinning");
 
-    document.getElementById("lastResult").textContent=
-        "Bottle spinning...";
+    document.getElementById("spinStatus").textContent="The magic is awakening... ✨";
 
+    document.getElementById("lastResult").textContent="Destiny is deciding...";
+
+    // Initial magic effects
+
+    createMagicEmbers(22);
+
+    setTimeout(()=>{
+        triggerMagicFlash();
+    },600);
+
+    setTimeout(()=>{
+        summonBats();
+    },1100);
+
+    // The cap points toward the selected player.
 
     const finalAngle=selected==="guest"?0:180;
 
-    const extraRotations=5*360;
+    const extraRotations=7*360;
 
     const finalRotation=currentRotation+
         extraRotations+
         ((finalAngle-(currentRotation%360)+360)%360);
 
+    // Slight 3D movement while spinning.
+
+    bottle.style.transition="transform 5.5s cubic-bezier(.08,.72,.12,1)";
+
     bottle.style.transform=
-        `translate(-50%,-50%) rotate(${finalRotation}deg)`;
+        `translate(-50%,-50%) rotateX(15deg) rotate(${finalRotation}deg)`;
 
     currentRotation=finalRotation;
 
-
     if(spinAnimationTimer){
-
         clearTimeout(spinAnimationTimer);
-
     }
 
     spinAnimationTimer=setTimeout(()=>{
@@ -2369,12 +2459,22 @@ function animateSpin(selected){
 
         isSpinning=false;
 
+        arena.classList.remove("spinning");
+
         lastSelected=selected;
 
         const winner=selected==="host"?hostName:guestName;
 
         const winnerEmoji=selected==="host"?hostEmoji:guestEmoji;
 
+        // Reset the 3D tilt without changing the final bottle direction.
+
+        bottle.style.transition="transform .35s ease-out";
+
+        bottle.style.transform=
+            `translate(-50%,-50%) rotate(${finalRotation}deg)`;
+
+        // Winner animation.
 
         if(selected==="host"){
 
@@ -2390,36 +2490,33 @@ function animateSpin(selected){
 
         }
 
+        playFantasyEffects();
 
-        const resultText=
+        document.getElementById("lastResult").textContent=
             winnerEmoji+" "+winner+" has been selected!";
 
-        document.getElementById("lastResult").textContent=resultText;
+        document.getElementById("lastResult").classList.remove("winner-reveal");
+
+        void document.getElementById("lastResult").offsetWidth;
+
+        document.getElementById("lastResult").classList.add("winner-reveal");
 
         document.getElementById("spinStatus").textContent=
-            "Bottle stopped! 🎯";
-
+            "✦ Destiny has chosen! ✦";
 
         document.getElementById("spinButton").disabled=!isConnected;
 
-
-        // Open chat automatically on both devices.
+        // Automatically open chat on both devices.
 
         switchTab("chat");
 
-
-        // Determine whether the selected player is THIS device.
-
-        const localPlayerSelected =
-            (isHost && selected==="host") ||
-            (!isHost && selected==="guest");
-
+        const localPlayerSelected=
+            (isHost&&selected==="host")||
+            (!isHost&&selected==="guest");
 
         let notice;
 
         if(localPlayerSelected){
-
-            // Message shown only to the selected player.
 
             notice=
                 "🍾 The bottle cap is facing you, "+
@@ -2427,8 +2524,6 @@ function animateSpin(selected){
                 "! What will you choose — Truth or Dare? 💜";
 
         }else{
-
-            // Message shown only to the other player.
 
             notice=
                 "👀 Let's see what "+
@@ -2439,15 +2534,14 @@ function animateSpin(selected){
 
         addSpinNotice(notice);
 
-
-    },5100);
+    },5600);
 
 }
 
 
-// =========================================
-// SPIN RESULT CHAT MESSAGE
-// =========================================
+/* =========================================
+   SPIN RESULT CHAT MESSAGE
+========================================= */
 
 function addSpinNotice(text){
 
@@ -2457,16 +2551,14 @@ function addSpinNotice(text){
 
     notice.textContent=text;
 
-    // Insert at the latest chat position.
-
     appendChatItem(notice);
 
 }
 
 
-// =========================================
-// DYNAMIC CHAT INPUT HEIGHT
-// =========================================
+/* =========================================
+   DYNAMIC CHAT INPUT HEIGHT
+========================================= */
 
 function autoResizeChatInput(){
 
@@ -2480,19 +2572,18 @@ function autoResizeChatInput(){
 
     input.style.height=newHeight+"px";
 
-    input.style.overflowY=
-        input.scrollHeight>140?"auto":"hidden";
+    input.style.overflowY=input.scrollHeight>140?"auto":"hidden";
 
 }
 
 
-// =========================================
-// CHAT KEYBOARD HANDLING
-// =========================================
+/* =========================================
+   CHAT KEYBOARD
+========================================= */
 
 function handleChatKeydown(event){
 
-    if(event.key==="Enter" && event.ctrlKey){
+    if(event.key==="Enter"&&event.ctrlKey){
 
         event.preventDefault();
 
@@ -2505,9 +2596,9 @@ function handleChatKeydown(event){
 }
 
 
-// =========================================
-// LOCAL TYPING DETECTION
-// =========================================
+/* =========================================
+   LOCAL TYPING DETECTION
+========================================= */
 
 function handleTyping(){
 
@@ -2525,11 +2616,7 @@ function handleTyping(){
 
     }
 
-    if(!isConnected || !connection || !connection.open){
-
-        return;
-
-    }
+    if(!isConnected||!connection||!connection.open)return;
 
     if(!isTyping){
 
@@ -2542,36 +2629,30 @@ function handleTyping(){
     clearTimeout(typingTimer);
 
     typingTimer=setTimeout(()=>{
-
         stopTyping();
-
     },TYPING_DELAY);
 
 }
 
 
-// =========================================
-// SEND TYPING STATUS TO OPPONENT
-// =========================================
+/* =========================================
+   SEND TYPING STATUS
+========================================= */
 
 function sendTypingStatus(status){
 
     sendData({
-
         type:"typing",
-
         name:myName,
-
         typing:status
-
     });
 
 }
 
 
-// =========================================
-// STOP LOCAL TYPING
-// =========================================
+/* =========================================
+   STOP LOCAL TYPING
+========================================= */
 
 function stopTyping(){
 
@@ -2588,24 +2669,21 @@ function stopTyping(){
 }
 
 
-// =========================================
-// RECEIVE OPPONENT TYPING STATUS
-// =========================================
+/* =========================================
+   SHOW REMOTE TYPING
+========================================= */
 
 function showRemoteTyping(name){
 
-    const indicator=
-        document.getElementById("typingIndicator");
+    const indicator=document.getElementById("typingIndicator");
 
-    const typingName=
-        document.getElementById("typingName");
+    const typingName=document.getElementById("typingName");
 
-    if(!indicator || !typingName)return;
+    if(!indicator||!typingName)return;
 
     remoteIsTyping=true;
 
-    typingName.textContent=
-        (name||"Friend")+" is typing";
+    typingName.textContent=(name||"Friend")+" is typing";
 
     indicator.classList.add("show");
 
@@ -2614,17 +2692,15 @@ function showRemoteTyping(name){
     clearTimeout(remoteTypingTimer);
 
     remoteTypingTimer=setTimeout(()=>{
-
         hideRemoteTyping();
-
     },3000);
 
 }
 
 
-// =========================================
-// HIDE OPPONENT TYPING
-// =========================================
+/* =========================================
+   HIDE REMOTE TYPING
+========================================= */
 
 function hideRemoteTyping(){
 
@@ -2632,21 +2708,16 @@ function hideRemoteTyping(){
 
     remoteIsTyping=false;
 
-    const indicator=
-        document.getElementById("typingIndicator");
+    const indicator=document.getElementById("typingIndicator");
 
-    if(indicator){
-
-        indicator.classList.remove("show");
-
-    }
+    if(indicator)indicator.classList.remove("show");
 
 }
 
 
-// =========================================
-// RESET CHAT INPUT
-// =========================================
+/* =========================================
+   RESET CHAT INPUT
+========================================= */
 
 function resetChatInput(){
 
@@ -2665,9 +2736,9 @@ function resetChatInput(){
 }
 
 
-// =========================================
-// CHAT - SEND MESSAGE
-// =========================================
+/* =========================================
+   SEND MESSAGE
+========================================= */
 
 function sendMessage(){
 
@@ -2677,7 +2748,7 @@ function sendMessage(){
 
     if(!text)return;
 
-    if(!connection || !connection.open){
+    if(!connection||!connection.open){
 
         showToast("Friend disconnected!");
 
@@ -2688,13 +2759,9 @@ function sendMessage(){
     const messageText=text.substring(0,500);
 
     const sent=sendData({
-
         type:"message",
-
         name:myName,
-
         text:messageText
-
     });
 
     if(!sent){
@@ -2716,9 +2783,9 @@ function sendMessage(){
 }
 
 
-// =========================================
-// CHAT - DISPLAY MESSAGE
-// =========================================
+/* =========================================
+   DISPLAY MESSAGE
+========================================= */
 
 function addMessage(name,text,mine){
 
@@ -2742,16 +2809,14 @@ function addMessage(name,text,mine){
 
     msg.appendChild(content);
 
-    // Insert before typing indicator.
-
     appendChatItem(msg);
 
 }
 
 
-// =========================================
-// SYSTEM MESSAGE
-// =========================================
+/* =========================================
+   SYSTEM MESSAGE
+========================================= */
 
 function addSystemMessage(text){
 
@@ -2766,9 +2831,9 @@ function addSystemMessage(text){
 }
 
 
-// =========================================
-// ROOM CODE
-// =========================================
+/* =========================================
+   COPY ROOM CODE
+========================================= */
 
 function copyCode(){
 
@@ -2780,7 +2845,7 @@ function copyCode(){
 
     }
 
-    if(navigator.clipboard && navigator.clipboard.writeText){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
 
         navigator.clipboard.writeText(roomCode)
             .then(()=>showToast("Room code copied!"))
@@ -2795,9 +2860,9 @@ function copyCode(){
 }
 
 
-// =========================================
-// EXIT / CLEANUP
-// =========================================
+/* =========================================
+   EXIT ROOM
+========================================= */
 
 function leaveRoom(){
 
@@ -2818,6 +2883,10 @@ function backHome(){
 
 }
 
+
+/* =========================================
+   CLEANUP
+========================================= */
 
 function cleanupPeer(){
 
@@ -2852,9 +2921,7 @@ function cleanupPeer(){
     if(connection){
 
         try{
-
             connection.close();
-
         }catch(e){}
 
     }
@@ -2866,9 +2933,7 @@ function cleanupPeer(){
     if(myPeer){
 
         try{
-
             myPeer.destroy();
-
         }catch(e){}
 
         myPeer=null;
@@ -2891,8 +2956,12 @@ function cleanupPeer(){
 
     hideRemoteTyping();
 
+    document.getElementById("bottle").style.transition="transform .3s ease";
+
     document.getElementById("bottle").style.transform=
         "translate(-50%,-50%) rotate(0deg)";
+
+    document.getElementById("spinArena").classList.remove("spinning");
 
     document.getElementById("leftDirection").classList.remove("winner");
 
@@ -2914,18 +2983,13 @@ function cleanupPeer(){
 
     document.getElementById("lastResult").textContent="No spin yet";
 
-    document.getElementById("spinStatus").textContent=
-        "Waiting for both players...";
+    document.getElementById("spinStatus").textContent="Waiting for both players...";
 
-    document.getElementById("rightPlayerStatus").textContent=
-        "● WAITING";
+    document.getElementById("rightPlayerStatus").textContent="● WAITING";
 
     document.getElementById("rightPlayerStatus").style.color="#999";
 
-    document.getElementById("waitingStatus").textContent=
-        "Waiting for your friend...";
-
-    // Clear previous chat when leaving a room.
+    document.getElementById("waitingStatus").textContent="Waiting for your friend...";
 
     const chatBox=document.getElementById("chatMessages");
 
@@ -2956,9 +3020,9 @@ function cleanupPeer(){
 }
 
 
-// =========================================
-// TOAST
-// =========================================
+/* =========================================
+   TOAST
+========================================= */
 
 function showToast(text){
 
@@ -2973,17 +3037,15 @@ function showToast(text){
     clearTimeout(window.toastTimer);
 
     window.toastTimer=setTimeout(()=>{
-
         toast.style.display="none";
-
     },2800);
 
 }
 
 
-// =========================================
-// INITIALIZATION
-// =========================================
+/* =========================================
+   INITIALIZATION
+========================================= */
 
 const playerNameInput=document.getElementById("playerName");
 
@@ -2998,8 +3060,6 @@ if(playerNameInput){
 }
 
 
-// Uppercase room code while typing.
-
 const roomInputElement=document.getElementById("roomInput");
 
 if(roomInputElement){
@@ -3007,14 +3067,14 @@ if(roomInputElement){
     roomInputElement.addEventListener("input",()=>{
 
         roomInputElement.value=
-            roomInputElement.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
+            roomInputElement.value.toUpperCase()
+            .replace(/[^A-Z0-9]/g,"")
+            .slice(0,6);
 
     });
 
 }
 
-
-// Auto-resize chat input when page loads.
 
 const chatInputElement=document.getElementById("chatInput");
 
