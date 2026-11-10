@@ -839,115 +839,135 @@
             return code;
         }
 
-        function createRoom() {
-            const nameInput = document.getElementById('mpPlayerName').value.trim();
-            if (nameInput) gameState.playerName = nameInput;
+        
+function createRoom() {
+    const nameInput = document.getElementById('mpPlayerName').value.trim();
+    if (nameInput) gameState.playerName = nameInput;
 
-            roomCode = generateRoomCode();
-            isHost = true;
+    roomCode = generateRoomCode();
+    isHost = true;
 
-            const peerId = `wa-${roomCode.toLowerCase()}-host`;
-            
-            try {
-                if (peer) { peer.destroy(); }
-                peer = new Peer(peerId, {
-                    host: '0.peerjs.com',
-                    port: 443,
-                    path: '/',
-                    secure: true,
-                    debug: 1
-                });
-            } catch (e) {
-                simulateMultiplayerFallback();
-                return;
-            }
+    const peerId = `wa-${roomCode.toLowerCase()}-host`;
 
-            peer.on('open', (id) => {
-                hideAllViews();
-                document.getElementById('waitingRoomView').classList.remove('hidden');
-                document.getElementById('displayRoomCode').innerText = roomCode;
-                document.getElementById('hostControls').classList.remove('hidden');
-                document.getElementById('guestWaitingText').classList.add('hidden');
-            });
+    if (peer) peer.destroy();
 
-            peer.on('connection', (connection) => {
-                conn = connection;
-                setupPeerConnection();
-                showGameMessage("Friend connected to room!", "success");
-            });
+    peer = new Peer(peerId, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        debug: 2
+    });
 
-            peer.on('error', (err) => {
-                console.warn("PeerJS Host Error:", err);
-                if (err.type === 'unavailable-id') {
-                    roomCode = generateRoomCode();
-                    createRoom();
-                } else {
-                    showGameMessage("Running in P2P hybrid mode.", "info");
-                }
-            });
-        }
-        window.createRoom = createRoom;
+    peer.on('open', () => {
+        hideAllViews();
+        document.getElementById('waitingRoomView').classList.remove('hidden');
+        document.getElementById('displayRoomCode').innerText = roomCode;
+        document.getElementById('hostControls').classList.remove('hidden');
+        document.getElementById('guestWaitingText').classList.remove('hidden');
+        document.getElementById('guestWaitingText').innerText =
+            'Waiting for a friend to join...';
+    });
 
-        function joinRoom() {
-            const codeInput = document.getElementById('joinCodeInput').value.trim().toUpperCase();
-            const nameInput = document.getElementById('mpPlayerName').value.trim();
-            if (nameInput) gameState.playerName = nameInput;
+    peer.on('connection', (connection) => {
+        if (conn) conn.close();
 
-            if (codeInput.length !== 6) {
-                showGameMessage("Please enter a valid 6-character room code.", "error");
-                return;
-            }
+        conn = connection;
+        setupPeerConnection();
 
-            roomCode = codeInput;
-            isHost = false;
+        document.getElementById('guestWaitingText').innerText =
+            'Friend connected! Ready to play.';
 
-            const myPeerId = `wa-guest-${Math.random().toString(36).substring(2, 7)}`;
-            
-            try {
-                if (peer) { peer.destroy(); }
-                peer = new Peer(myPeerId, {
-                    host: '0.peerjs.com',
-                    port: 443,
-                    path: '/',
-                    secure: true
-                });
-            } catch (e) {
-                simulateMultiplayerFallback();
-                return;
-            }
+        document.getElementById('guestWaitingText').classList.remove('hidden');
+    });
 
-            peer.on('open', () => {
-                const hostPeerId = `wa-${roomCode.toLowerCase()}-host`;
-                
-                hideAllViews();
-                document.getElementById('waitingRoomView').classList.remove('hidden');
-                document.getElementById('displayRoomCode').innerText = roomCode;
-                document.getElementById('hostControls').classList.add('hidden');
-                document.getElementById('guestWaitingText').classList.remove('hidden');
+    peer.on('error', (err) => {
+        console.error('Host Peer Error:', err);
+        alert('Room connection error: ' + err.type);
+    });
 
-                showGameMessage("Connecting to host room...", "info");
+    peer.on('disconnected', () => {
+        console.warn('Host disconnected from signaling server.');
+    });
+}
 
-                try {
-                    conn = peer.connect(hostPeerId, { reliable: true });
-                    setupPeerConnection();
-                } catch (err) {
-                    console.warn("Connection attempt failed:", err);
-                }
+window.createRoom = createRoom;
 
-                setTimeout(() => {
-                    if (!conn || !conn.open) {
-                        simulateMultiplayerFallback();
-                    }
-                }, 4000);
-            });
 
-            peer.on('error', (err) => {
-                console.warn("PeerJS join error:", err);
-                showGameMessage("Could not connect to host room. Please verify code.", "error");
-                setTimeout(returnToHome, 2500);
-            });
-        }
-        window.joinRoom = joinRoom;
+       
+function joinRoom() {
+    const codeInput = document.getElementById('joinCodeInput')
+        .value.trim().toUpperCase();
+
+    const nameInput = document.getElementById('mpPlayerName')
+        .value.trim();
+
+    if (nameInput) gameState.playerName = nameInput;
+
+    if (!/^[A-Z0-9]{6}$/.test(codeInput)) {
+        alert('Please enter a valid 6-character room code.');
+        return;
+    }
+
+    roomCode = codeInput;
+    isHost = false;
+
+    if (peer) peer.destroy();
+
+    const myPeerId =
+        `wa-guest-${Math.random().toString(36).substring(2, 10)}`;
+
+    peer = new Peer(myPeerId, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        debug: 2
+    });
+
+    peer.on('open', () => {
+        hideAllViews();
+
+        document.getElementById('waitingRoomView').classList.remove('hidden');
+        document.getElementById('displayRoomCode').innerText = roomCode;
+        document.getElementById('hostControls').classList.add('hidden');
+
+        const waiting = document.getElementById('guestWaitingText');
+        waiting.classList.remove('hidden');
+        waiting.innerText = 'Connecting to host...';
+
+        const hostPeerId = `wa-${roomCode.toLowerCase()}-host`;
+
+        conn = peer.connect(hostPeerId, {
+            reliable: true
+        });
+
+        setupPeerConnection();
+
+        conn.on('open', () => {
+            waiting.innerText = 'Connected! Waiting for host to start.';
+        });
+
+        conn.on('error', (err) => {
+            console.error('Guest connection error:', err);
+            waiting.innerText = 'Connection failed: ' + err;
+        });
+    });
+
+    peer.on('error', (err) => {
+        console.error('Guest Peer Error:', err);
+
+        document.getElementById('guestWaitingText').innerText =
+            'Unable to join room: ' + err.type;
+    });
+
+    peer.on('disconnected', () => {
+        console.warn('Guest disconnected from signaling server.');
+    });
+}
+
+window.joinRoom = joinRoom;
+
 
         function simulateMultiplayerFallback() {
             roomCode = roomCode || "DEMO99";
@@ -960,25 +980,44 @@
             showGameMessage("Room initialized in local P2P simulation mode.", "success");
         }
 
-        function setupPeerConnection() {
-            if (!conn) return;
-            conn.on('open', () => {
-                if (!isHost) {
-                    conn.send({ type: 'JOIN', name: gameState.playerName });
-                } else {
-                    conn.send({ type: 'ACK', name: gameState.playerName });
-                }
-            });
+        
+function setupPeerConnection() {
+    if (!conn) return;
 
-            conn.on('data', (data) => {
-                handlePeerData(data);
-            });
+    conn.on('open', () => {
+        console.log('P2P connection established!');
 
-            conn.on('close', () => {
-                showGameMessage("Peer disconnected from room.", "error");
-                setTimeout(returnToHome, 1500);
+        if (!isHost) {
+            conn.send({
+                type: 'JOIN',
+                name: gameState.playerName
+            });
+        } else {
+            conn.send({
+                type: 'ACK',
+                name: gameState.playerName
             });
         }
+    });
+
+    conn.on('data', (data) => {
+        console.log('Received:', data);
+        handlePeerData(data);
+    });
+
+    conn.on('close', () => {
+        console.warn('P2P connection closed.');
+
+        alert('Your opponent disconnected.');
+
+        returnToHome();
+    });
+
+    conn.on('error', (err) => {
+        console.error('Data connection error:', err);
+    });
+}
+
 
         function copyRoomCode() {
             const code = document.getElementById('displayRoomCode').innerText;
