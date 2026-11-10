@@ -883,10 +883,11 @@ hostConn.on('close', () => {
 
 
 
-function broadcastData(data, exceptConn = null) {
+
+function broadcastData(data, excludeConn = null) {
   if (isHost) {
     peerConnections.forEach(conn => {
-      if (conn !== exceptConn && conn.open) {
+      if (conn.open && conn !== excludeConn) {
         conn.send(data);
       }
     });
@@ -894,6 +895,7 @@ function broadcastData(data, exceptConn = null) {
     hostConn.send(data);
   }
 }
+
 
 
 
@@ -1010,10 +1012,11 @@ function handleNetworkData(data, senderConn) {
     return;
   }
 
+  
   if (data.type === 'PLAYER_JOINED') {
     activePlayers = data.activePlayers;
     gameState = data.gameState;
-    turnIndex = data.turnIndex || 0;
+    turnIndex = data.turnIndex ?? 0;
 
     setupPlayerCards();
     renderTokens();
@@ -1027,13 +1030,11 @@ function handleNetworkData(data, senderConn) {
       'left'
     );
 
-    return;
-  }
+  } else if (data.type === 'PLAYER_LEFT') {
 
-  if (data.type === 'PLAYER_LEFT') {
     activePlayers = data.activePlayers;
     gameState = data.gameState || gameState;
-    turnIndex = data.turnIndex || 0;
+    turnIndex = data.turnIndex ?? 0;
 
     if (data.leftPlayer) {
       delete gameState[data.leftPlayer];
@@ -1050,27 +1051,28 @@ function handleNetworkData(data, senderConn) {
       'left'
     );
 
-    return;
+  } else if (data.type === 'ROLL_RESULT') {
+
+    // Host relays the exact dice value to other players.
+    if (isHost) {
+      broadcastData(data, senderConn);
+    }
+
+    executeRemoteRoll(data.rollValue);
+
+  } else if (data.type === 'MOVE_TOKEN') {
+
+    // Host relays movement to other players.
+    if (isHost) {
+      broadcastData(data, senderConn);
+    }
+
+    executeRemoteMove(
+      data.color,
+      data.tokenIdx,
+      data.targetPos
+    );
   }
-
-
-} else if (data.type === 'ROLL_RESULT') {
-
-  // Host relays the exact dice value to every other player
-  if (isHost) {
-    broadcastData(data, senderConn);
-  }
-
-  executeRemoteRoll(data.rollValue);
-
-} else if (data.type === 'MOVE_TOKEN') {
-
-  // Host relays the token movement to every other player
-  if (isHost) {
-    broadcastData(data, senderConn);
-  }
-
-  executeRemoteMove(data.color, data.tokenIdx, data.targetPos);
 
 
   if (data.type === 'RESTART_MATCH') {
@@ -1598,20 +1600,3 @@ function addMessageToChat(sender, text, position) {
 
 // Initialize Board on load
 initializeBoard();
-
-
-
-// Expose HTML onclick functions globally
-window.setMatchMode = setMatchMode;
-window.setOnlineAction = setOnlineAction;
-window.selectPlayerCount = selectPlayerCount;
-window.selectUserColor = selectUserColor;
-window.startGame = startGame;
-window.handleDiceClick = handleDiceClick;
-window.toggleChat = toggleChat;
-window.sendChatMessage = sendChatMessage;
-window.sendQuickMessage = sendQuickMessage;
-window.restartMatch = restartMatch;
-window.returnToHome = returnToHome;
-window.closeExitModal = closeExitModal;
-
