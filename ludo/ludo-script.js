@@ -882,6 +882,7 @@ hostConn.on('close', () => {
 
 
 
+
 function broadcastData(data, exceptConn = null) {
   if (isHost) {
     peerConnections.forEach(conn => {
@@ -893,6 +894,7 @@ function broadcastData(data, exceptConn = null) {
     hostConn.send(data);
   }
 }
+
 
 
 
@@ -1051,15 +1053,25 @@ function handleNetworkData(data, senderConn) {
     return;
   }
 
-  if (data.type === 'ROLL_RESULT') {
-    executeRemoteRoll(data.rollValue);
-    return;
+
+} else if (data.type === 'ROLL_RESULT') {
+
+  // Host relays the exact dice value to every other player
+  if (isHost) {
+    broadcastData(data, senderConn);
   }
 
-  if (data.type === 'MOVE_TOKEN') {
-    executeRemoteMove(data.color, data.tokenIdx, data.targetPos);
-    return;
+  executeRemoteRoll(data.rollValue);
+
+} else if (data.type === 'MOVE_TOKEN') {
+
+  // Host relays the token movement to every other player
+  if (isHost) {
+    broadcastData(data, senderConn);
   }
+
+  executeRemoteMove(data.color, data.tokenIdx, data.targetPos);
+
 
   if (data.type === 'RESTART_MATCH') {
     gameState = data.gameState;
@@ -1140,7 +1152,17 @@ function initializeBoard() {
       if (r === 7 && c >= 9 && c <= 13) cell.classList.add('path-yellow');
       if (c === 7 && r >= 9 && r <= 13) cell.classList.add('path-blue');
 
-      if (SAFE_SPOTS.includes(key)) cell.classList.add('safe-star');
+      
+if (SAFE_SPOTS.includes(key)) {
+  cell.classList.add('safe-star');
+
+  const star = document.createElement('span');
+  star.className = 'safe-star-icon';
+  star.innerHTML = '★';
+
+  cell.appendChild(star);
+}
+
 
       boardEl.appendChild(cell);
       cellsMap[key] = cell;
