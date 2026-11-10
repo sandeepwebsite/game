@@ -1598,3 +1598,20 @@ function addMessageToChat(sender, text, position) {
 
 // Initialize Board on load
 initializeBoard();
+
+
+
+// Expose HTML onclick functions globally
+window.setMatchMode = setMatchMode;
+window.setOnlineAction = setOnlineAction;
+window.selectPlayerCount = selectPlayerCount;
+window.selectUserColor = selectUserColor;
+window.startGame = startGame;
+window.handleDiceClick = handleDiceClick;
+window.toggleChat = toggleChat;
+window.sendChatMessage = sendChatMessage;
+window.sendQuickMessage = sendQuickMessage;
+window.restartMatch = restartMatch;
+window.returnToHome = returnToHome;
+window.closeExitModal = closeExitModal;
+
