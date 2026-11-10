@@ -436,6 +436,10 @@ let peer = null;
 let peerConnections = [];
 let hostConn = null;
 let isHost = false;
+let isJoining = false;
+let roomReady = false;
+let joinTimeout = null;
+let connectionGeneration = 0;
 
 function generateRoomToken() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -636,213 +640,464 @@ function initOfflineGame() {
   addMessageToChat("System", "Offline Match Started!", 'left');
 }
 
+
 function initOnlineRoom() {
   const statusText = document.getElementById('room-status-text');
+  const startBtn = document.getElementById('start-btn');
+
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
+
+  if (joinTimeout) {
+    clearTimeout(joinTimeout);
+    joinTimeout = null;
+  }
+
+  connectionGeneration++;
+  const generation = connectionGeneration;
+
+  peerConnections = [];
+  hostConn = null;
+  roomReady = false;
+  isJoining = false;
+
+  if (startBtn) startBtn.disabled = true;
 
   if (onlineAction === 'create') {
     roomToken = generateRoomToken();
     isHost = true;
-    statusText.innerText = "Creating Room WebRTC Peer...";
 
-    peer = new Peer('LUDO-' + roomToken);
+    statusText.innerText = 'Creating room...';
 
-    peer.on('open', (id) => {
-      statusText.innerText = `Room Token: ${roomToken}. Waiting for players (1/${selectedPlayerCount})...`;
-      document.getElementById('room-tag').style.display = 'block';
-      document.getElementById('room-tag').innerText = `ROOM: ${roomToken}`;
+    const createPeer = () => {
+      if (generation !== connectionGeneration) return;
 
-      activePlayers = [selectedColor];
-      gameState = {};
-      gameState[selectedColor] = [-1, -1, -1, -1];
+      peer = new Peer('LUDO-' + roomToken);
 
-      setupPlayerCards();
-      document.getElementById('setup-modal').classList.add('hidden');
-      renderTokens();
-      updateTurnUI();
-      addMessageToChat("System", `Created ${selectedPlayerCount}-Player Room ${roomToken}. Share code with friends!`, 'left');
-    });
+      peer.on('open', () => {
+        if (generation !== connectionGeneration) return;
 
-    peer.on('connection', (conn) => {
-      peerConnections.push(conn);
-      conn.on('data', (data) => handleNetworkData(data, conn));
+        roomReady = true;
+        statusText.innerText =
+          `Room: ${roomToken} | Players: 1/${selectedPlayerCount}`;
 
-      conn.on('close', () => {
-        const leftColor = conn.playerColor;
-        if (leftColor) {
+        document.getElementById('room-tag').style.display = 'block';
+        document.getElementById('room-tag').innerText =
+          `ROOM: ${roomToken}`;
+
+        activePlayers = [selectedColor];
+        gameState = {};
+
+        ALL_COLORS.forEach(color => {
+          if (activePlayers.includes(color)) {
+            gameState[color] = [-1, -1, -1, -1];
+          }
+        });
+
+        setupPlayerCards();
+        document.getElementById('setup-modal').classList.add('hidden');
+
+        renderTokens();
+        updateTurnUI();
+
+        addMessageToChat(
+          'System',
+          `Room ${roomToken} created. Waiting for ${selectedPlayerCount - 1} more player(s).`,
+          'left'
+        );
+      });
+
+      peer.on('connection', conn => {
+        if (generation !== connectionGeneration) {
+          conn.close();
+          return;
+        }
+
+        peerConnections.push(conn);
+
+        conn.on('data', data => {
+          handleNetworkData(data, conn);
+        });
+
+        conn.on('close', () => {
+          peerConnections = peerConnections.filter(c => c !== conn);
+
+          if (!conn.playerColor) return;
+
+          const leftColor = conn.playerColor;
+
           activePlayers = activePlayers.filter(c => c !== leftColor);
           delete gameState[leftColor];
+
+          if (turnIndex >= activePlayers.length) {
+            turnIndex = 0;
+          }
 
           setupPlayerCards();
           renderTokens();
           updateTurnUI();
 
           showPlayerExitModal(leftColor);
-          addMessageToChat("System", `Player ${leftColor.toUpperCase()} left the game.`, 'left');
+
+          addMessageToChat(
+            'System',
+            `Player ${leftColor.toUpperCase()} disconnected.`,
+            'left'
+          );
 
           broadcastData({
             type: 'PLAYER_LEFT',
             leftPlayer: leftColor,
-            activePlayers: activePlayers
+            activePlayers: activePlayers,
+            gameState: gameState,
+            turnIndex: turnIndex
           });
-        }
+        });
       });
-    });
 
-    peer.on('error', (err) => {
-      statusText.innerText = "Room Token busy. Try starting again.";
-    });
+      peer.on('error', err => {
+        if (generation !== connectionGeneration) return;
+
+        if (err.type === 'unavailable-id') {
+          roomToken = generateRoomToken();
+          statusText.innerText = 'Room code occupied. Generating another...';
+
+          peer.destroy();
+          peer = null;
+
+          setTimeout(createPeer, 300);
+          return;
+        }
+
+        statusText.innerText = 'Room connection error: ' + err.type;
+        if (startBtn) startBtn.disabled = false;
+      });
+    };
+
+    createPeer();
 
   } else {
-    const inputVal = document.getElementById('room-code-input').value.trim().toUpperCase();
-    if (inputVal.length !== 5) {
-      alert('Please enter a valid 5-character Room Token.');
+    const inputVal = document.getElementById('room-code-input')
+      .value.trim().toUpperCase();
+
+    if (!/^[A-Z0-9]{5}$/.test(inputVal)) {
+      statusText.innerText = 'Enter a valid 5-character room code.';
+      if (startBtn) startBtn.disabled = false;
       return;
     }
+
     roomToken = inputVal;
     isHost = false;
+    isJoining = true;
 
-    statusText.innerText = "Connecting to Host...";
+    statusText.innerText = 'Connecting to room host...';
+
     peer = new Peer();
 
-    peer.on('open', (id) => {
-      hostConn = peer.connect('LUDO-' + roomToken);
+    peer.on('open', () => {
+      if (generation !== connectionGeneration) return;
+
+      hostConn = peer.connect('LUDO-' + roomToken, {
+        reliable: true
+      });
 
       hostConn.on('open', () => {
-        document.getElementById('room-tag').style.display = 'block';
-        document.getElementById('room-tag').innerText = `ROOM: ${roomToken}`;
-        document.getElementById('setup-modal').classList.add('hidden');
+        if (generation !== connectionGeneration) return;
+
+        statusText.innerText = 'Connected. Requesting room entry...';
 
         hostConn.send({
           type: 'JOIN_ROOM',
           color: selectedColor
         });
+
+        joinTimeout = setTimeout(() => {
+          if (isJoining && !roomReady) {
+            statusText.innerText =
+              'Host did not respond. Check the room code and try again.';
+
+            isJoining = false;
+
+            if (hostConn) hostConn.close();
+            if (peer) peer.destroy();
+
+            peer = null;
+            hostConn = null;
+
+            if (startBtn) startBtn.disabled = false;
+          }
+        }, 15000);
       });
 
-      hostConn.on('data', (data) => handleNetworkData(data, hostConn));
+      hostConn.on('data', data => {
+        if (generation !== connectionGeneration) return;
+        handleNetworkData(data, hostConn);
+      });
 
-      hostConn.on('close', () => {
-        showPlayerExitModal('HOST');
-        addMessageToChat("System", "Host disconnected from room.", 'left');
+hostConn.on('close', () => {
+  const wasConnected = roomReady;
+
+  if (joinTimeout) clearTimeout(joinTimeout);
+
+  isJoining = false;
+  roomReady = false;
+
+  if (wasConnected) {
+    showPlayerExitModal('HOST');
+    addMessageToChat(
+      'System',
+      'Host disconnected from room.',
+      'left'
+    );
+  } else {
+    statusText.innerText = 'Connection to host was closed.';
+  }
+
+  if (startBtn) startBtn.disabled = false;
+});
+
+      hostConn.on('error', err => {
+        statusText.innerText = 'Connection failed: ' + err;
+        isJoining = false;
+        if (startBtn) startBtn.disabled = false;
       });
     });
 
-    peer.on('error', (err) => {
-      statusText.innerText = "Could not find Room Code. Check code and try again.";
+    peer.on('error', err => {
+      if (generation !== connectionGeneration) return;
+
+      statusText.innerText =
+        'Unable to connect: ' + err.type +
+        '. Check the room code and try again.';
+
+      isJoining = false;
+
+      if (joinTimeout) clearTimeout(joinTimeout);
+      if (startBtn) startBtn.disabled = false;
     });
   }
 }
 
-function broadcastData(data) {
+
+
+function broadcastData(data, exceptConn = null) {
   if (isHost) {
     peerConnections.forEach(conn => {
-      if (conn.open) conn.send(data);
+      if (conn !== exceptConn && conn.open) {
+        conn.send(data);
+      }
     });
   } else if (hostConn && hostConn.open) {
     hostConn.send(data);
   }
 }
 
+
+
 function handleNetworkData(data, senderConn) {
+  if (!data || !data.type) return;
+
   if (data.type === 'JOIN_ROOM') {
-    if (isHost) {
-      if (activePlayers.length >= selectedPlayerCount) {
-        senderConn.send({ type: 'ERROR', msg: 'Room is full!' });
-        return;
-      }
+    if (!isHost || !roomReady) return;
 
-      let assignedColor = data.color;
-      if (activePlayers.includes(assignedColor)) {
-        assignedColor = ALL_COLORS.find(c => !activePlayers.includes(c));
-      }
+    // Prevent duplicate join requests.
+    if (senderConn.playerColor) return;
 
-      if (!assignedColor) {
-        senderConn.send({ type: 'ERROR', msg: 'Room is full!' });
-        return;
-      }
-
-      senderConn.playerColor = assignedColor;
-      activePlayers.push(assignedColor);
-      gameState[assignedColor] = [-1, -1, -1, -1];
-
+    // Validate room capacity.
+    if (activePlayers.length >= selectedPlayerCount) {
       senderConn.send({
-        type: 'INIT_CLIENT',
-        assignedColor: assignedColor,
-        activePlayers: activePlayers,
-        gameState: gameState,
-        turnIndex: turnIndex,
-        maxPlayers: selectedPlayerCount
+        type: 'ERROR',
+        msg: 'Room is full! Maximum players: ' + selectedPlayerCount
       });
-
-      setupPlayerCards();
-      renderTokens();
-      updateTurnUI();
-
-      broadcastData({
-        type: 'PLAYER_JOINED',
-        activePlayers: activePlayers,
-        gameState: gameState,
-        newPlayer: assignedColor
-      });
-
-      audio.play('playerJoin');
-      addMessageToChat("System", `Player joined as ${assignedColor.toUpperCase()}! (${activePlayers.length}/${selectedPlayerCount})`, 'left');
+      return;
     }
-  } else if (data.type === 'INIT_CLIENT') {
+
+    // Assign the requested color if available.
+    // Otherwise assign the first available color.
+    let assignedColor = ALL_COLORS.includes(data.color) &&
+      !activePlayers.includes(data.color)
+      ? data.color
+      : ALL_COLORS.find(c => !activePlayers.includes(c));
+
+    if (!assignedColor) {
+      senderConn.send({
+        type: 'ERROR',
+        msg: 'No available player colors.'
+      });
+      return;
+    }
+
+    senderConn.playerColor = assignedColor;
+
+    activePlayers.push(assignedColor);
+    gameState[assignedColor] = [-1, -1, -1, -1];
+
+    // Send the initial game state to the new player.
+    senderConn.send({
+      type: 'INIT_CLIENT',
+      assignedColor: assignedColor,
+      activePlayers: activePlayers,
+      gameState: gameState,
+      turnIndex: turnIndex,
+      maxPlayers: selectedPlayerCount
+    });
+
+    // Update existing players.
+    broadcastData({
+      type: 'PLAYER_JOINED',
+      activePlayers: activePlayers,
+      gameState: gameState,
+      turnIndex: turnIndex,
+      newPlayer: assignedColor,
+      maxPlayers: selectedPlayerCount
+    }, senderConn);
+
+    setupPlayerCards();
+    renderTokens();
+    updateTurnUI();
+
+    audio.play('playerJoin');
+
+    addMessageToChat(
+      'System',
+      `${assignedColor.toUpperCase()} joined (${activePlayers.length}/${selectedPlayerCount})`,
+      'left'
+    );
+
+    return;
+  }
+
+  if (data.type === 'INIT_CLIENT') {
+    if (joinTimeout) {
+      clearTimeout(joinTimeout);
+      joinTimeout = null;
+    }
+
+    if (!ALL_COLORS.includes(data.assignedColor)) return;
+
+    isJoining = false;
+    roomReady = true;
+
     selectedColor = data.assignedColor;
     activePlayers = data.activePlayers;
     gameState = data.gameState;
-    turnIndex = data.turnIndex;
+    turnIndex = data.turnIndex || 0;
     selectedPlayerCount = data.maxPlayers || selectedPlayerCount;
 
+    if (!activePlayers.includes(selectedColor)) return;
+
+    document.getElementById('room-tag').style.display = 'block';
+    document.getElementById('room-tag').innerText = `ROOM: ${roomToken}`;
+
+    document.getElementById('setup-modal').classList.add('hidden');
+
     setupPlayerCards();
     renderTokens();
     updateTurnUI();
-    audio.play('playerJoin');
-    addMessageToChat("System", `Joined Room! You are playing as ${selectedColor.toUpperCase()} (${activePlayers.length}/${selectedPlayerCount})`, 'left');
 
-  } else if (data.type === 'PLAYER_JOINED') {
+    audio.play('playerJoin');
+
+    addMessageToChat(
+      'System',
+      `Successfully joined as ${selectedColor.toUpperCase()}!`,
+      'left'
+    );
+
+    return;
+  }
+
+  if (data.type === 'PLAYER_JOINED') {
     activePlayers = data.activePlayers;
     gameState = data.gameState;
+    turnIndex = data.turnIndex || 0;
+
     setupPlayerCards();
     renderTokens();
     updateTurnUI();
-    audio.play('playerJoin');
-    addMessageToChat("System", `Player joined as ${data.newPlayer.toUpperCase()}! (${activePlayers.length}/${selectedPlayerCount})`, 'left');
 
-  } else if (data.type === 'PLAYER_LEFT') {
+    audio.play('playerJoin');
+
+    addMessageToChat(
+      'System',
+      `${data.newPlayer.toUpperCase()} joined (${activePlayers.length}/${selectedPlayerCount})`,
+      'left'
+    );
+
+    return;
+  }
+
+  if (data.type === 'PLAYER_LEFT') {
     activePlayers = data.activePlayers;
+    gameState = data.gameState || gameState;
+    turnIndex = data.turnIndex || 0;
+
     if (data.leftPlayer) {
       delete gameState[data.leftPlayer];
       showPlayerExitModal(data.leftPlayer);
     }
+
     setupPlayerCards();
     renderTokens();
     updateTurnUI();
-    addMessageToChat("System", `Player ${data.leftPlayer.toUpperCase()} left the game.`, 'left');
 
-  } else if (data.type === 'ROLL_RESULT') {
+    addMessageToChat(
+      'System',
+      `Player ${data.leftPlayer.toUpperCase()} left.`,
+      'left'
+    );
+
+    return;
+  }
+
+  if (data.type === 'ROLL_RESULT') {
     executeRemoteRoll(data.rollValue);
+    return;
+  }
 
-  } else if (data.type === 'MOVE_TOKEN') {
+  if (data.type === 'MOVE_TOKEN') {
     executeRemoteMove(data.color, data.tokenIdx, data.targetPos);
+    return;
+  }
 
-  } else if (data.type === 'RESTART_MATCH') {
+  if (data.type === 'RESTART_MATCH') {
     gameState = data.gameState;
     turnIndex = data.turnIndex;
+
     hideVictoryModal();
     resetTurnState();
     renderTokens();
     updateTurnUI();
-    addMessageToChat("System", "Match Restarted by Host!", 'left');
 
-  } else if (data.type === 'CHAT_MSG') {
+    addMessageToChat('System', 'Match restarted!', 'left');
+    return;
+  }
+
+  if (data.type === 'CHAT_MSG') {
     addMessageToChat(data.sender, data.text, 'left');
+    return;
+  }
 
-  } else if (data.type === 'ERROR') {
-    alert(data.msg);
-    audio.play('playerLeave');
+  if (data.type === 'ERROR') {
+    if (joinTimeout) clearTimeout(joinTimeout);
+
+    isJoining = false;
+    roomReady = false;
+
+    document.getElementById('room-status-text').innerText = data.msg;
+
+    if (hostConn) hostConn.close();
+    if (peer) peer.destroy();
+
+    hostConn = null;
+    peer = null;
+
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) startBtn.disabled = false;
   }
 }
+
 
 function setupPlayerCards() {
   ALL_COLORS.forEach(color => {
