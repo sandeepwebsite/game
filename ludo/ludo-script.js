@@ -1,1602 +1,2405 @@
-// Sound Effects Synthesizer using Web Audio API
-class LudoAudio {
-  constructor() {
-    this.ctx = null;
-    this.isMuted = false;
-  }
+/* =========================================================
+   LUDO MULTIPLAYER
+   Offline + Online PeerJS
+   ========================================================= */
 
-  init() {
-    if (!this.ctx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioContext();
-    }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-  }
+(() => {
+"use strict";
 
-  play(soundName) {
-    if (this.isMuted) return;
-    this.init();
+/* ================= CONFIGURATION ================= */
 
-    switch (soundName) {
-      case 'click':
-        this.playClick();
-        break;
-      case 'diceRoll':
-        this.playDiceRoll();
-        break;
-      case 'sixRolled':
-        this.playSixRolled();
-        break;
-      case 'tokenMove':
-        this.playTokenMove();
-        break;
-      case 'tokenCapture':
-        this.playTokenCapture();
-        break;
-      case 'tokenHome':
-        this.playTokenHome();
-        break;
-      case 'playerJoin':
-        this.playPlayerJoin();
-        break;
-      case 'playerLeave':
-        this.playPlayerLeave();
-        break;
-      case 'victory':
-        this.playVictory();
-        break;
-      case 'defeat':
-        this.playDefeat();
-        break;
-    }
-  }
+const COLORS = ["red", "green", "yellow", "blue"];
 
-  playClick() {
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.05);
-
-    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.05);
-  }
-
-  playDiceRoll() {
-    const rolls = 6;
-    for (let i = 0; i < rolls; i++) {
-      setTimeout(() => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-
-        const freq = 180 + Math.random() * 120;
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
-        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.04);
-      }, i * 45);
-    }
-  }
-
-  playSixRolled() {
-    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-    notes.forEach((freq, index) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + index * 0.06);
-
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime + index * 0.06);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + index * 0.06 + 0.12);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(this.ctx.currentTime + index * 0.06);
-      osc.stop(this.ctx.currentTime + index * 0.06 + 0.12);
-    });
-  }
-
-  playTokenMove() {
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.06);
-
-    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.06);
-  }
-
-  playTokenCapture() {
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.18);
-
-    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.18);
-  }
-
-  playTokenHome() {
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-    notes.forEach((freq, index) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + index * 0.07);
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime + index * 0.07);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + index * 0.07 + 0.18);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(this.ctx.currentTime + index * 0.07);
-      osc.stop(this.ctx.currentTime + index * 0.07 + 0.18);
-    });
-  }
-
-  playPlayerJoin() {
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(350, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.12);
-
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
-  }
-
-  playPlayerLeave() {
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.15);
-
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.15);
-  }
-
-  playVictory() {
-    const melody = [
-      { f: 523.25, d: 0.12 },
-      { f: 659.25, d: 0.12 },
-      { f: 783.99, d: 0.12 },
-      { f: 1046.50, d: 0.35 }
-    ];
-    let time = this.ctx.currentTime;
-    melody.forEach(note => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(note.f, time);
-
-      gain.gain.setValueAtTime(0.3, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + note.d);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(time);
-      osc.stop(time + note.d);
-      time += note.d * 0.9;
-    });
-  }
-
-  playDefeat() {
-    const notes = [300, 260, 220, 180];
-    let time = this.ctx.currentTime;
-    notes.forEach((freq, index) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, time);
-
-      gain.gain.setValueAtTime(0.2, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.18);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(time);
-      osc.stop(time + 0.18);
-      time += 0.16;
-    });
-  }
-}
-
-// Global audio instance & auto-unlock on initial gesture
-const audio = new LudoAudio();
-window.addEventListener('click', () => audio.init(), { once: true });
-window.addEventListener('touchstart', () => audio.init(), { once: true });
-
-// Game Configuration & State
-let isGameStarted = false;
-
-const rollDiceBtn = document.getElementById('roll-dice-btn');
-const statusText = document.getElementById('status-text');
-
-// Function called whenever a player joins or leaves
-function updateRoomState(joinedPlayers) {
-  activePlayers = joinedPlayers;
-
-  if (activePlayers.length >= selectedPlayerCount) {
-    isGameStarted = true;
-    if (rollDiceBtn) rollDiceBtn.disabled = false;
-    if (statusText) statusText.innerText = "All players joined! It's time to roll.";
-  } else {
-    isGameStarted = false;
-    if (rollDiceBtn) rollDiceBtn.disabled = true;
-    if (statusText) statusText.innerText = `Waiting for players... (${activePlayers.length}/${selectedPlayerCount})`;
-  }
-}
-
-function triggerHaptic(type = 15) {
-  if (navigator.vibrate) {
-    navigator.vibrate(type);
-  }
-}
-
-// Inject Victory Modal Styles & HTML Dynamically
-(function injectVictoryModalUI() {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .victory-modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(8px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .victory-modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .victory-modal-card {
-      background: #1e293b;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 28px 24px;
-      width: 90%;
-      max-width: 360px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-      transform: scale(0.8);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .victory-modal-overlay.active .victory-modal-card {
-      transform: scale(1);
-    }
-    .victory-trophy {
-      font-size: 56px;
-      margin-bottom: 12px;
-      filter: drop-shadow(0 0 12px rgba(234, 179, 8, 0.5));
-      animation: trophyBounce 1s infinite alternate ease-in-out;
-    }
-    @keyframes trophyBounce {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-8px); }
-    }
-    .victory-title {
-      font-size: 22px;
-      font-weight: 800;
-      color: #f8fafc;
-      margin: 0 0 6px 0;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .victory-sub {
-      font-size: 14px;
-      color: #94a3b8;
-      margin-bottom: 24px;
-    }
-    .victory-btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .victory-btn {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: transform 0.15s ease, filter 0.15s ease;
-    }
-    .victory-btn:active {
-      transform: scale(0.97);
-    }
-    .victory-btn-restart {
-      background: #3b82f6;
-      color: #ffffff;
-      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-    }
-    .victory-btn-home {
-      background: #334155;
-      color: #f8fafc;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-  `;
-  document.head.appendChild(style);
-
-  const modalHtml = `
-    <div id="victory-modal" class="victory-modal-overlay">
-      <div class="victory-modal-card">
-        <div class="victory-trophy">🏆</div>
-        <h2 id="victory-winner-text" class="victory-title">RED WINS!</h2>
-        <p class="victory-sub">All tokens reached home safely.</p>
-        <div class="victory-btn-group">
-          <button class="victory-btn victory-btn-restart" onclick="restartMatch()">
-            <span>🔄</span> Restart Match
-          </button>
-          <button class="victory-btn victory-btn-home" onclick="returnToHome()">
-            <span>🏠</span> Main Menu
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-})();
-
-const COMMON_PATH = [
-  [6,1], [6,2], [6,3], [6,4], [6,5],
-  [5,6], [4,6], [3,6], [2,6], [1,6], [0,6],
-  [0,7], [0,8],
-  [1,8], [2,8], [3,8], [4,8], [5,8],
-  [6,9], [6,10], [6,11], [6,12], [6,13], [6,14],
-  [7,14], [8,14],
-  [8,13], [8,12], [8,11], [8,10], [8,9],
-  [9,8], [10,8], [11,8], [12,8], [13,8], [14,8],
-  [14,7], [14,6],
-  [13,6], [12,6], [11,6], [10,6], [9,6],
-  [8,5], [8,4], [8,3], [8,2], [8,1], [8,0],
-  [7,0], [6,0]
-];
-
-const SAFE_SPOTS = [
-  "6,1", "8,2", "1,8", "2,6", "8,13", "6,12", "13,6", "12,8"
-];
-
-const ALL_COLORS = ['red', 'green', 'yellow', 'blue'];
-
-const PLAYER_CONFIG = {
-  red: { startIndex: 0, homePath: [[7,1], [7,2], [7,3], [7,4], [7,5]], color: 'var(--red)' },
-  green: { startIndex: 13, homePath: [[1,7], [2,7], [3,7], [4,7], [5,7]], color: 'var(--green)' },
-  yellow: { startIndex: 26, homePath: [[7,13], [7,12], [7,11], [7,10], [7,9]], color: 'var(--yellow)' },
-  blue: { startIndex: 39, homePath: [[13,7], [12,7], [11,7], [10,7], [9,7]], color: 'var(--blue)' }
+const COLOR_NAMES = {
+  red: "Red",
+  green: "Green",
+  yellow: "Yellow",
+  blue: "Blue"
 };
 
-// State Management
-let matchMode = 'offline';
-let onlineAction = 'create';
-let roomToken = '';
-let selectedPlayerCount = 2;
-let selectedColor = 'red';
-let activePlayers = [];
+const COLOR_HEX = {
+  red: "#ff3b30",
+  green: "#34c759",
+  yellow: "#ffcc00",
+  blue: "#007aff"
+};
 
-let turnIndex = 0;
-let currentRoll = null;
-let hasRolled = false;
-let isRolling = false;
-let isMoving = false;
-let consecutiveSixes = 0;
+const TOKENS_PER_PLAYER = 4;
 
-let gameState = {};
-const boardEl = document.getElementById('board');
-const cellsMap = {};
+const SAFE_CELLS = [0, 8, 13, 21, 26, 34, 39, 47];
 
-// PeerJS WebRTC Connection Variables
+/*
+  Standard 52-cell Ludo track.
+  Coordinates use 0-based row and column.
+*/
+
+const TRACK = [
+  [6,1],[6,2],[6,3],[6,4],[6,5],
+  [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],
+  [0,7],[0,8],
+  [1,8],[2,8],[3,8],[4,8],[5,8],
+  [6,9],[6,10],[6,11],[6,12],[6,13],[6,14],
+  [7,14],[8,14],
+  [8,13],[8,12],[8,11],[8,10],[8,9],
+  [9,8],[10,8],[11,8],[12,8],[13,8],[14,8],
+  [14,7],[14,6],
+  [13,6],[12,6],[11,6],[10,6],[9,6],
+  [8,5],[8,4],[8,3],[8,2],[8,1],[8,0],
+  [7,0],[6,0]
+];
+
+/*
+  Each color starts at a different position
+  on the shared track.
+*/
+
+const START_INDEX = {
+  red: 0,
+  green: 13,
+  yellow: 26,
+  blue: 39
+};
+
+/*
+  Home lane coordinates.
+*/
+
+const HOME_LANES = {
+  red: [
+    [7,1],[7,2],[7,3],[7,4],[7,5],[7,6]
+  ],
+
+  green: [
+    [1,7],[2,7],[3,7],[4,7],[5,7],[6,7]
+  ],
+
+  yellow: [
+    [7,13],[7,12],[7,11],[7,10],[7,9],[7,8]
+  ],
+
+  blue: [
+    [13,7],[12,7],[11,7],[10,7],[9,7],[8,7]
+  ]
+};
+
+const BASE_COORDS = {
+  red: [[2,2],[2,4],[4,2],[4,4]],
+  green: [[2,10],[2,12],[4,10],[4,12]],
+  yellow: [[10,10],[10,12],[12,10],[12,12]],
+  blue: [[10,2],[10,4],[12,2],[12,4]]
+};
+
+/* ================= GAME STATE ================= */
+
+let matchMode = "offline";
+let onlineAction = "create";
+
+let playerCount = 2;
+let selectedColor = "red";
+
+let players = [];
+let currentTurn = 0;
+
+let diceValue = 0;
+let diceRolling = false;
+let waitingForMove = false;
+
+let gameStarted = false;
+let gameOver = false;
+
+let gameState = null;
+
 let peer = null;
-let peerConnections = [];
-let hostConn = null;
+let connections = [];
+
+let roomCode = "";
 let isHost = false;
-let isJoining = false;
-let roomReady = false;
-let joinTimeout = null;
-let connectionGeneration = 0;
+let myPeerId = null;
 
-function generateRoomToken() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let token = '';
-  for (let i = 0; i < 5; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
+let myColor = null;
+let hostConnection = null;
 
-function setMatchMode(mode) {
-  audio.play('click');
-  matchMode = mode;
-  document.getElementById('mode-offline-btn').classList.toggle('active', mode === 'offline');
-  document.getElementById('mode-online-btn').classList.toggle('active', mode === 'online');
+let chatOpen = false;
+let unreadMessages = 0;
 
-  document.getElementById('offline-settings').style.display = mode === 'offline' ? 'block' : 'none';
-  document.getElementById('online-settings').style.display = mode === 'online' ? 'flex' : 'none';
+let audioContext = null;
+let gameMessageTimer = null;
 
-  if (mode === 'online') {
-    setOnlineAction(onlineAction);
-  }
-}
+const $ = id => document.getElementById(id);
 
-function setOnlineAction(action) {
-  audio.play('click');
-  onlineAction = action;
-  document.getElementById('online-create-btn').classList.toggle('active', action === 'create');
-  document.getElementById('online-join-btn').classList.toggle('active', action === 'join');
+/* ================= AUDIO ================= */
 
-  const roomInput = document.getElementById('room-code-input');
-  const statusText = document.getElementById('room-status-text');
-  const onlinePlayerOpt = document.getElementById('online-player-select');
+function playSound(type = "click") {
 
-  if (action === 'join') {
-    roomInput.style.display = 'block';
-    if (onlinePlayerOpt) onlinePlayerOpt.style.display = 'none';
-    statusText.innerText = "Enter room code & click Join";
-  } else {
-    roomInput.style.display = 'none';
-    if (onlinePlayerOpt) onlinePlayerOpt.style.display = 'block';
-    statusText.innerText = `Click Start to generate 5-Digit Room Token (${selectedPlayerCount} Players)`;
-  }
-}
+  try {
 
-function selectPlayerCount(count) {
-  audio.play('click');
-  selectedPlayerCount = count;
+    const AudioCtx =
+      window.AudioContext || window.webkitAudioContext;
 
-  document.querySelectorAll('.player-opt-grid .opt-btn, .online-player-opt-grid .opt-btn').forEach(btn => {
-    const btnCount = parseInt(btn.dataset.count || btn.innerText);
-    btn.classList.toggle('active', btnCount === count);
-  });
+    if (!AudioCtx) return;
 
-  if (matchMode === 'online' && onlineAction === 'create') {
-    const statusText = document.getElementById('room-status-text');
-    if (statusText) {
-      statusText.innerText = `Click Start to generate 5-Digit Room Token (${selectedPlayerCount} Players)`;
+    if (!audioContext) {
+      audioContext = new AudioCtx();
     }
-  }
-}
 
-function selectUserColor(color) {
-  audio.play('click');
-  selectedColor = color;
-  document.querySelectorAll('.color-opt-grid .color-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.classList.contains(color));
-  });
-}
-
-function startGame() {
-  audio.play('click');
-  triggerHaptic(30);
-
-  if (matchMode === 'online') {
-    initOnlineRoom();
-  } else {
-    initOfflineGame();
-  }
-}
-
-function showPlayerExitModal(playerColor) {
-  audio.play('playerLeave');
-  triggerHaptic([30, 50, 30]);
-
-  const modal = document.getElementById('exit-modal');
-  if (!modal) return;
-
-  const titleEl = document.getElementById('exit-modal-title');
-  const descEl = document.getElementById('exit-modal-desc');
-  const ringEl = document.getElementById('exit-avatar-ring');
-
-  const colorHex = PLAYER_CONFIG[playerColor]?.color || '#f43f5e';
-
-  if (titleEl) titleEl.innerText = `${playerColor.toUpperCase()} Left`;
-  if (descEl) descEl.innerText = `Player ${playerColor.toUpperCase()} has disconnected from the room.`;
-
-  if (ringEl) {
-    ringEl.style.borderColor = colorHex;
-    ringEl.style.boxShadow = `0 0 15px ${colorHex}`;
-  }
-
-  modal.classList.remove('hidden');
-}
-
-function closeExitModal() {
-  audio.play('click');
-  const modal = document.getElementById('exit-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function showVictoryModal(winnerColor) {
-  audio.play('victory');
-  triggerHaptic([40, 80, 40, 80, 100]);
-
-  const modal = document.getElementById('victory-modal');
-  const titleEl = document.getElementById('victory-winner-text');
-
-  if (titleEl) {
-    titleEl.innerText = `${winnerColor.toUpperCase()} HAS WON! 🎉`;
-    titleEl.style.color = PLAYER_CONFIG[winnerColor]?.color || '#3b82f6';
-  }
-
-  if (modal) modal.classList.add('active');
-}
-
-function hideVictoryModal() {
-  const modal = document.getElementById('victory-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function restartMatch() {
-  audio.play('click');
-  hideVictoryModal();
-
-  activePlayers.forEach(c => {
-    gameState[c] = [-1, -1, -1, -1];
-  });
-
-  turnIndex = 0;
-  resetTurnState();
-  renderTokens();
-  updateTurnUI();
-  addMessageToChat("System", "Match Restarted!", 'left');
-
-  if (matchMode === 'online') {
-    broadcastData({
-      type: 'RESTART_MATCH',
-      gameState: gameState,
-      turnIndex: turnIndex
-    });
-  }
-}
-
-function returnToHome() {
-  audio.play('click');
-  hideVictoryModal();
-
-  if (peer) {
-    peer.destroy();
-    peer = null;
-  }
-  peerConnections = [];
-  hostConn = null;
-
-  document.getElementById('setup-modal').classList.remove('hidden');
-  document.getElementById('room-tag').style.display = 'none';
-}
-
-function initOfflineGame() {
-  const userIndex = ALL_COLORS.indexOf(selectedColor);
-  activePlayers = [];
-
-  if (selectedPlayerCount === 2) {
-    activePlayers.push(ALL_COLORS[userIndex]);
-    activePlayers.push(ALL_COLORS[(userIndex + 2) % 4]);
-  } else if (selectedPlayerCount === 3) {
-    activePlayers.push(ALL_COLORS[userIndex]);
-    activePlayers.push(ALL_COLORS[(userIndex + 1) % 4]);
-    activePlayers.push(ALL_COLORS[(userIndex + 2) % 4]);
-  } else {
-    activePlayers = [...ALL_COLORS];
-  }
-
-  gameState = {};
-  ALL_COLORS.forEach(c => {
-    if (activePlayers.includes(c)) {
-      gameState[c] = [-1, -1, -1, -1];
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
     }
-  });
 
-  setupPlayerCards();
-  turnIndex = 0;
-  document.getElementById('room-tag').style.display = 'none';
-  document.getElementById('setup-modal').classList.add('hidden');
-  renderTokens();
-  updateTurnUI();
-  addMessageToChat("System", "Offline Match Started!", 'left');
-}
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
 
-function initOnlineRoom() {
-  const statusText = document.getElementById('room-status-text');
-  const startBtn = document.getElementById('start-btn');
+    const now = audioContext.currentTime;
 
-  if (peer) {
-    peer.destroy();
-    peer = null;
-  }
-
-  if (joinTimeout) {
-    clearTimeout(joinTimeout);
-    joinTimeout = null;
-  }
-
-  connectionGeneration++;
-  const generation = connectionGeneration;
-
-  peerConnections = [];
-  hostConn = null;
-  roomReady = false;
-  isJoining = false;
-
-  if (startBtn) startBtn.disabled = true;
-
-  if (onlineAction === 'create') {
-    roomToken = generateRoomToken();
-    isHost = true;
-
-    statusText.innerText = 'Creating room...';
-
-    const createPeer = () => {
-      if (generation !== connectionGeneration) return;
-
-      peer = new Peer('LUDO-' + roomToken);
-
-      peer.on('open', () => {
-        if (generation !== connectionGeneration) return;
-
-        roomReady = true;
-        statusText.innerText =
-          `Room: ${roomToken} | Players: 1/${selectedPlayerCount}`;
-
-        document.getElementById('room-tag').style.display = 'block';
-        document.getElementById('room-tag').innerText =
-          `ROOM: ${roomToken}`;
-
-        activePlayers = [selectedColor];
-        gameState = {};
-
-        ALL_COLORS.forEach(color => {
-          if (activePlayers.includes(color)) {
-            gameState[color] = [-1, -1, -1, -1];
-          }
-        });
-
-        setupPlayerCards();
-        document.getElementById('setup-modal').classList.add('hidden');
-
-        renderTokens();
-        updateTurnUI();
-
-        addMessageToChat(
-          'System',
-          `Room ${roomToken} created. Waiting for ${selectedPlayerCount - 1} more player(s).`,
-          'left'
-        );
-      });
-
-      peer.on('connection', conn => {
-        if (generation !== connectionGeneration) {
-          conn.close();
-          return;
-        }
-
-        peerConnections.push(conn);
-
-        conn.on('data', data => {
-          handleNetworkData(data, conn);
-        });
-
-        conn.on('close', () => {
-          peerConnections = peerConnections.filter(c => c !== conn);
-
-          if (!conn.playerColor) return;
-
-          const leftColor = conn.playerColor;
-
-          activePlayers = activePlayers.filter(c => c !== leftColor);
-          delete gameState[leftColor];
-
-          if (turnIndex >= activePlayers.length) {
-            turnIndex = 0;
-          }
-
-          setupPlayerCards();
-          renderTokens();
-          updateTurnUI();
-
-          showPlayerExitModal(leftColor);
-
-          addMessageToChat(
-            'System',
-            `Player ${leftColor.toUpperCase()} disconnected.`,
-            'left'
-          );
-
-          broadcastData({
-            type: 'PLAYER_LEFT',
-            leftPlayer: leftColor,
-            activePlayers: activePlayers,
-            gameState: gameState,
-            turnIndex: turnIndex
-          });
-        });
-      });
-
-      peer.on('error', err => {
-        if (generation !== connectionGeneration) return;
-
-        if (err.type === 'unavailable-id') {
-          roomToken = generateRoomToken();
-          statusText.innerText = 'Room code occupied. Generating another...';
-
-          peer.destroy();
-          peer = null;
-
-          setTimeout(createPeer, 300);
-          return;
-        }
-
-        statusText.innerText = 'Room connection error: ' + err.type;
-        if (startBtn) startBtn.disabled = false;
-      });
+    const sounds = {
+      click: [500, 0.06],
+      dice: [650, 0.12],
+      move: [420, 0.07],
+      capture: [180, 0.25],
+      win: [850, 0.5],
+      message: [720, 0.08]
     };
 
-    createPeer();
+    const [frequency, duration] =
+      sounds[type] || sounds.click;
 
-  } else {
-    const inputVal = document.getElementById('room-code-input')
-      .value.trim().toUpperCase();
+    oscillator.type = "sine";
 
-    if (!/^[A-Z0-9]{5}$/.test(inputVal)) {
-      statusText.innerText = 'Enter a valid 5-character room code.';
-      if (startBtn) startBtn.disabled = false;
-      return;
+    oscillator.frequency.setValueAtTime(
+      frequency,
+      now
+    );
+
+    if (type === "dice") {
+
+      oscillator.frequency.exponentialRampToValueAtTime(
+        220,
+        now + duration
+      );
+
     }
 
-    roomToken = inputVal;
-    isHost = false;
-    isJoining = true;
+    if (type === "win") {
 
-    statusText.innerText = 'Connecting to room host...';
+      oscillator.frequency.exponentialRampToValueAtTime(
+        1400,
+        now + duration
+      );
 
-    peer = new Peer();
+    }
 
-    peer.on('open', () => {
-      if (generation !== connectionGeneration) return;
+    gain.gain.setValueAtTime(0.001, now);
 
-      hostConn = peer.connect('LUDO-' + roomToken, {
-        reliable: true
-      });
-
-      hostConn.on('open', () => {
-        if (generation !== connectionGeneration) return;
-
-        statusText.innerText = 'Connected. Requesting room entry...';
-
-        hostConn.send({
-          type: 'JOIN_ROOM',
-          color: selectedColor
-        });
-
-        joinTimeout = setTimeout(() => {
-          if (isJoining && !roomReady) {
-            statusText.innerText =
-              'Host did not respond. Check the room code and try again.';
-
-            isJoining = false;
-
-            if (hostConn) hostConn.close();
-            if (peer) peer.destroy();
-
-            peer = null;
-            hostConn = null;
-
-            if (startBtn) startBtn.disabled = false;
-          }
-        }, 15000);
-      });
-
-      hostConn.on('data', data => {
-        if (generation !== connectionGeneration) return;
-        handleNetworkData(data, hostConn);
-      });
-
-hostConn.on('close', () => {
-  const wasConnected = roomReady;
-
-  if (joinTimeout) clearTimeout(joinTimeout);
-
-  isJoining = false;
-  roomReady = false;
-
-  if (wasConnected) {
-    showPlayerExitModal('HOST');
-    addMessageToChat(
-      'System',
-      'Host disconnected from room.',
-      'left'
+    gain.gain.exponentialRampToValueAtTime(
+      0.12,
+      now + 0.015
     );
-  } else {
-    statusText.innerText = 'Connection to host was closed.';
-  }
 
-  if (startBtn) startBtn.disabled = false;
-});
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      now + duration
+    );
 
-      hostConn.on('error', err => {
-        statusText.innerText = 'Connection failed: ' + err;
-        isJoining = false;
-        if (startBtn) startBtn.disabled = false;
-      });
-    });
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.02);
 
-    peer.on('error', err => {
-      if (generation !== connectionGeneration) return;
-
-      statusText.innerText =
-        'Unable to connect: ' + err.type +
-        '. Check the room code and try again.';
-
-      isJoining = false;
-
-      if (joinTimeout) clearTimeout(joinTimeout);
-      if (startBtn) startBtn.disabled = false;
-    });
+  } catch (error) {
+    console.warn("Audio unavailable:", error);
   }
 }
 
+/* ================= SETUP FUNCTIONS ================= */
 
+window.setMatchMode = function(mode) {
 
+  matchMode = mode;
 
+  $("mode-offline-btn").classList.toggle(
+    "active",
+    mode === "offline"
+  );
 
-function broadcastData(data, excludeConn = null) {
-  if (isHost) {
-    peerConnections.forEach(conn => {
-      if (conn.open && conn !== excludeConn) {
-        conn.send(data);
-      }
-    });
-  } else if (hostConn && hostConn.open) {
-    hostConn.send(data);
-  }
-}
+  $("mode-online-btn").classList.toggle(
+    "active",
+    mode === "online"
+  );
 
+  $("offline-settings").style.display =
+    mode === "offline" ? "block" : "none";
 
+  $("online-settings").style.display =
+    mode === "online" ? "flex" : "none";
 
+  $("room-status-text").textContent =
+    mode === "online"
+      ? "Create a room or join an existing room"
+      : "";
 
+  updateStartButton();
 
-function handleNetworkData(data, senderConn) {
-  if (!data || !data.type) return;
+};
 
-  if (data.type === 'JOIN_ROOM') {
-    if (!isHost || !roomReady) return;
+window.setOnlineAction = function(action) {
 
-    // Prevent duplicate join requests.
-    if (senderConn.playerColor) return;
+  onlineAction = action;
 
-    // Validate room capacity.
-    if (activePlayers.length >= selectedPlayerCount) {
-      senderConn.send({
-        type: 'ERROR',
-        msg: 'Room is full! Maximum players: ' + selectedPlayerCount
-      });
-      return;
+  $("online-create-btn").classList.toggle(
+    "active",
+    action === "create"
+  );
+
+  $("online-join-btn").classList.toggle(
+    "active",
+    action === "join"
+  );
+
+  $("online-player-select").style.display =
+    action === "create" ? "block" : "none";
+
+  $("room-code-input").style.display =
+    action === "join" ? "block" : "none";
+
+  $("room-status-text").textContent =
+    action === "create"
+      ? "Create a new multiplayer room"
+      : "Enter the five-digit room code";
+
+  updateStartButton();
+
+};
+
+window.selectPlayerCount = function(count) {
+
+  playerCount = count;
+
+  document.querySelectorAll(
+    '[data-count]'
+  ).forEach(button => {
+
+    const parent = button.parentElement;
+
+    if (
+      parent.classList.contains("player-opt-grid") ||
+      parent.classList.contains("online-player-opt-grid")
+    ) {
+
+      button.classList.toggle(
+        "active",
+        Number(button.dataset.count) === count
+      );
+
     }
 
-    // Assign the requested color if available.
-    // Otherwise assign the first available color.
-    let assignedColor = ALL_COLORS.includes(data.color) &&
-      !activePlayers.includes(data.color)
-      ? data.color
-      : ALL_COLORS.find(c => !activePlayers.includes(c));
-
-    if (!assignedColor) {
-      senderConn.send({
-        type: 'ERROR',
-        msg: 'No available player colors.'
-      });
-      return;
-    }
-
-    senderConn.playerColor = assignedColor;
-
-    activePlayers.push(assignedColor);
-    gameState[assignedColor] = [-1, -1, -1, -1];
-
-    // Send the initial game state to the new player.
-    senderConn.send({
-      type: 'INIT_CLIENT',
-      assignedColor: assignedColor,
-      activePlayers: activePlayers,
-      gameState: gameState,
-      turnIndex: turnIndex,
-      maxPlayers: selectedPlayerCount
-    });
-
-    // Update existing players.
-    broadcastData({
-      type: 'PLAYER_JOINED',
-      activePlayers: activePlayers,
-      gameState: gameState,
-      turnIndex: turnIndex,
-      newPlayer: assignedColor,
-      maxPlayers: selectedPlayerCount
-    }, senderConn);
-
-    setupPlayerCards();
-    renderTokens();
-    updateTurnUI();
-
-    audio.play('playerJoin');
-
-    addMessageToChat(
-      'System',
-      `${assignedColor.toUpperCase()} joined (${activePlayers.length}/${selectedPlayerCount})`,
-      'left'
-    );
-
-    return;
-  }
-
-  if (data.type === 'INIT_CLIENT') {
-    if (joinTimeout) {
-      clearTimeout(joinTimeout);
-      joinTimeout = null;
-    }
-
-    if (!ALL_COLORS.includes(data.assignedColor)) return;
-
-    isJoining = false;
-    roomReady = true;
-
-    selectedColor = data.assignedColor;
-    activePlayers = data.activePlayers;
-    gameState = data.gameState;
-    turnIndex = data.turnIndex || 0;
-    selectedPlayerCount = data.maxPlayers || selectedPlayerCount;
-
-    if (!activePlayers.includes(selectedColor)) return;
-
-    document.getElementById('room-tag').style.display = 'block';
-    document.getElementById('room-tag').innerText = `ROOM: ${roomToken}`;
-
-    document.getElementById('setup-modal').classList.add('hidden');
-
-    setupPlayerCards();
-    renderTokens();
-    updateTurnUI();
-
-    audio.play('playerJoin');
-
-    addMessageToChat(
-      'System',
-      `Successfully joined as ${selectedColor.toUpperCase()}!`,
-      'left'
-    );
-
-    return;
-  }
-
-  
-  if (data.type === 'PLAYER_JOINED') {
-    activePlayers = data.activePlayers;
-    gameState = data.gameState;
-    turnIndex = data.turnIndex ?? 0;
-
-    setupPlayerCards();
-    renderTokens();
-    updateTurnUI();
-
-    audio.play('playerJoin');
-
-    addMessageToChat(
-      'System',
-      `${data.newPlayer.toUpperCase()} joined (${activePlayers.length}/${selectedPlayerCount})`,
-      'left'
-    );
-
-  } else if (data.type === 'PLAYER_LEFT') {
-
-    activePlayers = data.activePlayers;
-    gameState = data.gameState || gameState;
-    turnIndex = data.turnIndex ?? 0;
-
-    if (data.leftPlayer) {
-      delete gameState[data.leftPlayer];
-      showPlayerExitModal(data.leftPlayer);
-    }
-
-    setupPlayerCards();
-    renderTokens();
-    updateTurnUI();
-
-    addMessageToChat(
-      'System',
-      `Player ${data.leftPlayer.toUpperCase()} left.`,
-      'left'
-    );
-
-  } else if (data.type === 'ROLL_RESULT') {
-
-    // Host relays the exact dice value to other players.
-    if (isHost) {
-      broadcastData(data, senderConn);
-    }
-
-    executeRemoteRoll(data.rollValue);
-
-  } else if (data.type === 'MOVE_TOKEN') {
-
-    // Host relays movement to other players.
-    if (isHost) {
-      broadcastData(data, senderConn);
-    }
-
-    executeRemoteMove(
-      data.color,
-      data.tokenIdx,
-      data.targetPos
-    );
-  }
-
-
-  if (data.type === 'RESTART_MATCH') {
-    gameState = data.gameState;
-    turnIndex = data.turnIndex;
-
-    hideVictoryModal();
-    resetTurnState();
-    renderTokens();
-    updateTurnUI();
-
-    addMessageToChat('System', 'Match restarted!', 'left');
-    return;
-  }
-
-  if (data.type === 'CHAT_MSG') {
-    addMessageToChat(data.sender, data.text, 'left');
-    return;
-  }
-
-  if (data.type === 'ERROR') {
-    if (joinTimeout) clearTimeout(joinTimeout);
-
-    isJoining = false;
-    roomReady = false;
-
-    document.getElementById('room-status-text').innerText = data.msg;
-
-    if (hostConn) hostConn.close();
-    if (peer) peer.destroy();
-
-    hostConn = null;
-    peer = null;
-
-    const startBtn = document.getElementById('start-btn');
-    if (startBtn) startBtn.disabled = false;
-  }
-}
-
-
-function setupPlayerCards() {
-  ALL_COLORS.forEach(color => {
-    const card = document.getElementById(`card-${color}`);
-    const home = document.getElementById(`home-${color}`);
-
-    if (activePlayers.includes(color)) {
-      if (card) card.classList.remove('disabled');
-      if (home) home.classList.remove('disabled-home');
-    } else {
-      if (card) card.classList.add('disabled');
-      if (home) home.classList.add('disabled-home');
-    }
   });
+
+};
+
+window.selectUserColor = function(color) {
+
+  selectedColor = color;
+
+  document.querySelectorAll(
+    ".color-btn"
+  ).forEach(button => {
+
+    button.classList.toggle(
+      "active",
+      button.classList.contains(color)
+    );
+
+  });
+
+};
+
+function updateStartButton() {
+
+  const button = $("start-btn");
+
+  if (!button) return;
+
+  const code = $("room-code-input").value.trim();
+
+  button.disabled =
+    matchMode === "online" &&
+    onlineAction === "join" &&
+    !/^\d{5}$/.test(code);
+
 }
 
-function initializeBoard() {
+/* ================= ROOM CODE ================= */
+
+function generateRoomCode() {
+
+  return String(
+    Math.floor(10000 + Math.random() * 90000)
+  );
+
+}
+
+/* ================= BOARD CREATION ================= */
+
+function createBoard() {
+
+  const board = $("board");
+
+  board.querySelectorAll(".cell").forEach(
+    cell => cell.remove()
+  );
+
+  const reserved = new Set();
+
+  /*
+    Home areas.
+  */
+
   for (let r = 0; r < 15; r++) {
+
     for (let c = 0; c < 15; c++) {
-      if ((r < 6 && c < 6) || (r < 6 && c > 8) || 
-          (r > 8 && c < 6) || (r > 8 && c > 8) || 
-          (r >= 6 && r <= 8 && c >= 6 && c <= 8)) {
-        continue;
+
+      const isHome =
+        (r < 6 && c < 6) ||
+        (r < 6 && c > 8) ||
+        (r > 8 && c < 6) ||
+        (r > 8 && c > 8);
+
+      const isCenter =
+        r >= 6 && r <= 8 &&
+        c >= 6 && c <= 8;
+
+      if (isHome || isCenter) {
+
+        reserved.add(`${r},${c}`);
+
       }
 
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.style.gridRowStart = r + 1;
-      cell.style.gridColumnStart = c + 1;
+    }
 
-      const key = `${r},${c}`;
+  }
 
-      if (key === "6,1") cell.classList.add('start-red');
-      if (key === "1,8") cell.classList.add('start-green');
-      if (key === "8,13") cell.classList.add('start-yellow');
-      if (key === "13,6") cell.classList.add('start-blue');
+  const trackMap = new Map();
 
-      if (r === 7 && c >= 1 && c <= 5) cell.classList.add('path-red');
-      if (c === 7 && r >= 1 && r <= 5) cell.classList.add('path-green');
-      if (r === 7 && c >= 9 && c <= 13) cell.classList.add('path-yellow');
-      if (c === 7 && r >= 9 && r <= 13) cell.classList.add('path-blue');
+  TRACK.forEach((position, index) => {
+    trackMap.set(
+      `${position[0]},${position[1]}`,
+      index
+    );
+  });
 
-      
-if (SAFE_SPOTS.includes(key)) {
-  cell.classList.add('safe-star');
+  const laneMap = new Map();
 
-  const star = document.createElement('span');
-  star.className = 'safe-star-icon';
-  star.innerHTML = '★';
+  COLORS.forEach(color => {
+
+    HOME_LANES[color].forEach(
+      (position, index) => {
+
+        laneMap.set(
+          `${position[0]},${position[1]}`,
+          { color, index }
+        );
+
+      }
+    );
+
+  });
+
+  /*
+    Build remaining board cells.
+  */
+
+  for (let r = 0; r < 15; r++) {
+
+    for (let c = 0; c < 15; c++) {
+
+      if (reserved.has(`${r},${c}`)) continue;
+
+      const cell = document.createElement("div");
+
+      cell.className = "cell";
+
+      cell.id = `cell-${r}-${c}`;
+
+      const trackIndex = trackMap.get(`${r},${c}`);
+
+      const lane = laneMap.get(`${r},${c}`);
+
+      if (trackIndex !== undefined) {
+
+        const color = COLORS.find(
+          item => START_INDEX[item] === trackIndex
+        );
+
+        if (color) {
+          cell.classList.add(`start-${color}`);
+        }
+
+        if (SAFE_CELLS.includes(trackIndex)) {
+
+          cell.classList.add("safe-star");
+
+          addStar(cell);
+
+        }
+
+        cell.dataset.track = trackIndex;
+
+      }
+
+      if (lane) {
+
+        cell.classList.add(`path-${lane.color}`);
+
+        cell.dataset.lane = lane.color;
+
+        cell.dataset.laneIndex = lane.index;
+
+      }
+
+      board.appendChild(cell);
+
+    }
+
+  }
+
+  /*
+    Create home base spots.
+  */
+
+  COLORS.forEach(color => {
+
+    const base = $(`base-${color}`);
+
+    if (!base) return;
+
+    base.innerHTML = "";
+
+    for (let i = 0; i < 4; i++) {
+
+      const spot = document.createElement("div");
+
+      spot.className = "base-spot";
+
+      spot.id = `base-${color}-${i}`;
+
+      base.appendChild(spot);
+
+    }
+
+  });
+
+}
+
+function addStar(cell) {
+
+  const star = document.createElement("span");
+
+  star.className = "safe-star-icon";
+
+  star.textContent = "★";
 
   cell.appendChild(star);
+
 }
 
+/* ================= PLAYER SETUP ================= */
 
-      boardEl.appendChild(cell);
-      cellsMap[key] = cell;
-    }
+function createPlayers() {
+
+  players = [];
+
+  let order = [];
+
+  if (matchMode === "offline") {
+
+    order = COLORS.slice(0, playerCount);
+
+  } else {
+
+    order = [selectedColor];
+
   }
 
-  ALL_COLORS.forEach(color => {
-    const baseEl = document.getElementById(`base-${color}`);
-    if (baseEl) {
-      baseEl.innerHTML = '';
-      for (let i = 0; i < 4; i++) {
-        const spot = document.createElement('div');
-        spot.className = 'base-spot';
-        spot.id = `base-${color}-${i}`;
-        baseEl.appendChild(spot);
-      }
-    }
+  order.forEach((color, index) => {
+
+    players.push({
+
+      color,
+
+      name: COLOR_NAMES[color],
+
+      peerId: null,
+
+      connected: true,
+
+      isLocal:
+        matchMode === "offline" ||
+        color === myColor,
+
+      tokens: Array.from(
+        { length: TOKENS_PER_PLAYER },
+        () => ({
+          position: -1,
+          finished: false
+        })
+      )
+
+    });
+
   });
 
-  renderDiceFace(6);
+  if (matchMode === "online" && isHost) {
+
+    players = [];
+
+    players.push(createPlayer(myColor));
+
+  }
+
 }
 
-function renderDiceFace(value) {
-  const diceEl = document.getElementById('dice');
-  if (!diceEl) return;
-  diceEl.innerHTML = '';
+function createPlayer(color, peerId = null) {
 
-  const dotPatterns = {
-    1: [4],
-    2: [0, 8],
-    3: [0, 4, 8],
-    4: [0, 2, 6, 8],
-    5: [0, 2, 4, 6, 8],
-    6: [0, 2, 3, 5, 6, 8]
+  return {
+
+    color,
+
+    name: COLOR_NAMES[color],
+
+    peerId,
+
+    connected: true,
+
+    isLocal: matchMode === "offline",
+
+    tokens: Array.from(
+      { length: 4 },
+      () => ({
+        position: -1,
+        finished: false
+      })
+    )
+
   };
 
-  const activeDots = dotPatterns[value] || [];
+}
+
+/* ================= START GAME ================= */
+
+window.startGame = async function() {
+
+  if (matchMode === "online") {
+
+    if (onlineAction === "create") {
+
+      await createOnlineRoom();
+
+    } else {
+
+      await joinOnlineRoom();
+
+    }
+
+    return;
+
+  }
+
+  playSound("click");
+
+  myColor = null;
+
+  isHost = false;
+
+  createPlayers();
+
+  initializeGame();
+
+};
+
+function initializeGame() {
+
+  gameStarted = true;
+
+  gameOver = false;
+
+  currentTurn = 0;
+
+  diceValue = 0;
+
+  diceRolling = false;
+
+  waitingForMove = false;
+
+  gameState = null;
+
+  createBoard();
+
+  $("setup-modal").classList.add("hidden");
+
+  $("room-tag").style.display = "none";
+
+  updatePlayerCards();
+
+  renderTokens();
+
+  updateTurnDisplay();
+
+  updateDiceDisplay(0);
+
+  addSystemMessage(
+    "Game started! Good luck everyone."
+  );
+
+}
+
+/* ================= PLAYER CARDS ================= */
+
+function updatePlayerCards() {
+
+  COLORS.forEach(color => {
+
+    const player = players.find(
+      p => p.color === color
+    );
+
+    const card = $(`card-${color}`);
+
+    const home = $(`home-${color}`);
+
+    if (!player) {
+
+      card.classList.add("disabled");
+
+      home.classList.add("disabled-home");
+
+      card.classList.remove("active");
+
+      return;
+
+    }
+
+    card.classList.remove("disabled");
+
+    home.classList.remove("disabled-home");
+
+    $(`name-${color}`).textContent = player.name;
+
+    card.classList.toggle(
+      "active",
+      players[currentTurn]?.color === color
+    );
+
+  });
+
+}
+
+/* ================= DICE ================= */
+
+function createDicePips(value) {
+
+  const patterns = {
+
+    1: [4],
+
+    2: [0,8],
+
+    3: [0,4,8],
+
+    4: [0,2,6,8],
+
+    5: [0,2,4,6,8],
+
+    6: [0,2,3,5,6,8]
+
+  };
+
+  const dice = $("dice");
+
+  dice.innerHTML = "";
 
   for (let i = 0; i < 9; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'pip' + (activeDots.includes(i) ? ' active' : '');
-    diceEl.appendChild(pip);
+
+    const pip = document.createElement("span");
+
+    pip.className =
+      patterns[value]?.includes(i)
+        ? "pip active"
+        : "pip";
+
+    dice.appendChild(pip);
+
   }
+
 }
 
-function renderTokens(activeMovingTokenKey = null) {
-  document.querySelectorAll('.token').forEach(t => t.remove());
+function updateDiceDisplay(value) {
 
-  activePlayers.forEach(color => {
-    gameState[color].forEach((pos, idx) => {
-      const token = document.createElement('div');
-      token.className = `token ${color}`;
-      token.dataset.color = color;
-      token.dataset.index = idx;
+  createDicePips(value);
 
-      const currentKey = `${color}-${idx}`;
-      if (activeMovingTokenKey === currentKey) {
-        token.classList.add('moving');
-      }
+  const dice = $("dice");
 
-      token.onclick = (e) => {
-        e.stopPropagation();
-        handleTokenClick(color, idx);
-      };
+  dice.classList.toggle(
+    "disabled-dice",
+    diceRolling || waitingForMove || !isMyTurn()
+  );
 
-      if (pos === -1) {
-        const spot = document.getElementById(`base-${color}-${idx}`);
-        if (spot) spot.appendChild(token);
-      } else if (pos === 56) {
-        const home = document.querySelector('.center-home');
-        if (home) home.appendChild(token);
+}
+
+function isMyTurn() {
+
+  if (matchMode === "offline") return true;
+
+  return players[currentTurn]?.color === myColor;
+
+}
+
+window.handleDiceClick = async function() {
+
+  if (!gameStarted || gameOver) return;
+
+  if (diceRolling || waitingForMove) return;
+
+  if (!isMyTurn()) {
+
+    showHint("Wait for your turn!");
+
+    return;
+
+  }
+
+  diceRolling = true;
+
+  updateDiceDisplay(1);
+
+  $("dice").classList.add("rolling");
+
+  $("dice-hint").textContent = "Rolling...";
+
+  playSound("dice");
+
+  let count = 0;
+
+  const interval = setInterval(() => {
+
+    createDicePips(
+      Math.floor(Math.random() * 6) + 1
+    );
+
+    count++;
+
+    if (count > 10) {
+
+      clearInterval(interval);
+
+      const result =
+        Math.floor(Math.random() * 6) + 1;
+
+      finishDiceRoll(result);
+
+    }
+
+  }, 75);
+
+};
+
+function finishDiceRoll(value) {
+
+  diceRolling = false;
+
+  diceValue = value;
+
+  $("dice").classList.remove("rolling");
+
+  createDicePips(value);
+
+  $("dice-hint").textContent =
+    `You rolled ${value}`;
+
+  const player = players[currentTurn];
+
+  if (!player) return;
+
+  const possible = getMovableTokens(player);
+
+  if (matchMode === "online" && isHost) {
+
+    broadcast({
+      type: "dice",
+      value,
+      currentTurn
+    });
+
+  }
+
+  if (possible.length === 0) {
+
+    waitingForMove = false;
+
+    updateDiceDisplay(value);
+
+    $("dice-hint").textContent =
+      value === 6
+        ? "No moves available"
+        : "No move available";
+
+    setTimeout(() => {
+
+      if (value !== 6) {
+
+        nextTurn();
+
       } else {
-        const coords = getCoordinates(color, pos);
-        if (coords) {
-          const cellKey = `${coords[0]},${coords[1]}`;
-          if (cellsMap[cellKey]) {
-            cellsMap[cellKey].appendChild(token);
-          }
-        }
+
+        resetDice();
+
       }
-    });
-  });
-}
 
-function getCoordinates(color, step) {
-  if (step <= 50) {
-    const globalIdx = (PLAYER_CONFIG[color].startIndex + step) % 52;
-    return COMMON_PATH[globalIdx];
-  } else if (step <= 55) {
-    const homeStep = step - 51;
-    return PLAYER_CONFIG[color].homePath[homeStep];
-  } else {
-    return null;
-  }
-}
+    }, 900);
 
-function handleDiceClick() {
-  if (matchMode === 'online' && activePlayers[turnIndex] !== selectedColor) {
     return;
+
   }
-  rollDice();
+
+  waitingForMove = true;
+
+  updateDiceDisplay(value);
+
+  renderTokens();
+
+  $("dice-hint").textContent =
+    "Select a highlighted token";
+
 }
 
-function rollDice() {
-  // Guard check: Prevent roll if active, moving, or waiting for online players
-  if (hasRolled || isRolling || isMoving) return;
-  if (matchMode === 'online' && activePlayers.length < selectedPlayerCount) {
-    const hintEl = document.getElementById('dice-hint');
-    if (hintEl) hintEl.innerText = `Waiting for players... (${activePlayers.length}/${selectedPlayerCount})`;
-    return;
-  }
+/* ================= MOVEMENT ================= */
 
-  audio.play('diceRoll');
-  triggerHaptic(20);
-  isRolling = true;
-  const diceBtn = document.getElementById('dice');
-  const hintEl = document.getElementById('dice-hint');
-  if (diceBtn) diceBtn.classList.add('rolling');
-  if (hintEl) hintEl.innerText = "Rolling...";
+function getMovableTokens(player) {
 
-  const rollValue = Math.floor(Math.random() * 6) + 1;
+  const result = [];
 
-  let animCount = 0;
-  const interval = setInterval(() => {
-    renderDiceFace(Math.floor(Math.random() * 6) + 1);
-    animCount++;
-    if (animCount > 8) {
-      clearInterval(interval);
-      finishRoll(rollValue);
+  player.tokens.forEach((token, index) => {
 
-      if (matchMode === 'online') {
-        broadcastData({
-          type: 'ROLL_RESULT',
-          rollValue: rollValue
-        });
+    if (token.finished) return;
+
+    if (token.position === -1) {
+
+      if (diceValue === 6) {
+        result.push(index);
       }
-    }
-  }, 50);
-}
 
-function executeRemoteRoll(rollValue) {
-  isRolling = true;
-  audio.play('diceRoll');
-  const diceBtn = document.getElementById('dice');
-  const hintEl = document.getElementById('dice-hint');
-  if (diceBtn) diceBtn.classList.add('rolling');
-  if (hintEl) hintEl.innerText = "Remote Rolling...";
-
-  let animCount = 0;
-  const interval = setInterval(() => {
-    renderDiceFace(Math.floor(Math.random() * 6) + 1);
-    animCount++;
-    if (animCount > 8) {
-      clearInterval(interval);
-      finishRoll(rollValue);
-    }
-  }, 50);
-}
-
-function finishRoll(rollValue) {
-  const diceBtn = document.getElementById('dice');
-  const hintEl = document.getElementById('dice-hint');
-  if (diceBtn) diceBtn.classList.remove('rolling');
-
-  currentRoll = rollValue;
-  renderDiceFace(currentRoll);
-  triggerHaptic(30);
-
-  isRolling = false;
-  hasRolled = true;
-
-  if (currentRoll === 6) {
-    audio.play('sixRolled');
-    consecutiveSixes++;
-  } else {
-    consecutiveSixes = 0;
-  }
-
-  if (consecutiveSixes === 3) {
-    consecutiveSixes = 0;
-    if (hintEl) hintEl.innerText = "3 Sixes! Turn Lost";
-    setTimeout(nextTurn, 1000);
-    return;
-  }
-
-  if (!hasValidMoves(activePlayers[turnIndex], currentRoll)) {
-    if (hintEl) hintEl.innerText = "No Valid Move!";
-    setTimeout(nextTurn, 1000);
-  } else {
-    if (hintEl) hintEl.innerText = `Rolled ${currentRoll}! Select Token`;
-    highlightMovableTokens(activePlayers[turnIndex], currentRoll);
-  }
-}
-
-function hasValidMoves(color, roll) {
-  return gameState[color].some((pos) => isValidMove(color, pos, roll));
-}
-
-function isValidMove(color, pos, roll) {
-  if (pos === -1 && roll === 6) return true;
-  if (pos >= 0 && pos + roll <= 56) return true;
-  return false;
-}
-
-function highlightMovableTokens(color, roll) {
-  if (matchMode === 'online' && color !== selectedColor) return;
-
-  gameState[color].forEach((pos, idx) => {
-    if (isValidMove(color, pos, roll)) {
-      const tokenEl = document.querySelector(`.token.${color}[data-index='${idx}']`);
-      if (tokenEl) tokenEl.classList.add('clickable');
-    }
-  });
-}
-
-function clearHighlights() {
-  document.querySelectorAll('.token.clickable').forEach(t => t.classList.remove('clickable'));
-}
-
-function handleTokenClick(color, tokenIdx) {
-  if (!hasRolled || isRolling || isMoving || activePlayers[turnIndex] !== color) return;
-  if (matchMode === 'online' && color !== selectedColor) return;
-
-  const currentPos = gameState[color][tokenIdx];
-  if (!isValidMove(color, currentPos, currentRoll)) return;
-
-  const targetPos = (currentPos === -1 && currentRoll === 6) ? 0 : currentPos + currentRoll;
-
-  if (matchMode === 'online') {
-    broadcastData({
-      type: 'MOVE_TOKEN',
-      color: color,
-      tokenIdx: tokenIdx,
-      targetPos: targetPos
-    });
-  }
-
-  executeRemoteMove(color, tokenIdx, targetPos);
-}
-
-function executeRemoteMove(color, tokenIdx, targetPos) {
-  isMoving = true;
-  clearHighlights();
-
-  const currentPos = gameState[color][tokenIdx];
-
-  if (currentPos === -1) {
-    gameState[color][tokenIdx] = 0;
-    audio.play('tokenMove');
-    triggerHaptic(20);
-    renderTokens(`${color}-${tokenIdx}`);
-    setTimeout(() => finalizeTokenStep(color, tokenIdx, targetPos), 200);
-  } else {
-    let stepCounter = currentPos + 1;
-
-    const stepTimer = setInterval(() => {
-      gameState[color][tokenIdx] = stepCounter;
-      audio.play('tokenMove');
-      triggerHaptic(10);
-      renderTokens(`${color}-${tokenIdx}`);
-
-      if (stepCounter >= targetPos) {
-        clearInterval(stepTimer);
-        finalizeTokenStep(color, tokenIdx, targetPos);
-      }
-      stepCounter++;
-    }, 160);
-  }
-}
-
-function finalizeTokenStep(color, tokenIdx, targetPos) {
-  let extraTurnGrant = (currentRoll === 6) || (targetPos === 56);
-
-  if (targetPos === 56) {
-    addMessageToChat("Game", `${color.toUpperCase()} token reached Home! 🎉`, 'left');
-    triggerHaptic([30, 50, 30, 50]);
-
-    if (gameState[color].every(p => p === 56)) {
-      addMessageToChat("System", `🏆 ${color.toUpperCase()} HAS WON THE GAME! 🎉`, 'left');
-      showVictoryModal(color);
-      isMoving = false;
       return;
-    } else {
-      audio.play('tokenHome');
-    }
-  } else if (targetPos <= 50) {
-    const coords = getCoordinates(color, targetPos);
-    if (coords) {
-      const coordKey = `${coords[0]},${coords[1]}`;
 
-      if (!SAFE_SPOTS.includes(coordKey)) {
-        activePlayers.forEach(otherColor => {
-          if (otherColor !== color) {
-            gameState[otherColor].forEach((otherPos, otherIdx) => {
-              if (otherPos >= 0 && otherPos <= 50) {
-                const otherCoords = getCoordinates(otherColor, otherPos);
-                if (otherCoords && otherCoords[0] === coords[0] && otherCoords[1] === coords[1]) {
-                  gameState[otherColor][otherIdx] = -1;
-                  extraTurnGrant = true;
-                  audio.play('tokenCapture');
-                  triggerHaptic([40, 60, 40]);
-                  addMessageToChat("Game", `${color.toUpperCase()} captured ${otherColor.toUpperCase()}! 💥`, 'left');
-                }
-              }
-            });
-          }
-        });
-      }
     }
+
+    if (token.position + diceValue <= 57) {
+
+      result.push(index);
+
+    }
+
+  });
+
+  return result;
+
+}
+
+function getGlobalPosition(color, progress) {
+
+  if (progress < 0 || progress > 51) return null;
+
+  return (
+    START_INDEX[color] + progress
+  ) % 52;
+
+}
+
+function getTokenLocation(color, token) {
+
+  if (token.position === -1) {
+
+    return {
+      type: "base",
+      index: token.index
+    };
+
+  }
+
+  if (token.position >= 52) {
+
+    const laneIndex = token.position - 52;
+
+    return {
+      type: "lane",
+      index: laneIndex,
+      color
+    };
+
+  }
+
+  return {
+    type: "track",
+    index: getGlobalPosition(
+      color,
+      token.position
+    )
+  };
+
+}
+
+function tokenElement(color, index) {
+
+  const token = document.createElement("div");
+
+  token.className = `token ${color}`;
+
+  token.dataset.color = color;
+
+  token.dataset.index = index;
+
+  token.title =
+    `${COLOR_NAMES[color]} Token ${index + 1}`;
+
+  token.addEventListener("click", () => {
+
+    handleTokenClick(color, index);
+
+  });
+
+  return token;
+
+}
+
+/* ================= RENDER TOKENS ================= */
+
+function renderTokens() {
+
+  document.querySelectorAll(
+    ".base-spot, .cell, .center-home"
+  ).forEach(element => {
+
+    element.querySelectorAll(".token").forEach(
+      token => token.remove()
+    );
+
+  });
+
+  const occupied = new Map();
+
+  players.forEach(player => {
+
+    player.tokens.forEach((token, index) => {
+
+      if (token.finished) return;
+
+      const position = token.position;
+
+      let target;
+
+      if (position === -1) {
+
+        target = $(
+          `base-${player.color}-${index}`
+        );
+
+      } else if (position >= 52) {
+
+        const laneIndex = position - 52;
+
+        const coords =
+          HOME_LANES[player.color][laneIndex];
+
+        target = $(
+          `cell-${coords[0]}-${coords[1]}`
+        );
+
+      } else {
+
+        const trackIndex = getGlobalPosition(
+          player.color,
+          position
+        );
+
+        const coords = TRACK[trackIndex];
+
+        target = $(
+          `cell-${coords[0]}-${coords[1]}`
+        );
+
+      }
+
+      if (!target) return;
+
+      const tokenElementNode = tokenElement(
+        player.color,
+        index
+      );
+
+      const movable =
+        waitingForMove &&
+        isMyTurn() &&
+        getMovableTokens(player).includes(index);
+
+      if (movable) {
+
+        tokenElementNode.classList.add("clickable");
+
+      }
+
+      target.appendChild(tokenElementNode);
+
+      const key =
+        `${player.color}-${position}`;
+
+      occupied.set(
+        key,
+        (occupied.get(key) || 0) + 1
+      );
+
+    });
+
+  });
+
+}
+
+/* ================= TOKEN CLICK ================= */
+
+async function handleTokenClick(color, index) {
+
+  if (!gameStarted || gameOver) return;
+
+  if (!waitingForMove) return;
+
+  const player = players[currentTurn];
+
+  if (!player || player.color !== color) return;
+
+  if (!isMyTurn()) return;
+
+  const movable = getMovableTokens(player);
+
+  if (!movable.includes(index)) return;
+
+  playSound("move");
+
+  await moveToken(currentTurn, index);
+
+}
+
+async function moveToken(playerIndex, tokenIndex) {
+
+  const player = players[playerIndex];
+
+  const token = player.tokens[tokenIndex];
+
+  if (!player || !token) return;
+
+  waitingForMove = false;
+
+  const dice = diceValue;
+
+  let oldPosition = token.position;
+
+  let newPosition;
+
+  if (oldPosition === -1) {
+
+    newPosition = 0;
+
+  } else {
+
+    newPosition = oldPosition + dice;
+
+  }
+
+  /*
+    Animate token one step at a time.
+  */
+
+  if (oldPosition === -1) {
+
+    token.position = 0;
+
+    renderTokens();
+
+    await delay(180);
+
+  } else {
+
+    for (
+      let step = oldPosition + 1;
+      step <= newPosition;
+      step++
+    ) {
+
+      token.position = step;
+
+      renderTokens();
+
+      await delay(115);
+
+    }
+
+  }
+
+  /*
+    Reaching the final home position.
+  */
+
+  if (newPosition === 57) {
+
+    token.finished = true;
+
+    playSound("win");
+
+  }
+
+  /*
+    Capture opponents.
+  */
+
+  let captured = false;
+
+  if (
+    newPosition <= 51 &&
+    !SAFE_CELLS.includes(
+      getGlobalPosition(player.color, newPosition)
+    )
+  ) {
+
+    const globalPosition =
+      getGlobalPosition(player.color, newPosition);
+
+    players.forEach((opponent, opponentIndex) => {
+
+      if (opponentIndex === playerIndex) return;
+
+      opponent.tokens.forEach(opponentToken => {
+
+        if (opponentToken.finished) return;
+
+        if (opponentToken.position < 0 ||
+            opponentToken.position > 51) return;
+
+        const opponentPosition =
+          getGlobalPosition(
+            opponent.color,
+            opponentToken.position
+          );
+
+        if (opponentPosition === globalPosition) {
+
+          opponentToken.position = -1;
+
+          captured = true;
+
+        }
+
+      });
+
+    });
+
   }
 
   renderTokens();
-  isMoving = false;
 
-  if (extraTurnGrant) {
-    resetTurnState();
-    const hintEl = document.getElementById('dice-hint');
-    if (hintEl) hintEl.innerText = "Bonus Turn! Roll Again";
-    updateTurnUI();
+  if (captured) {
+
+    playSound("capture");
+
+    showHint("Opponent captured!");
+
+  }
+
+  /*
+    Synchronize online state.
+  */
+
+  if (matchMode === "online" && isHost) {
+
+    broadcast({
+      type: "state",
+      state: serializeGame()
+    });
+
+  }
+
+  /*
+    Check winner.
+  */
+
+  if (
+    player.tokens.every(token => token.finished)
+  ) {
+
+    finishGame(player);
+
+    return;
+
+  }
+
+  /*
+    Six or capture gives an extra turn.
+  */
+
+  if (dice === 6 || captured) {
+
+    resetDice();
+
+    $("dice-hint").textContent =
+      captured
+        ? "Capture! Roll again"
+        : "Six! Roll again";
+
   } else {
+
     nextTurn();
+
   }
+
 }
 
-function resetTurnState() {
-  hasRolled = false;
-}
-
-function updateTurnUI() {
-  const currentColor = activePlayers[turnIndex];
-  if (!currentColor) return;
-
-  const turnDot = document.getElementById('turn-dot');
-  const turnText = document.getElementById('turn-text');
-  
-  if (turnDot) {
-    turnDot.style.backgroundColor = PLAYER_CONFIG[currentColor].color;
-    turnDot.style.boxShadow = `0 0 10px ${PLAYER_CONFIG[currentColor].color}`;
-  }
-  if (turnText) {
-    turnText.innerText = `${currentColor.toUpperCase()}'S TURN`;
-    turnText.style.color = PLAYER_CONFIG[currentColor].color;
-  }
-
-  document.querySelectorAll('.player-card').forEach(card => card.classList.remove('active'));
-  const activeCard = document.getElementById(`card-${currentColor}`);
-  if (activeCard) activeCard.classList.add('active');
-
-  const diceBtn = document.getElementById('dice');
-  const hintEl = document.getElementById('dice-hint');
-
-  if (matchMode === 'online' && currentColor !== selectedColor) {
-    if (diceBtn) diceBtn.classList.add('disabled-dice');
-    if (hintEl) hintEl.innerText = `Waiting for ${currentColor.toUpperCase()}...`;
-  } else {
-    if (diceBtn) diceBtn.classList.remove('disabled-dice');
-    if (hintEl) hintEl.innerText = "Tap Dice to Roll";
-  }
-}
+/* ================= TURN MANAGEMENT ================= */
 
 function nextTurn() {
-  resetTurnState();
-  turnIndex = (turnIndex + 1) % activePlayers.length;
-  updateTurnUI();
-}
 
-function toggleChat(open) {
-  audio.play('click');
-  const drawer = document.getElementById('chat-drawer');
-  const badge = document.getElementById('unread-badge');
-  if (drawer) {
-    if (open) {
-      drawer.classList.add('open');
-      if (badge) badge.style.display = 'none';
-    } else {
-      drawer.classList.remove('open');
-    }
+  currentTurn++;
+
+  if (currentTurn >= players.length) {
+
+    currentTurn = 0;
+
   }
-}
 
-function sendQuickMessage(msg) {
-  sendChatMessageText(msg);
-}
+  resetDice();
 
-function sendChatMessage() {
-  const input = document.getElementById('chat-input');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
+  updatePlayerCards();
 
-  sendChatMessageText(text);
-  input.value = '';
-}
-function sendChatMessageText(text) {
-  audio.play('click');
-  addMessageToChat("You", text, 'right');
+  updateTurnDisplay();
 
-  if (matchMode === 'online') {
-    broadcastData({
-      type: 'CHAT_MSG',
-      sender: selectedColor.toUpperCase(),
-      text: text
+  renderTokens();
+
+  if (matchMode === "online" && isHost) {
+
+    broadcast({
+      type: "state",
+      state: serializeGame()
     });
+
   }
+
 }
 
-function addMessageToChat(sender, text, position) {
-  const chatContainer = document.getElementById('chat-messages');
-  if (!chatContainer) return;
+function resetDice() {
 
-  const bubble = document.createElement('div');
-  bubble.className = `message-bubble ${position}`;
+  diceValue = 0;
 
-  const senderEl = document.createElement('div');
-  senderEl.className = 'message-sender';
-  senderEl.innerText = sender;
+  diceRolling = false;
 
-  const contentEl = document.createElement('div');
-  contentEl.innerText = text;
+  waitingForMove = false;
 
-  bubble.appendChild(senderEl);
-  bubble.appendChild(contentEl);
-  chatContainer.appendChild(bubble);
+  updateDiceDisplay(0);
 
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  $("dice-hint").textContent =
+    "Tap Dice to Roll";
 
-  const drawer = document.getElementById('chat-drawer');
-  const badge = document.getElementById('unread-badge');
-  if (position === 'left' && drawer && !drawer.classList.contains('open')) {
-    if (badge) badge.style.display = 'block';
-  }
+  renderTokens();
+
 }
 
-// Initialize Board on load
-initializeBoard();
+function updateTurnDisplay() {
+
+  const player = players[currentTurn];
+
+  if (!player) return;
+
+  $("turn-text").textContent =
+    `${player.name}'s Turn`;
+
+  $("turn-dot").style.background =
+    COLOR_HEX[player.color];
+
+  $("turn-dot").style.color =
+    COLOR_HEX[player.color];
+
+  $("turn-badge").style.color =
+    COLOR_HEX[player.color];
+
+  updatePlayerCards();
+
+}
+
+/* ================= WINNER ================= */
+
+function finishGame(player) {
+
+  gameOver = true;
+
+  gameStarted = false;
+
+  playSound("win");
+
+  $("dice-hint").textContent =
+    `${player.name} Wins! 🏆`;
+
+  $("dice").classList.add("disabled-dice");
+
+  showHint(`${player.name} wins the game! 🏆`);
+
+  if (matchMode === "online" && isHost) {
+
+    broadcast({
+      type: "winner",
+      color: player.color
+    });
+
+  }
+
+}
+
+/* ================= HINT / NOTIFICATION ================= */
+
+function showHint(message) {
+
+  const hint = $("dice-hint");
+
+  hint.textContent = message;
+
+  clearTimeout(gameMessageTimer);
+
+  gameMessageTimer = setTimeout(() => {
+
+    if (!waitingForMove && !diceRolling && !gameOver) {
+
+      hint.textContent = "Tap Dice to Roll";
+
+    }
+
+  }, 2200);
+
+}
+
+function addSystemMessage(message) {
+
+  addChatBubble(
+    message,
+    "left",
+    "System"
+  );
+
+}
+
+function showExitModal(name) {
+
+  $("exit-modal-title").textContent =
+    "Player Left";
+
+  $("exit-modal-desc").textContent =
+    `${name} has disconnected from the game.`;
+
+  $("exit-modal").classList.remove("hidden");
+
+}
+
+window.closeExitModal = function() {
+
+  $("exit-modal").classList.add("hidden");
+
+};
+
+/* ================= CHAT ================= */
+
+window.toggleChat = function(open) {
+
+  chatOpen = open;
+
+  $("chat-drawer").classList.toggle(
+    "open",
+    open
+  );
+
+  if (open) {
+
+    unreadMessages = 0;
+
+    $("unread-badge").style.display = "none";
+
+    $("chat-input").focus();
+
+    $("chat-messages").scrollTop =
+      $("chat-messages").scrollHeight;
+
+  }
+
+};
+
+function addChatBubble(message, side, sender = "") {
+
+  const container = $("chat-messages");
+
+  const bubble = document.createElement("div");
+
+  bubble.className =
+    `message-bubble ${side}`;
+
+  if (sender) {
+
+    const name = document.createElement("div");
+
+    name.style.fontSize = "10px";
+
+    name.style.fontWeight = "800";
+
+    name.style.opacity = "0.7";
+
+    name.style.marginBottom = "4px";
+
+    name.textContent = sender;
+
+    bubble.appendChild(name);
+
+  }
+
+  const content = document.createElement("div");
+
+  content.textContent = message;
+
+  bubble.appendChild(content);
+
+  container.appendChild(bubble);
+
+  container.scrollTop = container.scrollHeight;
+
+  if (side === "left" && !chatOpen) {
+
+    unreadMessages++;
+
+    $("unread-badge").style.display = "block";
+
+  }
+
+}
+
+window.sendChatMessage = function() {
+
+  const input = $("chat-input");
+
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  if (matchMode === "online" && !isConnected()) {
+
+    showHint("Not connected to another player");
+
+    return;
+
+  }
+
+  const sender =
+    myColor
+      ? COLOR_NAMES[myColor]
+      : "Player";
+
+  addChatBubble(
+    message,
+    "right",
+    "You"
+  );
+
+  if (matchMode === "online") {
+
+    sendNetwork({
+      type: "chat",
+      message,
+      sender
+    });
+
+  }
+
+  input.value = "";
+
+  playSound("message");
+
+};
+
+window.sendQuickMessage = function(message) {
+
+  $("chat-input").value = message;
+
+  sendChatMessage();
+
+};
+
+/* ================= PEERJS HELPERS ================= */
+
+function isConnected() {
+
+  if (isHost) {
+
+    return connections.some(
+      connection => connection.open
+    );
+
+  }
+
+  return !!hostConnection?.open;
+
+}
+
+function sendNetwork(data) {
+
+  if (isHost) {
+
+    broadcast(data);
+
+  } else if (hostConnection?.open) {
+
+    hostConnection.send(data);
+
+  }
+
+}
+
+function broadcast(data) {
+
+  connections.forEach(connection => {
+
+    if (connection.open) {
+
+      try {
+
+        connection.send(data);
+
+      } catch (error) {
+
+        console.warn(error);
+
+      }
+
+    }
+
+  });
+
+}
+
+/* ================= ONLINE ROOM CREATION ================= */
+
+async function createOnlineRoom() {
+
+  if (typeof Peer === "undefined") {
+
+    alert("PeerJS library could not load.");
+
+    return;
+
+  }
+
+  isHost = true;
+
+  myColor = selectedColor;
+
+  roomCode = generateRoomCode();
+
+  $("room-status-text").textContent =
+    "Creating room...";
+
+  $("start-btn").disabled = true;
+
+  peer = new Peer(
+    `ludo-${roomCode}`,
+    {
+      debug: 1
+    }
+  );
+
+  peer.on("open", id => {
+
+    myPeerId = id;
+
+    $("room-status-text").textContent =
+      `Room created! Code: ${roomCode}`;
+
+    $("room-tag").textContent =
+      `ROOM: ${roomCode}`;
+
+    $("room-tag").style.display = "block";
+
+    players = [createPlayer(myColor)];
+
+    initializeGame();
+
+    addSystemMessage(
+      `Room ${roomCode} created. Waiting for players.`
+    );
+
+  });
+
+  peer.on("connection", connection => {
+
+    handleHostConnection(connection);
+
+  });
+
+  peer.on("error", error => {
+
+    console.error("PeerJS error:", error);
+
+    $("room-status-text").textContent =
+      `Connection error: ${error.type}`;
+
+    $("start-btn").disabled = false;
+
+  });
+
+}
+
+/* ================= HOST CONNECTION ================= */
+
+function handleHostConnection(connection) {
+
+  connection.on("open", () => {
+
+    const available = COLORS.filter(color =>
+
+      !players.some(player => player.color === color)
+
+    );
+
+    if (available.length === 0) {
+
+      connection.send({
+        type: "room-full"
+      });
+
+      connection.close();
+
+      return;
+
+    }
+
+    const color = available[0];
+
+    const player = createPlayer(
+      color,
+      connection.peer
+    );
+
+    player.isLocal = false;
+
+    players.push(player);
+
+    connections.push(connection);
+
+    connection.send({
+
+      type: "welcome",
+
+      color,
+
+      roomCode,
+
+      host: true,
+
+      state: serializeGame()
+
+    });
+
+    addSystemMessage(
+      `${COLOR_NAMES[color]} joined the room.`
+    );
+
+    updatePlayerCards();
+
+    renderTokens();
+
+    connection.on("data", data => {
+
+      handleHostData(connection, data);
+
+    });
+
+    connection.on("close", () => {
+
+      handleDisconnect(connection);
+
+    });
+
+    connection.on("error", () => {
+
+      handleDisconnect(connection);
+
+    });
+
+    broadcast({
+
+      type: "player-list",
+
+      players: players.map(p => ({
+        color: p.color,
+        name: p.name
+      }))
+
+    });
+
+  });
+
+}
+
+/* ================= HOST DATA HANDLER ================= */
+
+function handleHostData(connection, data) {
+
+  if (!data || typeof data !== "object") return;
+
+  if (data.type === "chat") {
+
+    addChatBubble(
+      data.message,
+      "left",
+      data.sender
+    );
+
+    broadcast(data);
+
+    return;
+
+  }
+
+  if (data.type === "roll") {
+
+    const player = players.find(
+      p => p.peerId === connection.peer
+    );
+
+    if (!player) return;
+
+    if (players[currentTurn]?.color !== player.color) return;
+
+    if (diceRolling || waitingForMove) return;
+
+    const result = Math.floor(Math.random() * 6) + 1;
+
+    diceRolling = false;
+
+    diceValue = result;
+
+    finishRemoteDice(result);
+
+    return;
+
+  }
+
+  if (data.type === "move") {
+
+    const playerIndex = players.findIndex(
+      p => p.peerId === connection.peer
+    );
+
+    if (playerIndex !== currentTurn) return;
+
+    if (!waitingForMove) return;
+
+    if (!Number.isInteger(data.index)) return;
+
+    const movable = getMovableTokens(
+      players[playerIndex]
+    );
+
+    if (!movable.includes(data.index)) return;
+
+    moveToken(playerIndex, data.index);
+
+  }
+
+}
+
+function finishRemoteDice(value) {
+
+  diceValue = value;
+
+  diceRolling = false;
+
+  $("dice").classList.remove("rolling");
+
+  createDicePips(value);
+
+  $("dice-hint").textContent =
+    `Dice: ${value}`;
+
+  const possible = getMovableTokens(
+    players[currentTurn]
+  );
+
+  if (!possible.length) {
+
+    if (value === 6) {
+
+      resetDice();
+
+    } else {
+
+      nextTurn();
+
+    }
+
+  } else {
+
+    waitingForMove = true;
+
+    renderTokens();
+
+  }
+
+  broadcast({
+    type: "dice",
+    value,
+    currentTurn
+  });
+
+}
+
+/* ================= ONLINE JOIN ================= */
+
+async function joinOnlineRoom() {
+
+  if (typeof Peer === "undefined") {
+
+    alert("PeerJS library could not load.");
+
+    return;
+
+  }
+
+  roomCode = $("room-code-input").value.trim();
+
+  if (!/^\d{5}$/.test(roomCode)) {
+
+    alert("Enter a valid five-digit room code.");
+
+    return;
+
+  }
+
+  isHost = false;
+
+  myColor = null;
+
+  $("room-status-text").textContent =
+    "Connecting to room...";
+
+  $("start-btn").disabled = true;
+
+  peer = new Peer({
+    debug: 1
+  });
+
+  peer.on("open", id => {
+
+    myPeerId = id;
+
+    hostConnection = peer.connect(
+      `ludo-${roomCode}`,
+      {
+        reliable: true
+      }
+    );
+
+    hostConnection.on("open", () => {
+
+      $("room-status-text").textContent =
+        "Connected! Waiting for game data...";
+
+    });
+
+    hostConnection.on("data", handleGuestData);
+
+    hostConnection.on("close", () => {
+
+      showExitModal("Host");
+
+    });
+
+    hostConnection.on("error", error => {
+
+      console.error(error);
+
+      $("room-status-text").textContent =
+        "Connection failed.";
+
+      $("start-btn").disabled = false;
+
+    });
+
+  });
+
+  peer.on("error", error => {
+
+    console.error(error);
+
+    $("room-status-text").textContent =
+      "Room not found or connection failed.";
+
+    $("start-btn").disabled = false;
+
+  });
+
+}
+
+/* ================= GUEST DATA HANDLER ================= */
+
+function handleGuestData(data) {
+
+  if (!data) return;
+
+  switch (data.type) {
+
+    case "room-full":
+
+      $("room-status-text").textContent =
+        "Room is full.";
+
+      alert("This room is full.");
+
+      return;
+
+    case "welcome":
+
+      myColor = data.color;
+
+      roomCode = data.roomCode;
+
+      $("room-tag").textContent =
+        `ROOM: ${roomCode}`;
+
+      $("room-tag").style.display = "block";
+
+      $("room-status-text").textContent =
+        `Joined as ${COLOR_NAMES[myColor]}`;
+
+      players = data.state.players.map(
+        deserializePlayer
+      );
+
+      applyGameState(data.state);
+
+      gameStarted = true;
+
+      $("setup-modal").classList.add("hidden");
+
+      createBoard();
+
+      updatePlayerCards();
+
+      renderTokens();
+
+      updateTurnDisplay();
+
+      updateDiceDisplay(0);
+
+      addSystemMessage(
+        `Joined room as ${COLOR_NAMES[myColor]}.`
+      );
+
+      return;
+
+    case "chat":
+
+      addChatBubble(
+        data.message,
+        "left",
+        data.sender
+      );
+
+      playSound("message");
+
+      return;
+
+    case "dice":
+
+      diceValue = data.value;
+
+      currentTurn = data.currentTurn;
+
+      waitingForMove = true;
+
+      $("dice").classList.remove("rolling");
+
+      createDicePips(data.value);
+
+      $("dice-hint").textContent =
+        `Dice: ${data.value}`;
+
+      updatePlayerCards();
+
+      renderTokens();
+
+      return;
+
+    case "state":
+
+      applyGameState(data.state);
+
+      return;
+
+    case "winner":
+
+      gameOver = true;
+
+      gameStarted = false;
+
+      $("dice-hint").textContent =
+        `${COLOR_NAMES[data.color]} Wins! 🏆`;
+
+      playSound("win");
+
+      return;
+
+    case "player-list":
+
+      return;
+
+  }
+
+}
+
+/* ================= ONLINE TOKEN CLICK ================= */
+
+/*
+  Override movement handling for guests.
+  The host controls the official game state.
+*/
+
+const originalHandleTokenClick = handleTokenClick;
+
+async function guestMove(color, index) {
+
+  if (matchMode !== "online" || isHost) {
+
+    return originalHandleTokenClick(
+      color,
+      index
+    );
+
+  }
+
+  if (!waitingForMove) return;
+
+  if (color !== myColor) return;
+
+  const player = players[currentTurn];
+
+  if (!player || player.color !== myColor) return;
+
+  if (!getMovableTokens(player).includes(index)) return;
+
+  if (!hostConnection?.open) {
+
+    showHint("Connection lost!");
+
+    return;
+
+  }
+
+  hostConnection.send({
+
+    type: "move",
+
+    index
+
+  });
+
+}
+
+/*
+  Replace token click listeners for online guest.
+*/
+
+function refreshGuestTokenHandlers() {
+
+  if (matchMode !== "online" || isHost) return;
+
+  document.querySelectorAll(".token").forEach(token => {
+
+    const color = token.dataset.color;
+
+    const index = Number(token.dataset.index);
+
+    token.onclick = null;
+
+    token.replaceWith(token.cloneNode(true));
+
+    const newToken = document.querySelector(
+      `.token[data-color="${color}"][data-index="${index}"]`
+    );
+
+    if (!newToken) return;
+
+    newToken.addEventListener("click", () => {
+
+      guestMove(color, index);
+
+    });
+
+  });
+
+}
+
+/* ================= GUEST DICE OVERRIDE ================= */
+
+const originalDiceHandler = window.handleDiceClick;
+
+window.handleDiceClick = function() {
+
+  if (
+    matchMode === "online" &&
+    !isHost
+  ) {
+
+    if (!gameStarted || gameOver) return;
+
+    if (players[currentTurn]?.color !== myColor) {
+
+      showHint("Wait for your turn!");
+
+      return;
+
+    }
+
+    if (diceRolling || waitingForMove) return;
+
+    if (!hostConnection?.open) {
+
+      showHint("Connection lost!");
+
+      return;
+
+    }
+
+    diceRolling = true;
+
+    $("dice").classList.add("rolling");
+
+    $("dice-hint").textContent = "Rolling...";
+
+    hostConnection.send({
+      type: "roll"
+    });
+
+    return;
+
+  }
+
+  originalDiceHandler();
+
+};
+
+/* ================= GAME STATE SYNC ================= */
+
+function serializeGame() {
+
+  return {
+
+    players: players.map(player => ({
+
+      color: player.color,
+
+      name: player.name,
+
+      peerId: player.peerId,
+
+      connected: player.connected,
+
+      tokens: player.tokens.map(token => ({
+
+        position: token.position,
+
+        finished: token.finished
+
+      }))
+
+    })),
+
+    currentTurn,
+
+    diceValue,
+
+    waitingForMove,
+
+    gameStarted,
+
+    gameOver
+
+  };
+
+}
+
+function deserializePlayer(player) {
+
+  return {
+
+    color: player.color,
+
+    name: player.name,
+
+    peerId: player.peerId,
+
+    connected: player.connected,
+
+    isLocal: player.color === myColor,
+
+    tokens: player.tokens.map(token => ({
+
+      position: token.position,
+
+      finished: token.finished
+
+    }))
+
+  };
+
+}
+
+function applyGameState(state) {
+
+  if (!state) return;
+
+  players = state.players.map(
+    deserializePlayer
+  );
+
+  currentTurn = state.currentTurn;
+
+  diceValue = state.diceValue;
+
+  waitingForMove = state.waitingForMove;
+
+  gameStarted = state.gameStarted;
+
+  gameOver = state.gameOver;
+
+  diceRolling = false;
+
+  updatePlayerCards();
+
+  updateTurnDisplay();
+
+  createDicePips(diceValue || 1);
+
+  updateDiceDisplay(diceValue || 0);
+
+  renderTokens();
+
+  if (waitingForMove) {
+
+    $("dice-hint").textContent =
+      "Select a highlighted token";
+
+  } else if (gameOver) {
+
+    $("dice-hint").textContent =
+      "Game Over";
+
+  } else {
+
+    $("dice-hint").textContent =
+      "Tap Dice to Roll";
+
+  }
+
+}
+
+/* ================= DISCONNECTION ================= */
+
+function handleDisconnect(connection) {
+
+  const index = connections.indexOf(connection);
+
+  if (index === -1) return;
+
+  const player = players.find(
+    p => p.peerId === connection.peer
+  );
+
+  if (!player) return;
+
+  const name = player.name;
+
+  players = players.filter(
+    p => p.peerId !== connection.peer
+  );
+
+  connections = connections.filter(
+    c => c !== connection
+  );
+
+  if (currentTurn >= players.length) {
+
+    currentTurn = 0;
+
+  }
+
+  updatePlayerCards();
+
+  renderTokens();
+
+  showExitModal(name);
+
+  broadcast({
+    type: "state",
+    state: serializeGame()
+  });
+
+}
+
+/* ================= INPUT EVENTS ================= */
+
+$("room-code-input").addEventListener(
+  "input",
+  event => {
+
+    event.target.value =
+      event.target.value
+        .replace(/\D/g, "")
+        .slice(0, 5);
+
+    updateStartButton();
+
+  }
+);
+
+/* ================= UTILITY ================= */
+
+function delay(ms) {
+
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+
+}
+
+/* ================= INITIALIZATION ================= */
+
+function initializeApp() {
+
+  createBoard();
+
+  createDicePips(1);
+
+  selectPlayerCount(2);
+
+  selectUserColor("red");
+
+  setMatchMode("offline");
+
+  updateStartButton();
+
+  console.log(
+    "Ludo Multiplayer initialized successfully."
+  );
+
+}
+
+initializeApp();
+
+})();
