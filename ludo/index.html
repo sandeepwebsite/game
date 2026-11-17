@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>
-      Ludo Game
-    </title>
-    <!-- PeerJS WebRTC Library -->
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js">
-    </script>
-    <style>
-      :root {
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ludo Game</title>
+  <!-- PeerJS WebRTC Library -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  
+  <style>
+    :root {
       --red: #ff3b30;
       --red-dark: #b30000;
       --red-glow: rgba(255, 59, 48, 0.5);
@@ -39,7 +37,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, &#34;SF Pro Display&#34;, &#34;Segoe UI&#34;, Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
@@ -60,7 +58,7 @@
 
     /* Ambient Background Glow Effects */
     body::before, body::after {
-      content: &#34;&#34;;
+      content: "";
       position: absolute;
       width: 320px;
       height: 320px;
@@ -251,7 +249,7 @@
     }
 
     .color-btn::after {
-      content: &#34;&#34;;
+      content: "";
       position: absolute;
       inset: 2px;
       border-radius: 50%;
@@ -437,7 +435,7 @@
 
     /* Active Turn Indicator Bar */
     .player-card.active::before {
-      content: &#34;&#34;;
+      content: "";
       position: absolute;
       bottom: 0;
       left: 0;
@@ -574,7 +572,7 @@
     }
 
     .cell.safe-star::after {
-      content: &#34;★&#34;;
+      content: "★";
       font-size: clamp(0.75rem, 2.6vw, 1.05rem);
       color: #64748b;
       position: absolute;
@@ -991,312 +989,209 @@
     }
 
     .modal-primary-btn:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
 
-    
-.cell {
-  position: relative;
-}
+  <!-- Game Setup Overlay Modal -->
+  <div class="setup-modal-overlay" id="setup-modal">
+    <div class="setup-card">
+      <div class="setup-title">LUDO MULTIPLAYER</div>
 
-.safe-star {
-  position: relative;
-}
-
-.safe-star-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 19px;
-  color: #fbbf24;
-  text-shadow: 0 0 5px rgba(251, 191, 36, 0.7);
-  pointer-events: none;
-  z-index: 1;
-  line-height: 1;
-}
-
-    </style>
-  </head>
-  <body>
-    <!-- Game Setup Overlay Modal -->
-    <div class="setup-modal-overlay" id="setup-modal">
-      <div class="setup-card">
-        <div class="setup-title">
-          LUDO MULTIPLAYER
-        </div>
-        <!-- Mode Selector -->
-        <div>
-          <div class="setup-section-label">
-            Select Game Mode
-          </div>
-          <div class="mode-tab-grid">
-            <button class="opt-btn active" id="mode-offline-btn" onclick="setMatchMode(&#39;offline&#39;)">
-              <span class="btn-icon">              🎮
-</span>
-              <span>              Offline
-</span>
-            </button>
-            <button class="opt-btn" id="mode-online-btn" onclick="setMatchMode(&#39;online&#39;)">
-              <span class="btn-icon">              🌐
-</span>
-              <span>              Online Room
-</span>
-            </button>
-          </div>
-        </div>
-        <!-- Offline Settings View -->
-        <div id="offline-settings">
-          <div class="setup-section-label">
-            Number of Players
-          </div>
-          <div class="player-opt-grid">
-            <button class="opt-btn active" data-count="2" onclick="selectPlayerCount(2)">
-              <span class="btn-icon">              👥
-</span>
-              <span>              2 Players
-</span>
-            </button>
-            <button class="opt-btn" data-count="3" onclick="selectPlayerCount(3)">
-              <span class="btn-icon">              👥
-</span>
-              <span>              3 Players
-</span>
-            </button>
-            <button class="opt-btn" data-count="4" onclick="selectPlayerCount(4)">
-              <span class="btn-icon">              👥
-</span>
-              <span>              4 Players
-</span>
-            </button>
-          </div>
-        </div>
-        <!-- Online Settings View -->
-        <div id="online-settings" style="display: none; flex-direction: column; gap: 12px;">
-          <div class="setup-section-label">
-            Online Room Action
-          </div>
-          <div class="mode-tab-grid">
-            <button class="opt-btn active" id="online-create-btn" onclick="setOnlineAction(&#39;create&#39;)">
-              Create Room
-            </button>
-            <button class="opt-btn" id="online-join-btn" onclick="setOnlineAction(&#39;join&#39;)">
-              Join Room
-            </button>
-          </div>
-          <!-- Online Player Capacity Selector -->
-          <div id="online-player-select" class="setting-group">
-            <div class="setup-section-label">
-              Room Capacity
-            </div>
-            <div class="online-player-opt-grid">
-              <button class="opt-btn active" data-count="2" onclick="selectPlayerCount(2)">
-                <span class="btn-icon">                👥
-</span>
-                <span>                2 Players
-</span>
-              </button>
-              <button class="opt-btn" data-count="3" onclick="selectPlayerCount(3)">
-                <span class="btn-icon">                👥
-</span>
-                <span>                3 Players
-</span>
-              </button>
-              <button class="opt-btn" data-count="4" onclick="selectPlayerCount(4)">
-                <span class="btn-icon">                👥
-</span>
-                <span>                4 Players
-</span>
-              </button>
-            </div>
-          </div>
-          <input type="text" id="room-code-input" class="room-input" maxlength="5" placeholder="ENTER 5-DIGIT CODE" style="display: none;" />
-          <div class="room-status-text" id="room-status-text">
-            Select option to proceed
-          </div>
-        </div>
-        <!-- Color Selector -->
-        <div>
-          <div class="setup-section-label">
-            Choose Your Color
-          </div>
-          <div class="color-opt-grid">
-            <button class="color-btn red active" onclick="selectUserColor(&#39;red&#39;)">
-            </button>
-            <button class="color-btn green" onclick="selectUserColor(&#39;green&#39;)">
-            </button>
-            <button class="color-btn yellow" onclick="selectUserColor(&#39;yellow&#39;)">
-            </button>
-            <button class="color-btn blue" onclick="selectUserColor(&#39;blue&#39;)">
-            </button>
-          </div>
-        </div>
-        <button class="start-game-btn" id="start-btn" onclick="startGame()">
-          Start Match
-        </button>
-      </div>
-    </div>
-    <!-- Main Native App Shell Wrapper -->
-    <div class="app-card-wrapper">
-      <div class="native-notch">
-      </div>
-      <!-- Top App Header -->
-      <header class="app-header">
-        <div class="app-title" id="app-title">
-          LUDO NATIVE
-        </div>
-        <div class="room-tag" id="room-tag">
-          ROOM: -----
-        </div>
-        <div class="turn-badge" id="turn-badge">
-          <div class="turn-dot" id="turn-dot">
-          </div>
-          <span id="turn-text">          RED&#39;S TURN
-</span>
-        </div>
-      </header>
-      <!-- Main Viewport -->
-      <main class="game-viewport">
-        <!-- Top Players (Red & Green) -->
-        <div class="players-container">
-          <div class="player-card red active" id="card-red">
-            <div class="player-info">
-              <div class="player-avatar">
-                R
-              </div>
-              <span class="player-name" id="name-red">              Red
-</span>
-            </div>
-          </div>
-          <div class="player-card green" id="card-green">
-            <div class="player-info">
-              <div class="player-avatar">
-                G
-              </div>
-              <span class="player-name" id="name-green">              Green
-</span>
-            </div>
-          </div>
-        </div>
-        <!-- Board Frame Card -->
-        <div class="board-frame">
-          <div class="ludo-board" id="board">
-            <div class="center-home">
-            </div>
-            <div class="home home-red" id="home-red">
-              <div class="home-inner" id="base-red">
-              </div>
-            </div>
-            <div class="home home-green" id="home-green">
-              <div class="home-inner" id="base-green">
-              </div>
-            </div>
-            <div class="home home-yellow" id="home-yellow">
-              <div class="home-inner" id="base-yellow">
-              </div>
-            </div>
-            <div class="home home-blue" id="home-blue">
-              <div class="home-inner" id="base-blue">
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Bottom Players (Blue & Yellow) -->
-        <div class="players-container">
-          <div class="player-card blue" id="card-blue">
-            <div class="player-info">
-              <div class="player-avatar">
-                B
-              </div>
-              <span class="player-name" id="name-blue">              Blue
-</span>
-            </div>
-          </div>
-          <div class="player-card yellow" id="card-yellow">
-            <div class="player-info">
-              <div class="player-avatar">
-                Y
-              </div>
-              <span class="player-name" id="name-yellow">              Yellow
-</span>
-            </div>
-          </div>
-        </div>
-      </main>
-      <!-- Mobile Bottom Controls Card -->
-      <footer class="controls-bar">
-        <div class="dice-wrapper">
-          <div class="dice-btn" id="dice" onclick="handleDiceClick()">
-          </div>
-          <div class="dice-hint" id="dice-hint">
-            Tap Dice to Roll
-          </div>
-        </div>
-        <div class="chat-trigger-btn" onclick="toggleChat(true)">
-          <svg viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z">
-            </path>
-          </svg>
-          <div class="unread-badge" id="unread-badge">
-          </div>
-        </div>
-      </footer>
-    </div>
-    <!-- Chat Drawer Bottom Sheet Overlay -->
-    <div class="chat-drawer" id="chat-drawer">
-      <div class="chat-header">
-        <div class="drag-handle">
-        </div>
-        <div class="chat-header-row">
-          <div class="chat-title">
-            Room Live Chat
-          </div>
-          <button class="chat-close-btn" onclick="toggleChat(false)">
-            ✕
+      <!-- Mode Selector -->
+      <div>
+        <div class="setup-section-label">Select Game Mode</div>
+        <div class="mode-tab-grid">
+          <button class="opt-btn active" id="mode-offline-btn" onclick="setMatchMode('offline')">
+            <span class="btn-icon">🎮</span>
+            <span>Offline</span>
+          </button>
+          <button class="opt-btn" id="mode-online-btn" onclick="setMatchMode('online')">
+            <span class="btn-icon">🌐</span>
+            <span>Online Room</span>
           </button>
         </div>
       </div>
-      <div class="chat-messages" id="chat-messages">
+
+      <!-- Offline Settings View -->
+      <div id="offline-settings">
+        <div class="setup-section-label">Number of Players</div>
+        <div class="player-opt-grid">
+          <button class="opt-btn active" data-count="2" onclick="selectPlayerCount(2)">
+            <span class="btn-icon">👥</span>
+            <span>2 Players</span>
+          </button>
+          <button class="opt-btn" data-count="3" onclick="selectPlayerCount(3)">
+            <span class="btn-icon">👥</span>
+            <span>3 Players</span>
+          </button>
+          <button class="opt-btn" data-count="4" onclick="selectPlayerCount(4)">
+            <span class="btn-icon">👥</span>
+            <span>4 Players</span>
+          </button>
+        </div>
       </div>
-      <div class="quick-chips">
-        <button class="chip-btn" onclick="sendQuickMessage(&#39;Good Luck! 🎲&#39;)">
-          Good Luck! 🎲
-        </button>
-        <button class="chip-btn" onclick="sendQuickMessage(&#39;Well Played! 👏&#39;)">
-          Well Played! 👏
-        </button>
-        <button class="chip-btn" onclick="sendQuickMessage(&#39;Rolling a 6 now! 🔥&#39;)">
-          Rolling a 6 now! 🔥
-        </button>
-        <button class="chip-btn" onclick="sendQuickMessage(&#39;Oops! 😅&#39;)">
-          Oops! 😅
-        </button>
-      </div>
-      <div class="chat-input-row">
-        <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key===&#39;Enter&#39;) sendChatMessage()" />
-        <button class="send-btn" onclick="sendChatMessage()">
-          ➔
-        </button>
-      </div>
-    </div>
-    <!-- Player Exit Notification Modal -->
-    <div id="exit-modal" class="modal-overlay hidden">
-      <div class="modal-card glass-modal">
-        <div class="exit-avatar-ring" id="exit-avatar-ring">
-          <div class="exit-icon">
-            🚪
+
+      <!-- Online Settings View -->
+      <div id="online-settings" style="display: none; flex-direction: column; gap: 12px;">
+        <div class="setup-section-label">Online Room Action</div>
+        <div class="mode-tab-grid">
+          <button class="opt-btn active" id="online-create-btn" onclick="setOnlineAction('create')">Create Room</button>
+          <button class="opt-btn" id="online-join-btn" onclick="setOnlineAction('join')">Join Room</button>
+        </div>
+
+        <!-- Online Player Capacity Selector -->
+        <div id="online-player-select" class="setting-group">
+          <div class="setup-section-label">Room Capacity</div>
+          <div class="online-player-opt-grid">
+            <button class="opt-btn active" data-count="2" onclick="selectPlayerCount(2)">
+              <span class="btn-icon">👥</span>
+              <span>2 Players</span>
+            </button>
+            <button class="opt-btn" data-count="3" onclick="selectPlayerCount(3)">
+              <span class="btn-icon">👥</span>
+              <span>3 Players</span>
+            </button>
+            <button class="opt-btn" data-count="4" onclick="selectPlayerCount(4)">
+              <span class="btn-icon">👥</span>
+              <span>4 Players</span>
+            </button>
           </div>
         </div>
-        <h3 class="exit-title" id="exit-modal-title">
-          Player Left
-        </h3>
-        <p class="exit-desc" id="exit-modal-desc">
-          Player RED has disconnected from the game.
-        </p>
-        <button class="modal-primary-btn" onclick="closeExitModal()">
-          Got It
-        </button>
+
+        <input type="text" id="room-code-input" class="room-input" maxlength="5" placeholder="ENTER 5-DIGIT CODE" style="display: none;">
+        <div class="room-status-text" id="room-status-text">Select option to proceed</div>
+      </div>
+
+      <!-- Color Selector -->
+      <div>
+        <div class="setup-section-label">Choose Your Color</div>
+        <div class="color-opt-grid">
+          <button class="color-btn red active" onclick="selectUserColor('red')"></button>
+          <button class="color-btn green" onclick="selectUserColor('green')"></button>
+          <button class="color-btn yellow" onclick="selectUserColor('yellow')"></button>
+          <button class="color-btn blue" onclick="selectUserColor('blue')"></button>
+        </div>
+      </div>
+
+      <button class="start-game-btn" id="start-btn" onclick="startGame()">Start Match</button>
+    </div>
+  </div>
+
+  <!-- Main Native App Shell Wrapper -->
+  <div class="app-card-wrapper">
+    <div class="native-notch"></div>
+
+    <!-- Top App Header -->
+    <header class="app-header">
+      <div class="app-title" id="app-title">LUDO NATIVE</div>
+      <div class="room-tag" id="room-tag">ROOM: -----</div>
+      <div class="turn-badge" id="turn-badge">
+        <div class="turn-dot" id="turn-dot"></div>
+        <span id="turn-text">RED'S TURN</span>
+      </div>
+    </header>
+
+    <!-- Main Viewport -->
+    <main class="game-viewport">
+      
+      <!-- Top Players (Red & Green) -->
+      <div class="players-container">
+        <div class="player-card red active" id="card-red">
+          <div class="player-info">
+            <div class="player-avatar">R</div>
+            <span class="player-name" id="name-red">Red</span>
+          </div>
+        </div>
+        <div class="player-card green" id="card-green">
+          <div class="player-info">
+            <div class="player-avatar">G</div>
+            <span class="player-name" id="name-green">Green</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Board Frame Card -->
+      <div class="board-frame">
+        <div class="ludo-board" id="board">
+          <div class="center-home"></div>
+          <div class="home home-red" id="home-red"><div class="home-inner" id="base-red"></div></div>
+          <div class="home home-green" id="home-green"><div class="home-inner" id="base-green"></div></div>
+          <div class="home home-yellow" id="home-yellow"><div class="home-inner" id="base-yellow"></div></div>
+          <div class="home home-blue" id="home-blue"><div class="home-inner" id="base-blue"></div></div>
+        </div>
+      </div>
+
+      <!-- Bottom Players (Blue & Yellow) -->
+      <div class="players-container">
+        <div class="player-card blue" id="card-blue">
+          <div class="player-info">
+            <div class="player-avatar">B</div>
+            <span class="player-name" id="name-blue">Blue</span>
+          </div>
+        </div>
+        <div class="player-card yellow" id="card-yellow">
+          <div class="player-info">
+            <div class="player-avatar">Y</div>
+            <span class="player-name" id="name-yellow">Yellow</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Controls Card -->
+    <footer class="controls-bar">
+      <div class="dice-wrapper">
+        <div class="dice-btn" id="dice" onclick="handleDiceClick()"></div>
+        <div class="dice-hint" id="dice-hint">Tap Dice to Roll</div>
+      </div>
+
+      <div class="chat-trigger-btn" onclick="toggleChat(true)">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+        <div class="unread-badge" id="unread-badge"></div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Chat Drawer Bottom Sheet Overlay -->
+  <div class="chat-drawer" id="chat-drawer">
+    <div class="chat-header">
+      <div class="drag-handle"></div>
+      <div class="chat-header-row">
+        <div class="chat-title">Room Live Chat</div>
+        <button class="chat-close-btn" onclick="toggleChat(false)">✕</button>
       </div>
     </div>
-    <script src="ludo-script.js">
-    </script>
-  </body>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="quick-chips">
+      <button class="chip-btn" onclick="sendQuickMessage('Good Luck! 🎲')">Good Luck! 🎲</button>
+      <button class="chip-btn" onclick="sendQuickMessage('Well Played! 👏')">Well Played! 👏</button>
+      <button class="chip-btn" onclick="sendQuickMessage('Rolling a 6 now! 🔥')">Rolling a 6 now! 🔥</button>
+      <button class="chip-btn" onclick="sendQuickMessage('Oops! 😅')">Oops! 😅</button>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+      <button class="send-btn" onclick="sendChatMessage()">➔</button>
+    </div>
+  </div>
+
+  <!-- Player Exit Notification Modal -->
+  <div id="exit-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-modal">
+      <div class="exit-avatar-ring" id="exit-avatar-ring">
+        <div class="exit-icon">🚪</div>
+      </div>
+      <h3 class="exit-title" id="exit-modal-title">Player Left</h3>
+      <p class="exit-desc" id="exit-modal-desc">Player RED has disconnected from the game.</p>
+      <button class="modal-primary-btn" onclick="closeExitModal()">Got It</button>
+    </div>
+  </div>
+
+  <script src="ludo-script.js"></script>
+</body>
 </html>
