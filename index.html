@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="https://api.iconify.design/lucide:gamepad-2.svg?color=%2306b6d4">
 
     <!-- Dynamic Web App Manifest -->
-    <link rel="manifest" id="pwaManifest">
+    <link rel="manifest" href="./manifest.json">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -399,25 +399,6 @@
         };
         const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
         document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
-
-        // Register Service Worker for offline support
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', (e) => {
-                    self.skipWaiting();
-                });
-                self.addEventListener('activate', (e) => {
-                    e.waitUntil(clients.claim());
-                });
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(
-                        caches.match(e.request).then((response) => response || fetch(e.request))
-                    );
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'text/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW registration failed', err));
-        }
 
         // PWA Installation Prompt Logic
         let deferredPrompt;
