@@ -552,24 +552,44 @@
       background: rgba(241, 245, 249, 0.5);
     }
 
-    .center-home {
-      grid-area: 7 / 7 / 10 / 10;
-      background: conic-gradient(
-        var(--red) 0deg 90deg,
-        var(--green) 90deg 180deg,
-        var(--yellow) 180deg 270deg,
-        var(--blue) 270deg 360deg
-      );
-      border: 0.5px solid #94a3b8;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      padding: 2px;
-      gap: 2px;
-      z-index: 5;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
-    }
+
+.center-home {
+  grid-area: 7 / 7 / 10 / 10;
+  background: conic-gradient(
+    var(--red) 0deg 90deg,
+    var(--green) 90deg 180deg,
+    var(--yellow) 180deg 270deg,
+    var(--blue) 270deg 360deg
+  );
+  border: 0.5px solid #94a3b8;
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+
+  align-items: center;
+  justify-items: center;
+
+  padding: 3px;
+  gap: 1px;
+  z-index: 5;
+
+  overflow: hidden;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+}
+
+/* Tokens inside center home */
+.center-home .token {
+  width: 44%;
+  height: 44%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  border-width: 1px;
+  position: relative;
+}
+
 
     .cell.safe-star::after {
       content: "★";
@@ -611,11 +631,6 @@
       position: relative;
     }
 
-    .center-home .token {
-      width: 44%;
-      height: 44%;
-      border-width: 1px;
-    }
 
     .token.moving {
       transform: scale(1.45) translateY(-6px) !important;
