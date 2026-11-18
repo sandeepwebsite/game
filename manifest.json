@@ -1,0 +1,27 @@
+
+{
+  "id": "./",
+  "name": "PlayPod - Instant Play Games",
+  "short_name": "PlayPod",
+  "description": "Play free instant games online.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "icons": [
+    {
+      "src": "./image/icon.png",
+      "sizes": "192x192",
+      "type": "images/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./image/icon.png",
+      "sizes": "512x512",
+      "type": "images/png",
+      "purpose": "any"
+    }
+  ]
+}
