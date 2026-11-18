@@ -669,6 +669,67 @@ window.addEventListener('appinstalled', () => {
 
 });
 
+  
+// ==========================================
+// BACK BUTTON - DOUBLE PRESS TO EXIT
+// ==========================================
+
+let backPressedOnce = false;
+let backPressTimer;
+
+history.pushState({ page: 'playpod' }, '', location.href);
+
+window.addEventListener('popstate', function () {
+
+  if (backPressedOnce) {
+    // Allow normal browser back navigation
+    history.back();
+    return;
+  }
+
+  backPressedOnce = true;
+
+  // Show exit message
+  let exitToast = document.getElementById('exitToast');
+
+  if (!exitToast) {
+    exitToast = document.createElement('div');
+    exitToast.id = 'exitToast';
+    exitToast.textContent = 'Press back again to exit PlayPod';
+
+    exitToast.style.cssText = `
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 20px;
+      border: 1px solid #06b6d4;
+      border-radius: 12px;
+      font-size: 13px;
+      z-index: 9999;
+      white-space: nowrap;
+    `;
+
+    document.body.appendChild(exitToast);
+  }
+
+  exitToast.style.display = 'block';
+
+  clearTimeout(backPressTimer);
+
+  backPressTimer = setTimeout(() => {
+    backPressedOnce = false;
+    exitToast.style.display = 'none';
+  }, 2000);
+
+  // Restore history entry for second press
+  history.pushState({ page: 'playpod' }, '', location.href);
+
+});
+
+
 </script>
 
 </body>
