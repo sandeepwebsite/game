@@ -3,24 +3,24 @@
   "id": "./",
   "name": "PlayPod - Instant Play Games",
   "short_name": "PlayPod",
-  "description": "Play free instant games online.",
+  "description": "Play amazing free mini games instantly.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#030712",
   "theme_color": "#030712",
   "icons": [
     {
-      "src": "./image/icon1.png",
+      "src": "./images/icon1.png",
       "sizes": "192x192",
-      "type": "images/png",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./image/icon1.png",
+      "src": "./images/icon1.png",
       "sizes": "512x512",
-      "type": "images/png",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
