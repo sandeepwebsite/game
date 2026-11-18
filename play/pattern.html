@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Pattern Pro</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --gold: #fbbf24;
+            --danger: #ef4444;
+            --text: #f8fafc;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        html, body {
+            height: 100%; width: 100vw; margin: 0; padding: 0;
+            background-color: var(--bg); color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            overflow: hidden; position: fixed;
+        }
+
+        body { display: flex; flex-direction: column; }
+
+        .tabs {
+            display: flex; background: #0f172a;
+            padding: env(safe-area-inset-top) 5px 5px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            flex: 1; border: none; background: none; color: #64748b;
+            font-weight: 800; font-size: 0.9rem; cursor: pointer; padding: 12px 0;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
+
+        .stats-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; flex-shrink: 0;
+        }
+        .lvl-pill {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 8px 16px; border-radius: 12px; font-weight: bold; cursor: pointer;
+        }
+        .coin-box { font-weight: 900; color: var(--gold); font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+
+        #daily-btn { font-size: 1.4rem; cursor: pointer; animation: pulse 1.5s infinite; display: none; }
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px var(--gold)); }
+            50% { transform: scale(1.2); filter: drop-shadow(0 0 10px var(--gold)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--gold)); }
+        }
+
+        .game-area {
+            flex-grow: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 10px;
+        }
+        #status-msg { font-weight: 800; color: var(--accent); margin-bottom: 15px; height: 24px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+        .board {
+            display: grid; gap: 6px; padding: 10px;
+            background: var(--card); border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .tile {
+            background: rgba(255,255,255,0.05); border-radius: 6px;
+            transition: 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            aspect-ratio: 1/1; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .tile.active {
+            background: var(--accent) !important; box-shadow: 0 0 20px var(--accent);
+            transform: scale(0.9); border-color: white;
+        }
+
+        #start-btn {
+            margin-top: 20px; padding: 14px 45px; border-radius: 50px;
+            border: none; background: var(--accent); color: var(--bg);
+            font-weight: 900; font-size: 1rem; box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 15px 15px calc(15px + env(safe-area-inset-bottom)); 
+            background: #111b2d; border-top: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .ctrl-btn {
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+            color: white; min-width: 110px; padding: 10px; border-radius: 12px; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+        }
+        .ctrl-btn span { font-size: 0.7rem; color: var(--gold); margin-top: 2px; }
+
+        .coin-anim {
+            position: absolute; font-weight: 900; pointer-events: none;
+            z-index: 10; animation: floatAndFade 1s ease-out forwards;
+        }
+        @keyframes floatAndFade {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-60px); opacity: 0; }
+        }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 25px; width: 85%; text-align: center; }
+        .lvl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; max-height: 250px; overflow-y: auto; }
+        .grid-item { 
+            background: #334155; border: none; color: white; padding: 12px 5px; 
+            border-radius: 10px; cursor: pointer; font-size: 0.8rem;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .grid-item.active { background: var(--accent); color: var(--bg); font-weight: bold; }
+        .grid-item.locked { opacity: 0.4; cursor: not-allowed; }
+        .grid-item span { font-size: 0.6rem; }
+        
+        .danger-btn {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger);
+            color: var(--danger); padding: 10px; border-radius: 10px; margin-top: 10px;
+            width: 100%; font-weight: 800; font-size: 0.8rem; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tabs">
+        <button class="tab-btn" id="t2" onclick="changeGrid(2)">2x2</button>
+        <button class="tab-btn active" id="t4" onclick="changeGrid(4)">4x4</button>
+        <button class="tab-btn" id="t8" onclick="changeGrid(8)">8x8</button>
+    </div>
+
+    <div class="stats-row">
+        <button class="lvl-pill" onclick="showLevels()">LVL <span id="lvl-txt">1</span> ☰</button>
+        <div class="coin-box" id="coin-wrap">
+            <span id="daily-btn" onclick="claimDaily()">🎁</span>
+            🪙 <span id="coin-txt">500</span>
+        </div>
+    </div>
+
+    <div class="game-area">
+        <div id="status-msg">READY?</div>
+        <div id="board" class="board"></div>
+        <button id="start-btn" onclick="startRound()">START ROUND</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button id="hint-btn" class="ctrl-btn" onclick="triggerHint()">
+            HINT 💡 <span>-10 🪙</span>
+        </button>
+        <button id="mute-btn" class="ctrl-btn" onclick="toggleSound()">SOUND 🔊</button>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3>LEVELS</h3>
+            <div id="lvl-container" class="lvl-grid"></div>
+            <button class="lvl-pill" style="width:100%" onclick="hideLevels()">CLOSE</button>
+            <button class="danger-btn" onclick="resetProgress()">RESET ALL PROGRESS</button>
+        </div>
+    </div>
+
+    <script>
+        let grid = parseInt(localStorage.getItem('last_grid')) || 4;
+        let level = parseInt(localStorage.getItem(`curr_lvl_${grid}`)) || 1;
+        let coins = parseInt(localStorage.getItem('coins')) || 500;
+        let muted = localStorage.getItem('muted') === 'true';
+        let sequence = [];
+        let userPos = 0;
+        let busy = false;
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audio;
+
+        function initAudio() {
+            if (!audio) audio = new AudioCtx();
+            if (audio.state === 'suspended') audio.resume();
+        }
+
+        function play(f, t='sine', d=0.2, v=0.1) {
+            if (muted || !audio) return;
+            const o = audio.createOscillator();
+            const g = audio.createGain();
+            o.type = t;
+            o.frequency.setValueAtTime(f, audio.currentTime);
+            g.gain.setValueAtTime(v, audio.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + d);
+            o.connect(g); g.connect(audio.destination);
+            o.start(); o.stop(audio.currentTime + d);
+        }
+
+        function animateCoins(amount, isGain) {
+            const wrap = document.getElementById('coin-wrap');
+            const el = document.createElement('div');
+            el.className = `coin-anim`;
+            el.style.color = isGain ? 'var(--gold)' : 'var(--danger)';
+            el.innerText = `${isGain ? '+' : '-'}${Math.abs(amount)}`;
+            wrap.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function toggleSound() {
+            muted = !muted;
+            localStorage.setItem('muted', muted);
+            refresh();
+        }
+
+        function checkDaily() {
+            const lastClaim = localStorage.getItem('last_claim');
+            const now = new Date().toDateString();
+            document.getElementById('daily-btn').style.display = (lastClaim !== now) ? 'block' : 'none';
+        }
+
+        function claimDaily() {
+            initAudio();
+            localStorage.setItem('last_claim', new Date().toDateString());
+            coins += 250;
+            animateCoins(250, true);
+            play(800, 'sine', 0.6, 0.2);
+            refresh();
+        }
+
+        function changeGrid(s) {
+            if (busy) return;
+            grid = s;
+            level = parseInt(localStorage.getItem(`curr_lvl_${s}`)) || 1;
+            localStorage.setItem('last_grid', s);
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === `t${s}`));
+            setupBoard();
+            refresh();
+        }
+
+        function setupBoard() {
+            const b = document.getElementById('board');
+            b.innerHTML = '';
+            b.style.gridTemplateColumns = `repeat(${grid}, 1fr)`;
+            let size = grid === 8 ? '36px' : grid === 4 ? '70px' : '130px';
+            for (let i = 0; i < grid * grid; i++) {
+                const t = document.createElement('div');
+                t.className = 'tile';
+                t.id = `t-${i}`;
+                t.style.width = t.style.height = size;
+                t.onclick = () => tap(i);
+                b.appendChild(t);
+            }
+        }
+
+        function refresh() {
+            document.getElementById('coin-txt').innerText = coins;
+            document.getElementById('lvl-txt').innerText = level;
+            document.getElementById('hint-btn').disabled = coins < 10;
+            document.getElementById('mute-btn').innerText = muted ? "MUTED 🔈" : "SOUND 🔊";
+            localStorage.setItem('coins', coins);
+            localStorage.setItem(`curr_lvl_${grid}`, level);
+            checkDaily();
+        }
+
+        async function startRound() {
+            if (busy) return;
+            initAudio();
+            busy = true;
+            document.getElementById('start-btn').style.visibility = 'hidden';
+            sequence = Array.from({length: level}, () => Math.floor(Math.random() * (grid * grid)));
+            
+            document.getElementById('status-msg').innerText = "WATCH...";
+            for (let id of sequence) {
+                play(300 + (id * 10), 'sine', 0.4);
+                await light(id, 450);
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            if (grid >= 4) {
+                document.getElementById('status-msg').innerText = "MEMORIZE!";
+                sequence.forEach(id => document.getElementById(`t-${id}`).classList.add('active'));
+                play(200, 'square', 0.5, 0.05);
+                for(let i=5; i>0; i--) {
+                    document.getElementById('status-msg').innerText = `MEMORIZE (${i}s)`;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                sequence.forEach(id => document.getElementById(`t-${id}`).classList.remove('active'));
+            }
+
+            document.getElementById('status-msg').innerText = "YOUR TURN";
+            userPos = 0; busy = false;
+        }
+
+        function light(id, d) {
+            return new Promise(r => {
+                const el = document.getElementById(`t-${id}`);
+                if(!el) return r();
+                el.classList.add('active');
+                setTimeout(() => { el.classList.remove('active'); r(); }, d);
+            });
+        }
+
+        function tap(id) {
+            if (busy || sequence.length === 0) return;
+            play(450 + (id * 5), 'sine', 0.15);
+            light(id, 150);
+            if (id === sequence[userPos]) {
+                userPos++;
+                if (userPos === sequence.length) success();
+            } else { fail(); }
+        }
+
+        function success() {
+            busy = true;
+            document.getElementById('status-msg').innerText = "SUCCESS!";
+            play(600, 'sine', 0.1); 
+            setTimeout(() => play(900, 'sine', 0.4), 100);
+
+            const maxBeaten = parseInt(localStorage.getItem(`max_${grid}`)) || 0;
+
+            if (level > maxBeaten) {
+                animateCoins(100, true);
+                coins += 100;
+                localStorage.setItem(`max_${grid}`, level);
+            }
+
+            level++;
+            setTimeout(() => {
+                busy = false; refresh();
+                document.getElementById('start-btn').style.visibility = 'visible';
+                document.getElementById('status-msg').innerText = "READY?";
+            }, 1200);
+        }
+
+        function fail() {
+            busy = true;
+            play(120, 'sawtooth', 0.5, 0.15);
+            document.getElementById('status-msg').innerText = "FAILED!";
+            setTimeout(() => {
+                busy = false; refresh();
+                document.getElementById('start-btn').style.visibility = 'visible';
+            }, 1000);
+        }
+
+        async function triggerHint() {
+            if (busy || coins < 10 || sequence.length === 0) return;
+            busy = true;
+            animateCoins(10, false);
+            play(150, 'sine', 0.2);
+            coins -= 10;
+            refresh();
+            await new Promise(r => setTimeout(r, 500));
+            document.getElementById('status-msg').innerText = "REPLAYING...";
+            for (let id of sequence) {
+                play(300 + (id * 10), 'sine', 0.4);
+                await light(id, 450);
+                await new Promise(r => setTimeout(r, 100));
+            }
+            document.getElementById('status-msg').innerText = "YOUR TURN";
+            busy = false;
+        }
+
+        function showLevels() {
+            const container = document.getElementById('lvl-container');
+            container.innerHTML = '';
+            
+            const maxBeaten = parseInt(localStorage.getItem(`max_${grid}`)) || 0;
+            const maxToShow = maxBeaten + 4; // Show current progress + a few locked slots
+
+            for (let i = 1; i <= maxToShow; i++) {
+                const b = document.createElement('button');
+                const isLocked = i > (maxBeaten + 1);
+                const isBeaten = i <= maxBeaten;
+                
+                b.className = `grid-item ${i === level ? 'active' : ''} ${isLocked ? 'locked' : ''}`;
+                
+                let icon = isLocked ? "🔒" : (isBeaten ? "⭐" : "🎯");
+                b.innerHTML = `Lvl ${i} <span>${icon}</span>`;
+                
+                if (!isLocked) {
+                    b.onclick = () => { level = i; refresh(); hideLevels(); };
+                }
+                container.appendChild(b);
+            }
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function hideLevels() { document.getElementById('modal').style.display = 'none'; }
+
+        function resetProgress() {
+            if(confirm("Wipe all progress?")) { localStorage.clear(); location.reload(); }
+        }
+
+        changeGrid(grid);
+    </script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Criss Cross Premium - P2P</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f0c20 0%, #15102a 100%);
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --primary-color: #7000ff;
+            --primary-glow: rgba(112, 0, 255, 0.4);
+            --x-color: #ff4757;
+            --x-glow: rgba(255, 71, 87, 0.4);
+            --o-color: #2ed573;
+            --o-glow: rgba(46, 213, 115, 0.4);
+            --text-color: #ffffff;
+            --text-secondary: #8b8a9f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Glows */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+            animation: floatGlow 8s ease-in-out infinite alternate;
+        }
+        body::before { background: var(--x-color); top: 10%; left: -10%; }
+        body::after { background: var(--o-color); bottom: 10%; right: -10%; animation-delay: -4s; }
+
+        @keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 20px) scale(1.2); }
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            position: absolute;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .screen.active { display: flex; }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(15px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 16px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #5200cc 100%);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 36px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px var(--primary-glow);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow); }
+        .btn:active { transform: translateY(1px) scale(0.98); }
+
+        .btn-secondary { background: var(--surface-color); border: 1px solid var(--surface-border); box-shadow: none; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.08); box-shadow: none; }
+
+        /* Multi-input elements for Token management */
+        .token-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--surface-border);
+            padding: 16px;
+            border-radius: 16px;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .token-box:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.02); }
+        
+        .token-display {
+            font-family: monospace;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            color: var(--o-color);
+            margin-top: 10px;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .token-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--surface-border);
+            padding: 14px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+            font-family: monospace;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        .token-input:focus { border-color: var(--primary-color); }
+
+        /* Choice Tokens View */
+        .choice-container { display: flex; gap: 20px; width: 100%; margin-bottom: 30px; }
+        .choice-card {
+            flex: 1; background: var(--surface-color); border: 2px solid var(--surface-border);
+            border-radius: 24px; aspect-ratio: 1/1; display: flex; align-items: center;
+            justify-content: center; font-size: 4rem; font-weight: 800; cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .choice-card.select-x { color: var(--x-color); }
+        .choice-card.select-x:hover { border-color: var(--x-color); background: rgba(255, 71, 87, 0.05); box-shadow: 0 0 25px var(--x-glow); }
+        .choice-card.select-o { color: var(--o-color); }
+        .choice-card.select-o:hover { border-color: var(--o-color); background: rgba(46, 213, 115, 0.05); box-shadow: 0 0 25px var(--o-glow); }
+
+        /* Game Screen Header */
+        header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .icon-btn {
+            background: var(--surface-color); border: 1px solid var(--surface-border); color: var(--text-color);
+            font-size: 1.1rem; cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+
+        .scoreboard { display: flex; background: var(--surface-color); border: 1px solid var(--surface-border); padding: 14px 24px; border-radius: 20px; gap: 30px; margin-bottom: 20px; width: 100%; }
+        .score-item { flex: 1; text-align: center; }
+        .score-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .score-val { font-size: 1.5rem; font-weight: 800; transition: transform 0.2s; }
+        .score-bump { transform: scale(1.3); }
+
+        .status { font-size: 1.2rem; margin-bottom: 20px; font-weight: 600; height: 1.5rem; color: var(--text-color); text-align: center; }
+
+        .board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; aspect-ratio: 1 / 1;
+            background-color: rgba(255, 255, 255, 0.01); border: 1px solid var(--surface-border); padding: 12px; border-radius: 24px; margin-bottom: 25px;
+        }
+        .cell {
+            background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; font-size: 3.2rem; font-weight: 800; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cell:not(.x):not(.o):hover { background-color: rgba(255,255,255,0.06); }
+        .cell:active { transform: scale(0.92); }
+
+        .cell.x { color: var(--x-color); text-shadow: 0 0 20px var(--x-glow); animation: pop 0.25s ease-out; }
+        .cell.o { color: var(--o-color); text-shadow: 0 0 20px var(--o-glow); animation: pop 0.25s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+
+        .cell.winner { background-color: var(--primary-color); color: #fff !important; box-shadow: 0 0 25px var(--primary-color); animation: winPulse 0.6s infinite alternate; }
+        @keyframes winPulse { 0% { transform: scale(1); } 100% { transform: scale(1.03); } }
+        .cell.dimmed { opacity: 0.25; filter: blur(1px); }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(4px); } }
+    </style>
+</head>
+<body>
+
+    <div class="screen active" id="screenMode">
+        <h1>Criss Cross</h1>
+        <p class="subtitle">Choose your multiplayer arena</p>
+        <div class="menu-options">
+            <button class="btn" onclick="selectMode('friend')">Pass & Play (Local Friend)</button>
+            <button class="btn btn-secondary" onclick="selectMode('online-host')">Host Online Match</button>
+            <button class="btn btn-secondary" onclick="selectMode('online-join')">Join via Token</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screenHost">
+        <h1>Your Room Token</h1>
+        <p class="subtitle">Tap the pass token to copy it, then share it with your friend!</p>
+        <div class="token-box" onclick="copyTokenToClipboard()">
+            <div class="score-label" id="tokenLabel">Pass Token (Tap to Copy)</div>
+            <div class="token-display" id="generatedToken">LOADING...</div>
+        </div>
+        <p class="subtitle" style="font-size:0.85rem;" id="hostConnectionStatus">Waiting for connection...</p>
+        <div class="menu-options">
+            <button class="btn btn-secondary" onclick="cancelOnlineSetup()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screenJoin">
+        <h1>Enter Pass Token</h1>
+        <p class="subtitle">Paste the room token provided by your friend</p>
+        <input type="text" class="token-input" id="joinTokenField" placeholder="PASTE TOKEN HERE" autocomplete="off">
+        <div class="menu-options">
+            <button class="btn" onclick="connectToHost()">Connect & Play</button>
+            <button class="btn btn-secondary" onclick="changeScreen('screenMode')">Back</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screenChar">
+        <h1>Player 1 Selection</h1>
+        <p class="subtitle">Pick your battle token</p>
+        <div class="choice-container">
+            <div class="choice-card select-x" onclick="pickToken('X')">X</div>
+            <div class="choice-card select-o" onclick="pickToken('O')">O</div>
+        </div>
+        <div class="menu-options">
+            <button class="btn btn-secondary" onclick="changeScreen('screenMode')">Back</button>
+        </div>
+    </div>
+
+    <div class="screen" id="screenGame">
+        <header>
+            <button class="icon-btn" onclick="quitGame()">➔</button>
+            <button id="muteBtn" class="icon-btn">🔊</button>
+        </header>
+
+        <div class="scoreboard" id="scoreboard">
+            <div class="score-item">
+                <div class="score-label" id="labelPlayer1" style="color: var(--x-color)">P1 (X)</div>
+                <div id="scoreX" class="score-val">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Draws</div>
+                <div id="scoreDraws" class="score-val">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label" id="labelPlayer2" style="color: var(--o-color)">P2 (O)</div>
+                <div id="scoreO" class="score-val">0</div>
+            </div>
+        </div>
+
+        <div class="status" id="status">Player 1's Turn</div>
+
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="menu-options">
+            <button class="btn" id="resetBtn">Reset Board</button>
+        </div>
+    </div>
+
+    <script>
+        let gameMode = 'friend'; // 'friend', 'online-host', 'online-join'
+        let myToken = 'X';       // Personal assigned token 
+        let rivalToken = 'O';     
+        
+        let boardState = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X"; 
+        let isGameActive = true;
+        let scores = { X: 0, O: 0, draws: 0 };
+        let isMuted = false;
+
+        // P2P Core Variables
+        let peer = null;
+        let p2pConnection = null;
+
+        const board = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('status');
+        const resetBtn = document.getElementById('resetBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const scoreXText = document.getElementById('scoreX');
+        const scoreOText = document.getElementById('scoreO');
+        const scoreDrawsText = document.getElementById('scoreDraws');
+
+        // Audio System
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, duration, type = "sine") {
+            if (isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function changeScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            playTone(450, 0.08, "sine");
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            if (mode === 'friend') {
+                changeScreen('screenChar');
+            } else if (mode === 'online-host') {
+                setupHostPeer();
+            } else if (mode === 'online-join') {
+                changeScreen('screenJoin');
+            }
+        }
+
+        // --- CLIPBOARD COPY LOGIC ---
+        function copyTokenToClipboard() {
+            const tokenText = document.getElementById('generatedToken').textContent;
+            if (tokenText === "LOADING..." || tokenText === "COPIED!") return;
+
+            navigator.clipboard.writeText(tokenText).then(() => {
+                const label = document.getElementById('tokenLabel');
+                const tokenDisplay = document.getElementById('generatedToken');
+                
+                const originalLabel = label.textContent;
+                const originalToken = tokenText;
+
+                label.textContent = "SUCCESSFULLY";
+                tokenDisplay.textContent = "COPIED!";
+                tokenDisplay.style.color = "var(--x-color)";
+                playTone(880, 0.15, "sine");
+
+                setTimeout(() => {
+                    label.textContent = originalLabel;
+                    tokenDisplay.textContent = originalToken;
+                    tokenDisplay.style.color = "var(--o-color)";
+                }, 1500);
+            }).catch(err => {
+                console.error("Could not copy token automatically: ", err);
+            });
+        }
+
+        // --- P2P NETWORK LOGIC ---
+        function setupHostPeer() {
+            changeScreen('screenHost');
+            document.getElementById('generatedToken').textContent = "LOADING...";
+            document.getElementById('hostConnectionStatus').textContent = "Connecting to P2P signalling cloud...";
+
+            const generatedRoomId = 'CC-' + Math.floor(1000 + Math.random() * 9000);
+            
+            peer = new Peer(generatedRoomId);
+
+            peer.on('open', (id) => {
+                document.getElementById('generatedToken').textContent = id;
+                document.getElementById('hostConnectionStatus').textContent = "Awaiting your friend's connection...";
+            });
+
+            peer.on('connection', (conn) => {
+                p2pConnection = conn;
+                setupNetworkDataListeners();
+                
+                myToken = 'X';
+                rivalToken = 'O';
+                
+                p2pConnection.on('open', () => {
+                    p2pConnection.send({ type: 'init', hostToken: 'X' });
+                    startOnlineMatchArena();
+                });
+            });
+
+            peer.on('error', (err) => {
+                alert("Room token assignment collision or connection failure: " + err.type);
+                cancelOnlineSetup();
+            });
+        }
+
+        function connectToHost() {
+            const tokenInput = document.getElementById('joinTokenField').value.trim().toUpperCase();
+            if(!tokenInput) return alert("Please enter your friend's pass token first!");
+
+            statusText.textContent = "Connecting to token room...";
+            peer = new Peer();
+
+            peer.on('open', () => {
+                p2pConnection = peer.connect(tokenInput);
+                
+                p2pConnection.on('open', () => {
+                    setupNetworkDataListeners();
+                });
+
+                p2pConnection.on('error', (err) => {
+                    alert("Unable to establish tunnel connection with target token.");
+                });
+            });
+        }
+
+        function setupNetworkDataListeners() {
+            p2pConnection.on('data', (data) => {
+                if (data.type === 'init') {
+                    rivalToken = data.hostToken;
+                    myToken = rivalToken === 'X' ? 'O' : 'X';
+                    startOnlineMatchArena();
+                } else if (data.type === 'move') {
+                    executeMoveLogic(data.index, data.player);
+                } else if (data.type === 'reset') {
+                    resetBoardOnly();
+                    triggerScreenShakeFeedback();
+                }
+            });
+
+            p2pConnection.on('close', () => {
+                alert("Rival disconnected from match connection.");
+                quitGame();
+            });
+        }
+
+        function cancelOnlineSetup() {
+            if(peer) { peer.destroy(); peer = null; }
+            changeScreen('screenMode');
+        }
+
+        // --- MATCH INITIATION ---
+        function pickToken(token) {
+            myToken = token;
+            rivalToken = token === 'X' ? 'O' : 'X';
+            startOnlineMatchArena();
+        }
+
+        function startOnlineMatchArena() {
+            scores = { X: 0, O: 0, draws: 0 };
+            
+            if (gameMode === 'friend') {
+                document.getElementById('labelPlayer1').textContent = `P1 (${myToken})`;
+                document.getElementById('labelPlayer2').textContent = `P2 (${rivalToken})`;
+            } else {
+                document.getElementById('labelPlayer1').textContent = `You (${myToken})`;
+                document.getElementById('labelPlayer2').textContent = `Rival (${rivalToken})`;
+            }
+
+            updateScoreboard();
+            resetBoardOnly();
+            changeScreen('screenGame');
+        }
+
+        function quitGame() {
+            if(p2pConnection) { p2pConnection.close(); p2pConnection = null; }
+            if(peer) { peer.destroy(); peer = null; }
+            changeScreen('screenMode');
+        }
+
+        // --- GAMEPLAY ENGINE CORE ---
+        const winningConditions = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            if (!clickedCell.classList.contains('cell') || !isGameActive) return;
+            
+            const index = parseInt(clickedCell.getAttribute('data-index'));
+            if (boardState[index] !== "") return;
+
+            if (gameMode !== 'friend' && currentPlayer !== myToken) return;
+
+            executeMoveLogic(index, currentPlayer);
+
+            if (gameMode !== 'friend' && p2pConnection) {
+                p2pConnection.send({ type: 'move', index: index, player: myToken });
+            }
+        }
+
+        function executeMoveLogic(index, player) {
+            boardState[index] = player;
+            cells[index].textContent = player;
+            cells[index].classList.add(player.toLowerCase());
+            playTone(player === 'X' ? 550 : 400, 0.1, "triangle");
+            checkResult();
+        }
+
+        function checkResult() {
+            let roundWon = false;
+            let winningLine = [];
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                    roundWon = true;
+                    winningLine = [a, b, c];
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                isGameActive = false;
+                scores[currentPlayer]++;
+                bumpScore(currentPlayer === 'X' ? scoreXText : scoreOText);
+                
+                if (gameMode === 'friend') {
+                    const winnerLabel = currentPlayer === myToken ? "Player 1" : "Player 2";
+                    statusText.textContent = `${winnerLabel} Wins! 👑`;
+                } else {
+                    statusText.textContent = currentPlayer === myToken ? "Victory! You Win! 🎉" : "Defeat! Rival Won 💥";
+                }
+                
+                cells.forEach((c, idx) => c.classList.add(winningLine.includes(idx) ? 'winner' : 'dimmed'));
+                playTone(600, 0.1); setTimeout(() => playTone(900, 0.2), 80);
+                setTimeout(resetBoardOnly, 3000);
+                return;
+            }
+
+            if (!boardState.includes("")) {
+                statusText.textContent = "Draw Session! 🤝";
+                isGameActive = false;
+                scores.draws++;
+                bumpScore(scoreDrawsText);
+                cells.forEach(c => c.classList.add('dimmed'));
+                playTone(250, 0.3, "sawtooth");
+                setTimeout(resetBoardOnly, 3000);
+                return;
+            }
+
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            updateTurnStatus();
+        }
+
+        function updateTurnStatus() {
+            if (gameMode === 'friend') {
+                const activeLabel = currentPlayer === myToken ? "Player 1" : "Player 2";
+                statusText.textContent = `${activeLabel}'s Turn (${currentPlayer})`;
+            } else {
+                statusText.textContent = currentPlayer === myToken ? "Your Turn!" : "Rival is thinking...";
+            }
+            statusText.style.color = currentPlayer === 'X' ? 'var(--x-color)' : 'var(--o-color)';
+        }
+
+        function bumpScore(el) {
+            updateScoreboard();
+            el.classList.add('score-bump');
+            setTimeout(() => el.classList.remove('score-bump'), 250);
+        }
+
+        function updateScoreboard() {
+            scoreXText.textContent = scores.X;
+            scoreOText.textContent = scores.O;
+            scoreDrawsText.textContent = scores.draws;
+        }
+
+        function resetBoardOnly() {
+            boardState = ["", "", "", "", "", "", "", "", ""];
+            isGameActive = true;
+            currentPlayer = "X";
+            
+            cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
+            updateTurnStatus();
+        }
+
+        function triggerScreenShakeFeedback() {
+            document.getElementById('screenGame').classList.add('shake');
+            setTimeout(() => document.getElementById('screenGame').classList.remove('shake'), 400);
+        }
+
+        board.addEventListener('click', handleCellClick);
+
+        resetBtn.addEventListener('click', () => {
+            resetBoardOnly();
+            triggerScreenShakeFeedback();
+            if (gameMode !== 'friend' && p2pConnection) {
+                p2pConnection.send({ type: 'reset' });
+            }
+        });
+
+        const savedMute = localStorage.getItem('muteSettings');
+        isMuted = savedMute === 'true';
+        muteBtn.textContent = isMuted ? '🔇' : '🔊';
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            muteBtn.textContent = isMuted ? '🔇' : '🔊';
+            localStorage.setItem('muteSettings', isMuted);
+        });
+    </script>
+</body>
+</html>

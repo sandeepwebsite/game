@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frog Whacker Ultra</title>
+    <style>
+        :root {
+            --grass: #2d6a4f;
+            --hole: #1b4332;
+            --frog: #74c69d;
+            --hit: #ff4d4d;
+            --accent: #ffeb3b;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle, #40916c, #1b4332);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* Stats Bar */
+        .stats {
+            display: flex;
+            gap: 40px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 40px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            border: 2px solid var(--frog);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .stat-item { font-size: 1.2rem; letter-spacing: 1px; }
+        .stat-item span { color: var(--accent); font-weight: bold; font-size: 1.6rem; }
+
+        /* Game Board */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            gap: 25px;
+            padding: 20px;
+        }
+
+        .hole {
+            width: 120px;
+            height: 100px;
+            background: var(--hole);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.6);
+        }
+
+        .frog {
+            width: 90px;
+            height: 90px;
+            background: var(--frog);
+            border-radius: 45% 45% 20% 20%;
+            position: absolute;
+            left: 15px;
+            bottom: -100px;
+            transition: bottom 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .frog::before, .frog::after {
+            content: ''; position: absolute;
+            width: 18px; height: 18px;
+            background: white; border-radius: 50%;
+            top: 15px; border: 2px solid #000;
+        }
+        .frog::before { left: 18px; }
+        .frog::after { right: 18px; }
+
+        .frog.up { bottom: 5px; }
+        .frog.hit { background: var(--hit) !important; transform: scale(0.9); }
+
+        /* Buttons */
+        #start-btn {
+            margin-top: 30px;
+            padding: 15px 45px;
+            font-size: 1.3rem;
+            background: var(--accent);
+            color: #1b4332;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 900;
+            transition: 0.2s;
+            box-shadow: 0 5px 0 #c6b900;
+        }
+
+        #start-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #c6b900; }
+        #start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: #2d6a4f;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 4px solid var(--accent);
+            max-width: 300px;
+            width: 90%;
+            transform: scale(0.7);
+            transition: 0.3s;
+        }
+
+        .modal.show { transform: scale(1); }
+        .modal h2 { font-size: 2.5rem; margin: 0; color: var(--accent); }
+        .modal p { font-size: 1.2rem; margin: 20px 0; }
+        .modal-btn {
+            background: white;
+            color: #1b4332;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .high-score { margin-top: 15px; font-size: 0.9rem; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div class="stats">
+        <div class="stat-item">TIME: <span id="timer">30</span></div>
+        <div class="stat-item">SCORE: <span id="score">0</span></div>
+    </div>
+
+    <div class="game-grid" id="grid"></div>
+
+    <button id="start-btn">PLAY GAME</button>
+    <div class="high-score">All-Time High: <span id="high-score-val">0</span></div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <h2 id="modal-title">TIME UP!</h2>
+            <p>You whacked <span id="final-score" style="color:var(--accent); font-size: 2rem;">0</span> frogs!</p>
+            <button class="modal-btn" onclick="closeModal()">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SOUND EFFECTS (Synthesized Data URIs) ---
+        const popSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTtvT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19');
+        const whackSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='); 
+        // Using function to generate a "boing" and "splat"
+        function playWhackSound() {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, context.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(context.destination);
+            osc.start();
+            osc.stop(context.currentTime + 0.1);
+        }
+
+        const grid = document.getElementById('grid');
+        const scoreBoard = document.querySelector('#score');
+        const timerDisplay = document.querySelector('#timer');
+        const startBtn = document.querySelector('#start-btn');
+        const highScoreDisplay = document.querySelector('#high-score-val');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modal = document.getElementById('modal');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let score = 0;
+        let timeLeft = 30;
+        let timeUp = false;
+        let lastHole;
+        let countdown;
+
+        // Init High Score
+        highScoreDisplay.textContent = localStorage.getItem('frogHighScore') || 0;
+
+        // Build Grid
+        for (let i = 0; i < 9; i++) {
+            const hole = document.createElement('div');
+            hole.classList.add('hole');
+            const frog = document.createElement('div');
+            frog.classList.add('frog');
+            frog.addEventListener('mousedown', whack);
+            hole.appendChild(frog);
+            grid.appendChild(hole);
+        }
+
+        const holes = document.querySelectorAll('.hole');
+
+        function randomTime(min, max) {
+            return Math.round(Math.random() * (max - min) + min);
+        }
+
+        function randomHole(holes) {
+            const idx = Math.floor(Math.random() * holes.length);
+            const hole = holes[idx];
+            if (hole === lastHole) return randomHole(holes);
+            lastHole = hole;
+            return hole;
+        }
+
+        function peep() {
+            const time = randomTime(600, 1100);
+            const hole = randomHole(holes);
+            const frog = hole.querySelector('.frog');
+            frog.classList.add('up');
+            
+            setTimeout(() => {
+                frog.classList.remove('up');
+                frog.classList.remove('hit');
+                if (!timeUp) peep();
+            }, time);
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            timeUp = false;
+            scoreBoard.textContent = 0;
+            timerDisplay.textContent = timeLeft;
+            startBtn.disabled = true;
+            modalOverlay.style.display = 'none';
+
+            peep();
+            
+            countdown = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function whack(e) {
+            if(!e.isTrusted || this.classList.contains('hit')) return;
+            
+            playWhackSound(); // Play whack sound
+            score++;
+            this.classList.add('hit');
+            
+            if (navigator.vibrate) navigator.vibrate(40);
+            
+            setTimeout(() => this.classList.remove('up'), 100);
+            scoreBoard.textContent = score;
+        }
+
+        function endGame() {
+            timeUp = true;
+            startBtn.disabled = false;
+            finalScoreDisplay.textContent = score;
+            
+            // Check High Score
+            const currentHigh = localStorage.getItem('frogHighScore') || 0;
+            if (score > currentHigh) {
+                localStorage.setItem('frogHighScore', score);
+                highScoreDisplay.textContent = score;
+                document.getElementById('modal-title').textContent = "NEW RECORD!";
+            } else {
+                document.getElementById('modal-title').textContent = "GAME OVER";
+            }
+
+            // Show Modal
+            modalOverlay.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modalOverlay.style.display = 'none';
+            }, 300);
+        }
+
+        startBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>

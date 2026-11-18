@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Party - Arcade Edition</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --accent-color: #e94560;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --success-color: #4cd137;
+            --character-color: #ffbe76;
+            --gold-color: #ffd700;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(233, 69, 96, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 210, 211, 0.15) 0px, transparent 50%);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-badge {
+            background: var(--accent-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(233, 69, 96, 0.2);
+        }
+
+        .mute-btn {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mute-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .coin-display {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--gold-color);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .powerup-btn {
+            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.2);
+            transition: all 0.2s ease;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .powerup-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(255, 107, 107, 0.3);
+        }
+
+        .powerup-btn:active:not(:disabled) {
+            transform: translateY(1px);
+            border-bottom-width: 1px;
+        }
+
+        .powerup-btn:disabled {
+            background: #334155;
+            color: #64748b;
+            box-shadow: none;
+            cursor: not-allowed;
+            border-bottom: none;
+        }
+
+        .hint-container {
+            font-size: 0.95rem;
+            color: #f1f5f9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            background: rgba(30, 41, 59, 0.4);
+            padding: 14px;
+            border-radius: 14px;
+            border-left: 4px solid #00d2d3;
+            text-align: left;
+        }
+
+        #category-display {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hint-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            color: #00d2d3;
+        }
+
+        .figure-container {
+            height: 140px;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto 20px auto;
+        }
+
+        .gallows {
+            stroke: #f8fafc;
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+
+        .figure-part {
+            stroke: var(--character-color);
+            stroke-width: 4.5;
+            fill: transparent;
+            stroke-linecap: round;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .figure-part.visible { opacity: 1; }
+        .figure-part.filled { fill: var(--character-color); }
+
+        .floating-dead-man {
+            animation: floatAnimation 2.5s ease-in-out infinite alternate;
+            transform-origin: 140px 90px;
+        }
+
+        @keyframes floatAnimation {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-10px) rotate(4deg); }
+        }
+
+        .word-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            border-bottom: 4px solid #475569;
+            width: 32px;
+            height: 42px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: #fff;
+        }
+
+        .letter-box.revealed {
+            border-bottom-color: var(--accent-color);
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); }
+            100% { transform: scale(1); }
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 10px;
+            max-width: 100%;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .key {
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 
+                0 4px 0 #0f172a,
+                0 5px 10px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .key:hover:not(:disabled) {
+            background: rgba(47, 61, 85, 0.9);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 0 #0f172a,
+                0 8px 16px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .key:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 
+                0 0px 0 #0f172a,
+                0 1px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .key.correct {
+            background: linear-gradient(135deg, #4cd137, #268513) !important;
+            color: #fff !important;
+            border-color: #4cd137 !important;
+            transform: translateY(4px) !important;
+            box-shadow: 
+                0 0px 0 transparent,
+                0 0px 12px rgba(76, 209, 55, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+            opacity: 1 !important;
+        }
+
+        .key.wrong {
+            background: #1e293b !important;
+            color: #475569 !important;
+            border-color: rgba(255, 255, 255, 0.02) !important;
+            transform: translateY(4px) !important;
+            box-shadow: 
+                0 0px 0 transparent,
+                0 1px 2px rgba(0, 0, 0, 0.2) !important;
+            opacity: 0.4 !important;
+        }
+
+        .key:disabled {
+            cursor: not-allowed;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 440px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-title.win { color: var(--success-color); }
+        .modal-title.lose { color: var(--accent-color); }
+
+        .modal-content p {
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        .word-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        .btn-play-again {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(76, 209, 55, 0.3);
+            transition: all 0.2s;
+            border-bottom: 4px solid #268513;
+        }
+
+        .btn-play-again:hover {
+            background-color: #44bd32;
+            transform: scale(1.03);
+        }
+        
+        .btn-play-again:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .game-container { padding: 16px; border-radius: 16px; }
+            header { flex-direction: column; gap: 12px; margin-bottom: 15px; padding-bottom: 12px; }
+            h1 { font-size: 1.4rem; letter-spacing: 1px; }
+            .dashboard-controls { width: 100%; justify-content: space-between; }
+            .figure-container { height: 120px; margin-bottom: 15px; }
+            .word-display { gap: 6px; margin-bottom: 20px; }
+            .letter-box { width: 22px; height: 32px; font-size: 1.4rem; border-bottom-width: 3px; }
+            .keyboard { grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 10px; }
+            .key { padding: 8px 0; font-size: 0.9rem; border-radius: 6px; box-shadow: 0 2px 0 #0f172a, 0 3px 6px rgba(0, 0, 0, 0.4); }
+            .key:hover:not(:disabled) { box-shadow: 0 3px 0 #0f172a, 0 4px 8px rgba(0, 0, 0, 0.5); }
+            .key.correct, .key.wrong { transform: translateY(2px) !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="game-container">
+        <header>
+            <h1>Hangman</h1>
+            <div class="dashboard-controls">
+                <div class="level-badge" id="level-badge">Level 1</div>
+                <div class="coin-display">🪙 <span id="coin-count">0</span></div>
+                <button class="powerup-btn" id="hint-powerup-btn">✨ Reveal (50)</button>
+                <button class="mute-btn" id="mute-toggle-btn">🔊</button>
+            </div>
+        </header>
+
+        <div class="hint-container">
+            <div id="category-display">Category: -</div>
+            <div class="hint-title">Clue:</div>
+            <div id="hint-display">-</div>
+        </div>
+
+        <div class="figure-container">
+            <svg height="140" width="200" viewBox="0 0 200 140">
+                <line x1="20" y1="130" x2="140" y2="130" class="gallows" />
+                <line x1="60" y1="130" x2="60" y2="10" class="gallows" />
+                <line x1="60" y1="10" x2="140" y2="10" class="gallows" />
+                <line x1="140" y1="10" x2="140" y2="30" class="gallows" />
+
+                <g id="full-character">
+                    <circle cx="140" cy="42" r="12" class="figure-part" id="part-0" />
+                    <line x1="140" y1="54" x2="140" y2="90" class="figure-part" id="part-1" />
+                    <line x1="140" y1="65" x2="115" y2="75" class="figure-part" id="part-2" />
+                    <line x1="140" y1="65" x2="165" y2="75" class="figure-part" id="part-3" />
+                    <line x1="140" y1="90" x2="120" y2="120" class="figure-part" id="part-4" />
+                    <line x1="140" y1="90" x2="160" y2="120" class="figure-part" id="part-5" />
+                </g>
+            </svg>
+        </div>
+
+        <div class="word-display" id="word-display"></div>
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">-</h2>
+            <p id="modal-message">-</p>
+            <div class="word-description" id="word-description">-</div>
+            <button class="btn-play-again" id="btn-restart">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        const globalWordPool = [
+    // ==================== COMMERCE & INTERNATIONAL BUSINESS (25) ====================
+    { word: "BARTER", hint: "Commerce", desc: "Direct exchange of goods and services without using money." },
+    { word: "TARIFF", hint: "Commerce", desc: "Tax or duty imposed by a government on imported or exported goods." },
+    { word: "EXPORT", hint: "Commerce", desc: "Sending domestically produced goods or services to a foreign country." },
+    { word: "IMPORT", hint: "Commerce", desc: "Bringing goods or services into a country from abroad for sale." },
+    { word: "INVOICE", hint: "Commerce", desc: "Itemized commercial bill issued by a seller to a buyer." },
+    { word: "RETAIL", hint: "Commerce", desc: "Sale of goods directly to end consumers in small quantities." },
+    { word: "WHOLESALE", hint: "Commerce", desc: "Selling goods in large bulk quantities at lower prices to retailers." },
+    { word: "LOGISTICS", hint: "Commerce", desc: "Coordination of transporting, storing, and delivering goods." },
+    { word: "EMBARGO", hint: "International Business", desc: "Official government ban on trade or commercial activity with a country." },
+    { word: "QUOTA", hint: "International Business", desc: "Government-imposed trade restriction limiting the quantity of imported goods." },
+    { word: "DUMPING", hint: "International Business", desc: "Exporting goods at a price lower than their normal domestic market value." },
+    { word: "INCOTERMS", hint: "International Business", desc: "Standardized international commercial terms defining buyer and seller responsibilities." },
+    { word: "FOREX", hint: "International Business", desc: "Global decentralized marketplace for trading national currencies." },
+    { word: "FRANCHISE", hint: "Commerce", desc: "Authorization granted to an individual or group to market a company's goods." },
+    { word: "CONSIGNMENT", hint: "Commerce", desc: "Arrangement where goods are left in possession of an agent to sell." },
+    { word: "CARTEL", hint: "Commerce", desc: "Association of manufacturers or suppliers formed to maintain high prices." },
+    { word: "SYNDICATE", hint: "Commerce", desc: "Self-organizing group of businesses formed to transact specific joint business." },
+    { word: "ARBITRAGE", hint: "International Business", desc: "Simultaneous buying and selling of an asset to profit from price differences." },
+    { word: "ENTREPOT", hint: "International Business", desc: "Port or trading post where merchandise is imported and re-exported without duty." },
+    { word: "SUBSIDIARY", hint: "International Business", desc: "Company completely or partly owned and wholly controlled by another parent company." },
+    { word: "JOINTVENTURE", hint: "International Business", desc: "Business arrangement where two or more parties pool resources for a specific task." },
+    { word: "CUSTOMS", hint: "International Business", desc: "Government agency regulating shipments entering and leaving a country." },
+    { word: "BILLOFLADING", hint: "International Business", desc: "Legal document issued by a carrier detailing the type and destination of goods." },
+    { word: "LETTEROFCREDIT", hint: "International Business", desc: "Bank guarantee ensuring a buyer's payment to a seller will be received on time." },
+    { word: "GLOBALIZATION", hint: "International Business", desc: "Process by which businesses develop international influence or operate globally." },
+
+    // ==================== ECONOMICS (25) ====================
+    { word: "SUPPLY", hint: "Economics", desc: "Total amount of a specific good or service available to consumers." },
+    { word: "DEMAND", hint: "Economics", desc: "Consumer's desire and willingness to pay a price for a good." },
+    { word: "SCARCITY", hint: "Economics", desc: "Fundamental economic problem of unlimited wants with limited resources." },
+    { word: "MONOPOLY", hint: "Economics", desc: "Market structure where a single seller dominates the entire supply." },
+    { word: "OLIGOPOLY", hint: "Economics", desc: "Market state where a small number of large firms dominate an industry." },
+    { word: "MONOPSONY", hint: "Economics", desc: "Market condition in which there is only one buyer." },
+    { word: "DUOPOLY", hint: "Economics", desc: "Situation in which two suppliers dominate the market for a commodity." },
+    { word: "INFLATION", hint: "Economics", desc: "General, sustained increase in prices and fall in purchasing power." },
+    { word: "DEFLATION", hint: "Economics", desc: "Reduction of the general level of prices in an economy." },
+    { word: "STAGFLATION", hint: "Economics", desc: "Persistent high inflation combined with high unemployment and stagnant demand." },
+    { word: "RECESSION", hint: "Economics", desc: "Significant, widespread decline in economic activity lasting months." },
+    { word: "DEPRESSION", hint: "Economics", desc: "Severe and prolonged downturn in economic activity lasting years." },
+    { word: "ELASTICITY", hint: "Economics", desc: "Measure of a variable's sensitivity to a change in another variable." },
+    { word: "UTILITY", hint: "Economics", desc: "Total satisfaction received from consuming a good or service." },
+    { word: "SUBSIDY", hint: "Economics", desc: "Financial grant given by government to support an industry or lower prices." },
+    { word: "EXTERNALITY", hint: "Economics", desc: "Side effect or consequence of an industrial activity affecting uninvolved parties." },
+    { word: "LAISSEZFAIRE", hint: "Economics", desc: "Economic policy of letting owners of industry set working conditions without interference." },
+    { word: "KEYNESIAN", hint: "Economics", desc: "Economic theory advocating increased government expenditures to stimulate demand." },
+    { word: "MACROECONOMICS", hint: "Economics", desc: "Branch of economics studying performance and structure of an economy as a whole." },
+    { word: "MICROECONOMICS", hint: "Economics", desc: "Study of individuals, households, and firms' behavior in decision making." },
+    { word: "EQUILIBRIUM", hint: "Economics", desc: "State in which economic forces such as supply and demand are balanced." },
+    { word: "OPPORTUNITYCOST", hint: "Economics", desc: "Loss of potential gain from other alternatives when one alternative is chosen." },
+    { word: "FISCALPOLICY", hint: "Economics", desc: "Use of government spending and taxation to influence the economy." },
+    { word: "MONETARYPOLICY", hint: "Economics", desc: "Central bank actions managing money supply and interest rates." },
+    { word: "GDP", hint: "Economics", desc: "Total monetary value of all finished goods and services made within a country." },
+
+    // ==================== ACCOUNTING & COSTING (25) ====================
+    { word: "ASSET", hint: "Accounting", desc: "Resource with economic value owned by a business providing future benefit." },
+    { word: "LIABILITY", hint: "Accounting", desc: "Company's legal financial debts or obligations owed to outside parties." },
+    { word: "EQUITY", hint: "Accounting", desc: "Residual ownership value of an asset after liabilities are subtracted." },
+    { word: "DEBIT", hint: "Accounting", desc: "Accounting entry increasing an asset or expense account on the left side." },
+    { word: "CREDIT", hint: "Accounting", desc: "Accounting entry increasing a liability or equity account on the right side." },
+    { word: "LEDGER", hint: "Accounting", desc: "Principal book where all financial transactions are summarized by account." },
+    { word: "JOURNAL", hint: "Accounting", desc: "Chronological record of all financial transactions of a business." },
+    { word: "ACCRUAL", hint: "Accounting", desc: "Recording revenues and expenses when earned or incurred, regardless of cash." },
+    { word: "DEPRECIATION", hint: "Accounting", desc: "Systematic allocation of the cost of a tangible asset over its useful life." },
+    { word: "AMORTIZATION", hint: "Accounting", desc: "Gradual write-off of the initial cost of an intangible asset over time." },
+    { word: "GOODWILL", hint: "Accounting", desc: "Intangible asset arising when a buyer acquires an existing business above fair value." },
+    { word: "SOLVENCY", hint: "Accounting", desc: "Ability of a company to meet its long-term debts and financial obligations." },
+    { word: "LIQUIDITY", hint: "Accounting", desc: "Ease with which an asset can be converted into ready cash without affecting price." },
+    { word: "CONSOLIDATION", hint: "Accounting", desc: "Combining financial statements of a parent company and its subsidiaries." },
+    { word: "OVERHEAD", hint: "Cost Accounting", desc: "Ongoing business expenses not directly attributed to creating a product." },
+    { word: "VARIANCE", hint: "Cost Accounting", desc: "Difference between budgeted, planned, or standard cost and actual amount." },
+    { word: "BREAKEVEN", hint: "Cost Accounting", desc: "Production level where total revenues equal total expenses." },
+    { word: "CONTRIBUTION", hint: "Cost Accounting", desc: "Selling price per unit minus the variable cost per unit." },
+    { word: "MARGINALCOST", hint: "Cost Accounting", desc: "Change in total production cost that comes from making one additional unit." },
+    { word: "SUNKCOST", hint: "Cost Accounting", desc: "Money that has already been spent and cannot be recovered." },
+    { word: "ACTIVITYBASED", hint: "Cost Accounting", desc: "Costing method assigning overhead costs to specific activities." },
+    { word: "INVENTORY", hint: "Accounting", desc: "Raw materials, work-in-process goods, and finished goods held for sale." },
+    { word: "FIFO", hint: "Accounting", desc: "Inventory valuation method assuming oldest goods are sold first." },
+    { word: "LIFO", hint: "Accounting", desc: "Inventory valuation method assuming most recently produced items are sold first." },
+    { word: "IFRS", hint: "Accounting", desc: "International Financial Reporting Standards for global accounting consistency." },
+
+    // ==================== AUDITING & ASSURANCE (20) ====================
+{ word: "AUDIT", hint: "Auditing", desc: "Official inspection and verification of an organization's financial records." },
+{ word: "VOUCHER", hint: "Auditing", desc: "Supporting internal document proving a financial transaction is valid." },
+{ word: "VOUCHING", hint: "Auditing", desc: "Inspection of documentary evidence supporting and substantiating a transaction." },
+{ word: "VERIFICATION", hint: "Auditing", desc: "Confirming the truth, accuracy, ownership, and existence of assets." },
+{ word: "MATERIALITY", hint: "Auditing", desc: "Threshold above which missing or incorrect financial info influences decisions." },
+{ word: "SAMPLING", hint: "Auditing", desc: "Testing less than 100% of items within an account balance to evaluate the whole." },
+{ word: "COMPLIANCE", hint: "Auditing", desc: "Conforming to established laws, tax regulations, and internal policies." },
+{ word: "CONTROLS", hint: "Auditing", desc: "Internal rules and procedures implemented to ensure integrity and prevent fraud." },
+{ word: "FRAUD", hint: "Auditing", desc: "Intentional deception or misrepresentation of financial data for unlawful gain." },
+{ word: "EMBEZZLEMENT", hint: "Auditing", desc: "Theft or misappropriation of funds placed in one's trust or belonging to employer." },
+{ word: "WINDOWDRESSING", hint: "Auditing", desc: "Actions taken to improve the appearance of a company's financial statements." },
+{ word: "FORENSIC", hint: "Auditing", desc: "Investigative auditing used to gather financial evidence suitable for court." },
+{ word: "QUALIFIED", hint: "Auditing", desc: "Audit opinion indicating financial statements are fair except for specific areas." },
+{ word: "ADVERSE", hint: "Auditing", desc: "Audit opinion stating financial statements are misrepresented and non-compliant." },
+{ word: "DISCLAIMER", hint: "Auditing", desc: "Statement by an auditor declining to express an opinion due to scope limitations." },
+{ word: "WORKINGPAPERS", hint: "Auditing", desc: "Records kept by the auditor of procedures applied, tests performed, and info obtained." },
+{ word: "TEEMING", hint: "Auditing", desc: "Fraud scheme involving concealing cash shortages by delaying recording of receipts." },
+{ word: "STATUTORY", hint: "Auditing", desc: "Legally required review of the accuracy of a company's financial statements." },
+{ word: "CONCURRENT", hint: "Auditing", desc: "Systematic and timely examination of financial transactions on a regular basis." },
+{ word: "GOINGCONCERN", hint: "Auditing", desc: "Assumption that a business will continue operating for the foreseeable future." },
+// ==================== CORPORATE FINANCE & INVESTMENTS (25) ====================
+{ word: "DIVIDEND", hint: "Corporate Finance", desc: "Distribution of a portion of a company's earnings to its shareholders." },
+{ word: "LEVERAGE", hint: "Corporate Finance", desc: "Use of borrowed capital (debt) to increase the potential return of an investment." },
+{ word: "WACC", hint: "Corporate Finance", desc: "Weighted Average Cost of Capital representing a firm's blended cost of financing." },
+{ word: "NPV", hint: "Corporate Finance", desc: "Net Present Value comparing present value of cash inflows to outflows." },
+{ word: "IRR", hint: "Corporate Finance", desc: "Internal Rate of Return making the net present value of all cash flows equal zero." },
+{ word: "BETA", hint: "Corporate Finance", desc: "Measure of a stock's volatility in relation to the overall market." },
+{ word: "ALPHA", hint: "Corporate Finance", desc: "Excess return of an investment relative to the return of a benchmark index." },
+{ word: "DERIVATIVE", hint: "Corporate Finance", desc: "Financial security with a value reliant upon an underlying asset." },
+{ word: "HEDGING", hint: "Corporate Finance", desc: "Risk management strategy employed to offset losses in investments." },
+{ word: "FUTURES", hint: "Corporate Finance", desc: "Legal agreement to buy or sell a particular commodity asset at a predetermined price." },
+{ word: "OPTIONS", hint: "Corporate Finance", desc: "Financial derivatives giving buyers the right, but not obligation, to buy/sell." },
+{ word: "SWAP", hint: "Corporate Finance", desc: "Derivative contract through which two parties exchange financial instruments." },
+{ word: "DEBENTURE", hint: "Corporate Finance", desc: "Type of debt instrument that is not backed by any collateral." },
+{ word: "UNDERWRITING", hint: "Corporate Finance", desc: "Process where investment banks raise investment capital on behalf of corporations." },
+{ word: "IPO", hint: "Corporate Finance", desc: "Initial Public Offering when a private company first sells shares to the public." },
+{ word: "BUYBACK", hint: "Corporate Finance", desc: "Repurchase of outstanding shares by a company to reduce shares on the market." },
+{ word: "WORKINGCAPITAL", hint: "Corporate Finance", desc: "Difference between a company's current assets and current liabilities." },
+{ word: "CAPITALBUDGET", hint: "Corporate Finance", desc: "Process a business undertakes to evaluate potential major projects or investments." },
+{ word: "ANNUITY", hint: "Corporate Finance", desc: "Series of equal payments made at regular intervals over a period of time." },
+{ word: "PERPETUITY", hint: "Corporate Finance", desc: "Security that pays for an infinite amount of time with no maturity date." },
+{ word: "VENTURECAPITAL", hint: "Corporate Finance", desc: "Private equity financing provided to startups with long-term growth potential." },
+{ word: "PORTFOLIO", hint: "Corporate Finance", desc: "Collection of financial investments like stocks, bonds, commodities, and cash." },
+{ word: "DIVERSIFICATION", hint: "Corporate Finance", desc: "Risk management strategy mixing a wide variety of investments within a portfolio." },
+{ word: "YIELD", hint: "Corporate Finance", desc: "Earnings generated and realized on an investment over a particular period." },
+{ word: "INSOLVENCY", hint: "Corporate Finance", desc: "State of financial distress where a person or business cannot pay bills when due." },
+// ==================== TAXATION (20) ====================
+{ word: "ASSESSMENT", hint: "Taxation", desc: "Process of determining the taxable income and tax liability of a taxpayer." },
+{ word: "EXEMPTION", hint: "Taxation", desc: "Monetary amount or income category legally excluded from taxation." },
+{ word: "DEDUCTION", hint: "Taxation", desc: "Expense that can be subtracted from adjusted gross income to reduce tax." },
+{ word: "SURCHARGE", hint: "Taxation", desc: "Additional charge or tax levied on top of an existing tax." },
+{ word: "CESS", hint: "Taxation", desc: "Tax levied by government for a specific purpose like education or health." },
+{ word: "EVASION", hint: "Taxation", desc: "Illegal non-payment or underpayment of taxes through misrepresentation." },
+{ word: "AVOIDANCE", hint: "Taxation", desc: "Legal usage of the tax regime to reduce the amount of tax payable." },
+{ word: "DIRECTTAX", hint: "Taxation", desc: "Tax paid directly by an individual or organization to the imposing entity." },
+{ word: "INDIRECTTAX", hint: "Taxation", desc: "Tax collected by an intermediary from the person bearing ultimate economic burden." },
+{ word: "GST", hint: "Taxation", desc: "Goods and Services Tax levied on the supply of goods and services." },
+{ word: "TDS", hint: "Taxation", desc: "Tax Deducted at Source collected at the very origin of income generation." },
+{ word: "CAPITALGAIN", hint: "Taxation", desc: "Profit realized from the sale of a non-inventory asset like stocks or real estate." },
+{ word: "PERQUISITE", hint: "Taxation", desc: "Non-cash benefit received by an employee in addition to regular salary." },
+{ word: "REBATE", hint: "Taxation", desc: "Partial refund or reduction of tax liability provided to eligible taxpayers." },
+{ word: "TRANSFERPRICING", hint: "Taxation", desc: "Setting of prices for goods and services sold between related legal entities." },
+{ word: "DOUBLETAXATION", hint: "Taxation", desc: "Levying of tax by two or more jurisdictions on the same income or asset." },
+{ word: "WITHHOLDING", hint: "Taxation", desc: "Income tax paid directly to the government by the payer of the income." },
+{ word: "EXCISE", hint: "Taxation", desc: "Inland tax on the sale or production for sale of specific goods." },
+{ word: "PREVIOUSYEAR", hint: "Taxation", desc: "Financial year in which income is earned prior to the assessment year." },
+{ word: "ASSESSEE", hint: "Taxation", desc: "Person by whom any tax or any other sum of money is payable under tax law." },
+// ==================== BUSINESS LAW & CORPORATE GOVERNANCE (20) ====================
+{ word: "CONTRACT", hint: "Business Law", desc: "Legally binding agreement recognizing and governing rights and duties of parties." },
+{ word: "INDEMNITY", hint: "Business Law", desc: "Contract by which one party promises to save the other from loss caused." },
+{ word: "BAILMENT", hint: "Business Law", desc: "Delivery of goods by one person to another for some purpose upon a contract." },
+{ word: "PLEDGE", hint: "Business Law", desc: "Bailment of goods as security for payment of a debt or performance of promise." },
+{ word: "AGENCY", hint: "Business Law", desc: "Fiduciary relationship where an agent is authorized to act on behalf of a principal." },
+{ word: "ULTRAVIRES", hint: "Business Law", desc: "Acts conducted by a corporation beyond the scope of powers granted by its charter." },
+{ word: "PROSPECTUS", hint: "Business Law", desc: "Formal legal document required by regulators providing details about an investment." },
+{ word: "ARTICLES", hint: "Business Law", desc: "Document specifying regulations for a company's internal management and operations." },
+{ word: "MEMORANDUM", hint: "Business Law", desc: "Charter document defining a company's constitution and scope of external powers." },
+{ word: "QUORUM", hint: "Business Law", desc: "Minimum number of members required to be present to make meeting proceedings valid." },
+{ word: "PROXY", hint: "Business Law", desc: "Authority to represent someone else, especially in voting at shareholder meetings." },
+{ word: "FIDUCIARY", hint: "Business Law", desc: "Person or organization acting on behalf of another, bound to act in their best interest." },
+{ word: "LIQUIDATION", hint: "Business Law", desc: "Process of bringing a business to an end and distributing its assets to claimants." },
+{ word: "ARBITRATION", hint: "Business Law", desc: "Private dispute resolution process outside the courts by an impartial third party." },
+{ word: "BREACH", hint: "Business Law", desc: "Violation of a law, duty, or other form of obligation in a contract." },
+{ word: "CONSIDERATION", hint: "Business Law", desc: "Something of value exchanged between parties to make a contract legally valid." },
+{ word: "VOID", hint: "Business Law", desc: "Agreement that is not legally enforceable from the moment it was created." },
+{ word: "NEGOTIABLE", hint: "Business Law", desc: "Signed document promising a sum of payment to a specified person or assignee." },
+{ word: "GOVERNANCE", hint: "Business Law", desc: "System of rules, practices, and processes by which a firm is directed and controlled." },
+{ word: "WHISTLEBLOWER", hint: "Business Law", desc: "Person who exposes secretive information or illegal activity within an organization." },
+// ==================== STRATEGIC MANAGEMENT & HRM (20) ====================
+{ word: "SWOT", hint: "Strategy", desc: "Framework evaluating Strengths, Weaknesses, Opportunities, and Threats." },
+{ word: "SYNERGY", hint: "Strategy", desc: "Concept that combined value and performance of two companies exceeds the sum." },
+{ word: "MERGER", hint: "Strategy", desc: "Agreement uniting two existing companies into one new company." },
+{ word: "ACQUISITION", hint: "Strategy", desc: "Corporate action in which a company buys most or all of another's ownership." },
+{ word: "DIVERSIFY", hint: "Strategy", desc: "Corporate strategy to enter into a new market or industry not currently served." },
+{ word: "BENCHMARK", hint: "Strategy", desc: "Measuring company performance against best-in-class competitors." },
+{ word: "OUTSOURCING", hint: "Strategy", desc: "Business practice of hiring a party outside a company to perform services." },
+{ word: "DOWNSIZING", hint: "Strategy", desc: "Permanent reduction of a company's labor force through elimination of positions." },
+{ word: "BLUEOCEAN", hint: "Strategy", desc: "Strategy creating uncontested market space making the competition irrelevant." },
+{ word: "CORECOMPETENCE", hint: "Strategy", desc: "Harmonized combination of multiple resources and skills distinguishing a firm." },
+{ word: "ATTRITION", hint: "HRM", desc: "Gradual reduction in staff numbers occurring as employees retire or resign." },
+{ word: "APPRAISAL", hint: "HRM", desc: "Systematic evaluation of an employee's job performance and productivity." },
+{ word: "ONBOARDING", hint: "HRM", desc: "Process of integrating a new employee with a company and its culture." },
+{ word: "SUCCESSION", hint: "HRM", desc: "Strategy for passing on leadership roles to an employee or group of employees." },
+{ word: "COMPENSATION", hint: "HRM", desc: "Total cash and non-cash payments given to an employee in exchange for work." },
+{ word: "ERGONOMICS", hint: "HRM", desc: "Designing workplaces and systems to fit the people who use them." },
+{ word: "MOTIVATION", hint: "HRM", desc: "Internal and external factors stimulating desire and energy in employees." },
+{ word: "DELEGATION", hint: "HRM", desc: "Assignment of responsibility or authority to another person to carry out activities." },
+{ word: "HIERARCHY", hint: "HRM", desc: "System in which members of an organization are ranked according to authority." },
+{ word: "RETENTION", hint: "HRM", desc: "Ability of an organization to retain its employees and reduce turnover." },
+// ==================== QUANTITATIVE TECHNIQUES & RESEARCH (20) ====================
+{ word: "HYPOTHESIS", hint: "Research", desc: "Testable statement or educated guess predicting the relationship between variables." },
+{ word: "REGRESSION", hint: "Statistics", desc: "Statistical method estimating relationships between a dependent and independent variable." },
+{ word: "CORRELATION", hint: "Statistics", desc: "Statistical measure expressing the extent to which two variables are linearly related." },
+{ word: "MEAN", hint: "Statistics", desc: "Mathematical average of a set of two or more numbers." },
+{ word: "MEDIAN", hint: "Statistics", desc: "Middle number in a sorted, ascending or descending, list of numbers." },
+{ word: "MODE", hint: "Statistics", desc: "Value that appears most frequently in a data set." },
+{ word: "SKEWNESS", hint: "Statistics", desc: "Measure of the asymmetry of the probability distribution of a real-valued variable." },
+{ word: "KURTOSIS", hint: "Statistics", desc: "Statistical measure defining how heavily the tails of a distribution differ from normal." },
+{ word: "PROBABILITY", hint: "Statistics", desc: "Branch of mathematics concerning numerical descriptions of how likely an event is." },
+{ word: "POPULATION", hint: "Research", desc: "Entire pool from which a statistical sample is drawn." },
+{ word: "SAMPLE", hint: "Research", desc: "Smaller, manageable version of a larger group used in statistical testing." },
+{ word: "CHISQUARE", hint: "Statistics", desc: "Statistical test used to compare observed results with expected results." },
+{ word: "ANOVA", hint: "Statistics", desc: "Analysis of Variance used to analyze differences among group means in a sample." },
+{ word: "DISPERSION", hint: "Statistics", desc: "Extent to which a distribution is stretched or squeezed." },
+{ word: "LINEAR", hint: "Operations Research", desc: "Optimization method achieving the best outcome in a mathematical model." },
+{ word: "SIMPLEX", hint: "Operations Research", desc: "Standard algorithm for solving linear programming optimization problems." },
+{ word: "PERT", hint: "Operations Research", desc: "Program Evaluation Review Technique used to schedule and coordinate project tasks." },
+{ word: "CPM", hint: "Operations Research", desc: "Critical Path Method algorithm for scheduling a set of project activities." },
+{ word: "SIMULATION", hint: "Operations Research", desc: "Imitation of the operation of a real-world process or system over time." },
+{ word: "QUEUING", hint: "Operations Research", desc: "Mathematical study of waiting lines to predict queue lengths and waiting times." }
+];
+
+        let currentLevel = parseInt(localStorage.getItem('hangman_level')) || 1;
+        let coins = parseInt(localStorage.getItem('hangman_coins')) || 100;
+        let isMuted = localStorage.getItem('hangman_muted') === 'true'; // Audio state tracking
+        let trackingSequence = [];
+        
+        let currentWordData = {};
+        let currentWord = "";
+        let guessedLetters = [];
+        let wrongGuesses = 0;
+        const maxGuesses = 6;
+        const HINT_COST = 50;
+
+        let audioCtx = null;
+        function playSound(type) {
+            if (isMuted) return; // Halt output immediately if mute configuration is active
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.2); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6); osc.start(now); osc.stop(now + 0.6);
+                } else if (type === 'lose') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.5); gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(now); osc.stop(now + 0.5);
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        const wordDisplay = document.getElementById("word-display");
+        const categoryDisplay = document.getElementById("category-display");
+        const hintDisplay = document.getElementById("hint-display");
+        const levelBadge = document.getElementById("level-badge");
+        const coinCount = document.getElementById("coin-count");
+        const hintPowerupBtn = document.getElementById("hint-powerup-btn");
+        const keyboardContainer = document.getElementById("keyboard");
+        const modalOverlay = document.getElementById("modal-overlay");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const wordDescription = document.getElementById("word-description");
+        const restartBtn = document.getElementById("btn-restart");
+        const fullCharacterGroup = document.getElementById("full-character");
+        const muteToggleBtn = document.getElementById("mute-toggle-btn");
+
+        const canvas = document.getElementById("particle-canvas");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 5 + 3;
+                this.speedX = (Math.random() - 0.5) * 8;
+                this.speedY = (Math.random() - 0.5) * 8 - 2;
+                this.color = color; this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.02;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.speedY += 0.1; this.alpha -= this.decay; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            }
+        }
+
+        function triggerExplosion(element, customColor) {
+            if (!element) return;
+            const rect = element.getBoundingClientRect();
+            const posX = rect.left + rect.width / 2;
+            const posY = rect.top + rect.height / 2;
+            const colors = customColor ? [customColor] : ["#4cd137", "#e94560", "#00d2d3", "#ffd700"];
+            for (let i = 0; i < 15; i++) {
+                particles.push(new Particle(posX, posY, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function getSequenceMatrix() {
+            let savedSeq = localStorage.getItem('hangman_sequence');
+            if (savedSeq) {
+                trackingSequence = JSON.parse(savedSeq);
+            }
+            
+            if (!trackingSequence || trackingSequence.length !== globalWordPool.length) {
+                trackingSequence = Array.from({length: globalWordPool.length}, (_, i) => i);
+                for (let i = trackingSequence.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [trackingSequence[i], trackingSequence[j]] = [trackingSequence[j], trackingSequence[i]];
+                }
+                localStorage.setItem('hangman_sequence', JSON.stringify(trackingSequence));
+            }
+        }
+
+        function updateDashboardUI() {
+            coinCount.textContent = coins;
+            levelBadge.textContent = `Level ${currentLevel}`;
+            muteToggleBtn.textContent = isMuted ? "🔇" : "🔊";
+            
+            localStorage.setItem('hangman_coins', coins);
+            localStorage.setItem('hangman_level', currentLevel);
+            localStorage.setItem('hangman_muted', isMuted);
+            
+            const remaining = [...currentWord].filter(l => !guessedLetters.includes(l));
+            hintPowerupBtn.disabled = (coins < HINT_COST || remaining.length <= 1);
+        }
+
+        // Action binding event hook for clicking the Mute button element
+        muteToggleBtn.addEventListener("click", () => {
+            isMuted = !isMuted;
+            updateDashboardUI();
+        });
+
+        function initGame() {
+            getSequenceMatrix();
+            const sequenceIndex = (currentLevel - 1) % globalWordPool.length;
+            
+            if (currentLevel > 1 && sequenceIndex === 0 && guessedLetters.length === 0) {
+                localStorage.removeItem('hangman_sequence');
+                getSequenceMatrix();
+            }
+
+            const activeWordIndex = trackingSequence[sequenceIndex];
+            currentWordData = globalWordPool[activeWordIndex];
+            currentWord = currentWordData.word.toUpperCase();
+            guessedLetters = [];
+            wrongGuesses = 0;
+
+            categoryDisplay.innerHTML = `Category: <b>${currentWordData.hint}</b>`;
+            hintDisplay.textContent = currentWordData.desc;
+            
+            modalOverlay.classList.remove("active");
+            fullCharacterGroup.classList.remove("floating-dead-man");
+            document.querySelectorAll(".figure-part").forEach(p => p.classList.remove("visible", "filled"));
+
+            renderWord();
+            renderKeyboard();
+            updateDashboardUI();
+        }
+
+        function renderWord() {
+            wordDisplay.innerHTML = "";
+            [...currentWord].forEach(letter => {
+                const box = document.createElement("div");
+                box.classList.add("letter-box");
+                if (guessedLetters.includes(letter)) {
+                    box.textContent = letter;
+                    box.classList.add("revealed");
+                }
+                wordDisplay.appendChild(box);
+            });
+            checkGameStatus();
+        }
+
+        function renderKeyboard() {
+            keyboardContainer.innerHTML = "";
+            [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].forEach(letter => {
+                const button = document.createElement("button");
+                button.classList.add("key");
+                button.setAttribute("data-key", letter);
+                button.textContent = letter;
+                if(guessedLetters.includes(letter)) {
+                    button.disabled = true;
+                    button.classList.add(currentWord.includes(letter) ? "correct" : "wrong");
+                }
+                button.addEventListener("click", () => handleGuess(letter));
+                keyboardContainer.appendChild(button);
+            });
+        }
+
+        function handleGuess(letter) {
+            if (guessedLetters.includes(letter) || wrongGuesses >= maxGuesses) return;
+            guessedLetters.push(letter);
+            const keyBtn = document.querySelector(`.key[data-key="${letter}"]`);
+
+            if (currentWord.includes(letter)) {
+                playSound('correct');
+                if (keyBtn) triggerExplosion(keyBtn, "#4cd137");
+                renderWord();
+            } else {
+                playSound('wrong');
+                if (keyBtn) triggerExplosion(keyBtn, "#475569");
+                const currentPart = document.getElementById(`part-${wrongGuesses}`);
+                if (currentPart) currentPart.classList.add("visible");
+                wrongGuesses++;
+                checkGameStatus();
+            }
+            renderKeyboard();
+            updateDashboardUI();
+        }
+
+        hintPowerupBtn.addEventListener("click", () => {
+            if (coins < HINT_COST) return;
+            const unrevealed = [...currentWord].filter(l => !guessedLetters.includes(l));
+            if (unrevealed.length > 0) {
+                const randomLetter = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                coins -= HINT_COST;
+                triggerExplosion(hintPowerupBtn, "#ffd700");
+                handleGuess(randomLetter);
+            }
+        });
+
+        function checkGameStatus() {
+            const isWon = [...currentWord].every(l => guessedLetters.includes(l));
+            if (isWon) { endGame(true); return; }
+            if (wrongGuesses >= maxGuesses) endGame(false);
+        }
+
+        function endGame(isWin) {
+            if (isWin) {
+                playSound('win');
+                modalTitle.textContent = "Cleared! 🎉";
+                modalTitle.className = "modal-title win";
+                coins += 40;
+                modalMessage.innerHTML = `Great job! Uncovered <b>${currentWord}</b>!<br><span style="color:var(--gold-color)">🪙 +40 Victory Bonus!</span>`;
+                wordDescription.innerHTML = `Category classification: <b>${currentWordData.hint}</b>`;
+                currentLevel++;
+                restartBtn.textContent = `Start Level ${currentLevel}`;
+            } else {
+                playSound('lose');
+                document.querySelectorAll(".figure-part").forEach(p => p.classList.add("visible", "filled"));
+                setTimeout(() => fullCharacterGroup.classList.add("floating-dead-man"), 300);
+                modalTitle.textContent = "Defeat 💀";
+                modalTitle.className = "modal-title lose";
+                modalMessage.innerHTML = `The correct word was: 💔`;
+                restartBtn.textContent = "Try Level Again";
+            }
+            localStorage.setItem('hangman_level', currentLevel);
+            localStorage.setItem('hangman_coins', coins);
+            
+            setTimeout(() => modalOverlay.classList.add("active"), 800);
+        }
+
+        window.addEventListener("keydown", (e) => {
+            const letter = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(letter) && !modalOverlay.classList.contains("active")) {
+                handleGuess(letter);
+            }
+        });
+
+        restartBtn.addEventListener("click", initGame);
+        initGame();
+    </script>
+</body>
+</html>

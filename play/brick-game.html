@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Retro Handheld Brick Game</title>
+    <style>
+        :root {
+            --bg-color: #1a1c23;
+            --console-color: #f4d03f; /* Classic 90s handheld yellow */
+            --console-border: #d4ac0d;
+            --screen-bezel: #252830;
+            --lcd-bg: #9cb07a; /* Authentic greenish-gray monochrome LCD tone */
+            --lcd-pixel: #1c2833;
+            --button-color: #e74c3c;
+            --button-border: #c0392b;
+            --dpad-color: #34495e;
+            --dpad-border: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        html {
+            height: -webkit-fill-available;
+        }
+
+        /* ==========================================================================
+           LAPTOP / DESKTOP STYLES (Default Clean Frame Layout)
+           ========================================================================== */
+        .handheld-console {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* Hide primary cross controls and branding on laptops entirely */
+        .brand, 
+        .interface-grid {
+            display: none !important;
+        }
+
+        /* Desktop Mode clean utility button alignment footer */
+        .hardware-controls {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .top-row-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .util-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: #7f8c8d;
+            gap: 6px;
+        }
+
+        .utility-btn {
+            background: #7f8c8d;
+            border-radius: 20px;
+            width: 50px;
+            height: 18px;
+            border: 2px solid #5d6d7e;
+            box-shadow: 0 3px 0 #424949, inset 0 2px 2px rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+        .utility-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #424949;
+        }
+
+        /* Screen Outer Frame Container */
+        .screen-bezel {
+            background: var(--screen-bezel);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 4px solid #1e2026;
+        }
+
+        .lcd-display {
+            background: var(--lcd-bg);
+            border: 5px solid #0f1418;
+            border-radius: 6px;
+            box-shadow: inset 0 5px 10px rgba(0,0,0,0.4);
+            display: flex;
+            padding: 12px;
+            gap: 14px;
+            position: relative;
+            justify-content: center;
+        }
+
+        .game-board-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        #game-canvas {
+            background: transparent;
+            border: 2px solid var(--lcd-pixel);
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 2;
+        }
+
+        .lcd-side-panel {
+            display: flex;
+            flex-direction: column;
+            width: 80px;
+            color: var(--lcd-pixel);
+        }
+
+        .stat-box {
+            text-align: center;
+            border-bottom: 2px dashed rgba(28, 40, 81, 0.25);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .stat-val {
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        #next-canvas {
+            border: 1px solid var(--lcd-pixel);
+            display: block;
+            margin: 6px auto 0;
+            background: transparent;
+            width: 54px;
+            height: 54px;
+        }
+
+        /* Menu Systems */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(156, 176, 122, 0.92);
+            backdrop-filter: blur(1px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            gap: 12px;
+        }
+
+        .overlay-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--lcd-pixel);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .btn-system {
+            background: var(--lcd-pixel);
+            color: var(--lcd-bg);
+            border: none;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+
+        /* ==========================================================================
+           MOBILE / HANDHELD VIEWPORTS (Restores Yellow Enclosure Housing)
+           ========================================================================== */
+        @media (max-width: 1080px) {
+            .handheld-console {
+                background: var(--console-color);
+                border: 6px solid var(--console-border);
+                border-radius: 24px 24px 64px 24px;
+                box-shadow: 
+                    0 20px 45px rgba(0,0,0,0.6), 
+                    inset 0 -12px 20px rgba(0,0,0,0.2), 
+                    inset 0 12px 20px rgba(255,255,255,0.5);
+                padding: 20px;
+                max-width: 375px;
+                height: 98vh;
+                max-height: 680px;
+                justify-content: space-between;
+                gap: 15px;
+            }
+
+            .brand {
+                display: block !important;
+                font-style: italic;
+                font-weight: 900;
+                color: #11161b;
+                letter-spacing: 3px;
+                font-size: 1.1rem;
+                text-shadow: 1px 1px 0px rgba(255,255,255,0.6);
+                text-align: center;
+                width: 100%;
+                border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+                padding-bottom: 6px;
+            }
+
+            .screen-bezel {
+                box-shadow: inset 0 8px 16px rgba(0,0,0,0.6), 0 2px 3px rgba(255,255,255,0.2);
+                border-bottom: 3px solid rgba(255,255,255,0.08);
+                padding: 14px 14px 10px 14px;
+                border: none;
+                border-radius: 12px;
+            }
+
+            .hardware-controls {
+                gap: 15px;
+                flex-grow: 1;
+                flex-direction: column;
+                justify-content: space-around;
+                padding-bottom: 5px;
+            }
+
+            .top-row-buttons {
+                background: transparent;
+                border: none;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            .util-wrapper {
+                color: #2c3e50;
+            }
+
+            .interface-grid {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                padding: 0 5px;
+                gap: 10px;
+            }
+
+            .dpad-container {
+                position: relative;
+                width: 116px;
+                height: 116px;
+                flex-shrink: 0;
+            }
+
+            .dpad-btn {
+                position: absolute;
+                background: linear-gradient(135deg, var(--dpad-color), #243342);
+                border: 2px solid #1a252f;
+                box-shadow: 0 4px 0 #111922;
+                cursor: pointer;
+            }
+            .dpad-btn:active {
+                background: #1a252f;
+                box-shadow: 0 1px 0 #111922;
+                transform: translateY(2px);
+            }
+
+            #m-left { top: 40px; left: 0; width: 40px; height: 36px; border-radius: 6px 0 0 6px; border-right: none; }
+            #m-right { top: 40px; right: 0; width: 40px; height: 36px; border-radius: 0 6px 6px 0; border-left: none; }
+            #m-drop { bottom: 0; left: 40px; width: 36px; height: 40px; border-radius: 0 0 6px 6px; border-top: none; }
+            #m-up { top: 0; left: 40px; width: 36px; height: 40px; border-radius: 6px 6px 0 0; border-bottom: none; }
+
+            .dpad-center {
+                position: absolute;
+                top: 40px; left: 40px; width: 36px; height: 36px;
+                background: var(--dpad-color);
+                z-index: 2;
+            }
+
+            .action-container {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 16px;
+                flex-grow: 1;
+            }
+
+            .action-wrapper {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-size: 0.65rem;
+                font-weight: 900;
+                color: #2c3e50;
+                gap: 6px;
+            }
+
+            .action-btn {
+                background: linear-gradient(135deg, var(--button-color), #c0392b);
+                border-radius: 50%;
+                border: 2px solid #922b21;
+                box-shadow: 0 5px 0 #641e16, 0 6px 10px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.3);
+                cursor: pointer;
+            }
+            .action-btn:active {
+                transform: translateY(4px);
+                box-shadow: 0 1px 0 #641e16, 0 2px 5px rgba(0,0,0,0.3);
+            }
+
+            #m-rot { width: 68px; height: 68px; }
+            #m-space { width: 52px; height: 52px; margin-top: 12px; }
+        }
+
+        @media (max-width: 480px) and (max-height: 600px) {
+            .handheld-console { padding: 12px; gap: 8px; }
+            .brand { padding-bottom: 2px; font-size: 0.95rem; }
+            .screen-bezel { padding: 8px 8px 6px 8px; }
+            .hardware-controls { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="handheld-console">
+        <div class="brand">BRICK GAME 9999 in 1</div>
+
+        <div class="screen-bezel">
+            <div class="lcd-display">
+                <div class="game-board-wrapper">
+                    <canvas id="game-canvas" width="200" height="400"></canvas>
+                    
+                    <div id="menu-overlay" class="overlay">
+                        <div id="overlay-msg" class="overlay-title">BRICK GAME</div>
+                        <button id="start-btn" class="btn-system">START</button>
+                    </div>
+                </div>
+
+                <div class="lcd-side-panel">
+                    <div class="stat-box">
+                        <div class="stat-label">Score</div>
+                        <div id="score" class="stat-val">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Hi-Score</div>
+                        <div id="high-score" class="stat-val">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Next</div>
+                        <canvas id="next-canvas" width="60" height="60"></canvas>
+                    </div>
+                    <div style="font-size: 0.5rem; text-align: center; font-weight: bold; opacity: 0.6; margin-top: auto;">
+                        REV-A
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hardware-controls">
+            <div class="top-row-buttons">
+                <div class="util-wrapper">
+                    <div class="utility-btn" id="m-mute"></div>
+                    <span>SOUND</span>
+                </div>
+                <div class="util-wrapper">
+                    <div class="utility-btn" id="m-pause"></div>
+                    <span>PAUSE</span>
+                </div>
+            </div>
+
+            <!-- Handheld Action Panel (Hidden on Desktop) -->
+            <div class="interface-grid">
+                <div class="dpad-container">
+                    <div class="dpad-btn" id="m-up"></div>
+                    <div class="dpad-btn" id="m-left"></div>
+                    <div class="dpad-center"></div>
+                    <div class="dpad-btn" id="m-right"></div>
+                    <div class="dpad-btn" id="m-drop"></div>
+                </div>
+
+                <div class="action-container">
+                    <div class="action-wrapper">
+                        <div class="action-btn" id="m-space"></div>
+                        <span>DROP</span>
+                    </div>
+                    <div class="action-wrapper">
+                        <div class="action-btn" id="m-rot"></div>
+                        <span>ROTATE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let isMuted = localStorage.getItem('brickGameMuted') === 'true';
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function syncMuteBtnUI() {
+            document.getElementById('m-mute').style.backgroundColor = isMuted ? '#566573' : '#7f8c8d';
+        }
+        syncMuteBtnUI();
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio(); 
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'move') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'rotate') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(380, now + 0.06);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+                osc.start(now); osc.stop(now + 0.06);
+            } else if (type === 'clear') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'gameover') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(60, now + 0.5);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
+
+        const toggleMute = () => { 
+            initAudio();
+            isMuted = !isMuted; 
+            localStorage.setItem('brickGameMuted', isMuted);
+            syncMuteBtnUI();
+        };
+        document.getElementById('m-mute').addEventListener('click', toggleMute);
+        document.getElementById('m-mute').addEventListener('touchstart', (e) => { e.preventDefault(); toggleMute(); });
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('next-canvas');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        const COLS = 10, ROWS = 20;
+        const BLOCK_SIZE = 20; 
+        const NEXT_BLOCK_SIZE = 12;
+
+        const DARK_PIXEL = "#1c2833";
+        const LIGHT_PIXEL = "rgba(28, 40, 51, 0.06)"; 
+
+        const SHAPES = [
+            [],
+            [[1,1,1,1]],
+            [[1,1],[1,1]],
+            [[0,1,0],[1,1,1]],
+            [[0,1,1],[1,1,0]],
+            [[1,1,0],[0,1,1]],
+            [[1,0,0],[1,1,1]],
+            [[0,0,1],[1,1,1]]
+        ];
+
+        let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+        let score = 0;
+        let highScore = localStorage.getItem('brickHighScore') || 0;
+        document.getElementById('high-score').innerText = highScore;
+
+        let gameOver = false;
+        let gameRunning = false;
+        let isPaused = false;
+        let dropCounter = 0;
+        let dropInterval = 800;
+        let lastTime = 0;
+        let rafId = null;
+
+        let currentPiece = null;
+        let nextPiece = null;
+
+        function createPiece(type) {
+            return {
+                shape: SHAPES[type],
+                colorIndex: type,
+                x: Math.floor(COLS / 2) - Math.floor(SHAPES[type][0].length / 2),
+                y: 0
+            };
+        }
+
+        function randomPiece() {
+            return createPiece(Math.floor(Math.random() * 7) + 1);
+        }
+
+        function drawBlock(context, x, y, size, isFilled) {
+            context.fillStyle = isFilled ? DARK_PIXEL : LIGHT_PIXEL;
+            context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+            if(isFilled) {
+                context.strokeStyle = "#9cb07a";
+                context.lineWidth = 1.5;
+                context.strokeRect(x * size + 3, y * size + 3, size - 6, size - 6);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for(let r = 0; r < ROWS; r++) {
+                for(let c = 0; c < COLS; c++) {
+                    if (board[r][c] > 0) {
+                        drawBlock(ctx, c, r, BLOCK_SIZE, true);
+                    } else {
+                        drawBlock(ctx, c, r, BLOCK_SIZE, false); 
+                    }
+                }
+            }
+
+            if (currentPiece) {
+                currentPiece.shape.forEach((row, dy) => {
+                    row.forEach((value, dx) => {
+                        if (value > 0) {
+                            drawBlock(ctx, currentPiece.x + dx, currentPiece.y + dy, BLOCK_SIZE, true);
+                        }
+                    });
+                });
+            }
+
+            nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (nextPiece) {
+                const nShape = nextPiece.shape;
+                const ox = Math.floor((nextCanvas.width - nShape[0].length * NEXT_BLOCK_SIZE) / 2);
+                const oy = Math.floor((nextCanvas.height - nShape.length * NEXT_BLOCK_SIZE) / 2);
+                
+                for(let r=0; r<4; r++) {
+                    for(let c=0; c<4; c++) {
+                        nextCtx.fillStyle = LIGHT_PIXEL;
+                        nextCtx.fillRect(ox + c*NEXT_BLOCK_SIZE + 1, oy + r*NEXT_BLOCK_SIZE + 1, NEXT_BLOCK_SIZE - 2, NEXT_BLOCK_SIZE - 2);
+                    }
+                }
+
+                nShape.forEach((row, dy) => {
+                    row.forEach((value, dx) => {
+                        if (value > 0) {
+                            nextCtx.fillStyle = DARK_PIXEL;
+                            nextCtx.fillRect(ox + dx * NEXT_BLOCK_SIZE + 1, oy + dy * NEXT_BLOCK_SIZE + 1, NEXT_BLOCK_SIZE - 2, NEXT_BLOCK_SIZE - 2);
+                        }
+                    });
+                });
+            }
+        }
+
+        function collide(piece, offset = {x: 0, y: 0}) {
+            for (let r = 0; r < piece.shape.length; r++) {
+                for (let c = 0; c < piece.shape[r].length; c++) {
+                    if (piece.shape[r][c] > 0) {
+                        let nX = piece.x + c + offset.x;
+                        let nY = piece.y + r + offset.y;
+                        if (nX < 0 || nX >= COLS || nY >= ROWS) return true;
+                        if (nY >= 0 && board[nY][nX] > 0) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(piece) {
+            piece.shape.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value > 0 && piece.y + r >= 0) {
+                        board[piece.y + r][piece.x + c] = 1;
+                    }
+                });
+            });
+        }
+
+        function rotate() {
+            const nShape = Array.from({length: currentPiece.shape[0].length}, () => Array(currentPiece.shape.length).fill(0));
+            for(let r=0; r<currentPiece.shape.length; r++) {
+                for(let c=0; c<currentPiece.shape[r].length; c++) {
+                    nShape[c][currentPiece.shape.length - 1 - r] = currentPiece.shape[r][c];
+                }
+            }
+            const oldShape = currentPiece.shape;
+            currentPiece.shape = nShape;
+            
+            let offset = 0;
+            while(collide(currentPiece)) {
+                currentPiece.x += (offset >= 0) ? 1 : -1;
+                offset = (offset >= 0) ? -offset - 1 : -offset + 1;
+                if (Math.abs(offset) > currentPiece.shape[0].length) {
+                    currentPiece.shape = oldShape;
+                    return;
+                }
+            }
+            playSound('rotate');
+        }
+
+        function clearLines() {
+            let cleared = 0;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r].every(val => val > 0)) {
+                    board.splice(r, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    cleared++; r++;
+                }
+            }
+            if (cleared > 0) {
+                const pts = [0, 100, 300, 500, 900];
+                score += pts[cleared];
+                document.getElementById('score').innerText = score;
+                if (score > highScore) {
+                    highScore = score;
+                    document.getElementById('high-score').innerText = highScore;
+                    localStorage.setItem('brickHighScore', highScore);
+                }
+                dropInterval = Math.max(80, 800 - Math.floor(score / 500) * 40);
+                playSound('clear');
+            }
+        }
+
+        function triggerGameOver() {
+            gameOver = true;
+            gameRunning = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            playSound('gameover');
+            
+            document.getElementById('overlay-msg').innerText = 'GAME OVER';
+            document.getElementById('start-btn').innerText = 'RESTART';
+            document.getElementById('menu-overlay').style.display = 'flex';
+        }
+
+        function dropPiece() {
+            currentPiece.y++;
+            if (collide(currentPiece)) {
+                currentPiece.y--;
+                merge(currentPiece);
+                clearLines();
+                
+                currentPiece = nextPiece;
+                nextPiece = randomPiece();
+                
+                if (collide(currentPiece)) {
+                    triggerGameOver();
+                }
+            }
+            dropCounter = 0;
+        }
+
+        function hardDrop() {
+            while(!collide(currentPiece, {x: 0, y: 1})) { currentPiece.y++; }
+            dropPiece();
+        }
+
+        function movePiece(dir) {
+            currentPiece.x += dir;
+            if (collide(currentPiece)) {
+                currentPiece.x -= dir;
+            } else {
+                playSound('move');
+            }
+        }
+
+        function update(time = 0) {
+            if (!gameRunning) return;
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) dropPiece();
+            draw();
+            rafId = requestAnimationFrame(update);
+        }
+
+        function handleSystemAction() {
+            initAudio();
+            if (gameOver || !gameRunning) {
+                // Completely clear grid variables and reset score counters 
+                board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+                score = 0; 
+                dropInterval = 800;
+                document.getElementById('score').innerText = score;
+                gameOver = false;
+                isPaused = false;
+                document.getElementById('m-pause').style.backgroundColor = '#7f8c8d';
+                
+                currentPiece = randomPiece();
+                nextPiece = randomPiece();
+                gameRunning = true;
+                lastTime = performance.now();
+                document.getElementById('menu-overlay').style.display = 'none';
+                update();
+            }
+        }
+
+        document.getElementById('start-btn').addEventListener('click', handleSystemAction);
+
+        function togglePause() {
+            initAudio();
+            if (gameOver || (!gameRunning && !isPaused)) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                gameRunning = false;
+                if (rafId) cancelAnimationFrame(rafId);
+                document.getElementById('overlay-msg').innerText = 'PAUSED';
+                document.getElementById('start-btn').innerText = 'RESUME';
+                document.getElementById('menu-overlay').style.display = 'flex';
+            } else {
+                gameRunning = true;
+                lastTime = performance.now();
+                document.getElementById('menu-overlay').style.display = 'none';
+                update();
+            }
+            document.getElementById('m-pause').style.backgroundColor = isPaused ? '#566573' : '#7f8c8d';
+        }
+        document.getElementById('m-pause').addEventListener('click', togglePause);
+        document.getElementById('m-pause').addEventListener('touchstart', (e) => { e.preventDefault(); togglePause(); });
+
+        // Hardware Controls Engine
+        window.addEventListener('keydown', e => {
+            initAudio();
+            if (!gameRunning || isPaused) return;
+            if (e.key === 'ArrowLeft') movePiece(-1);
+            if (e.key === 'ArrowRight') movePiece(1);
+            if (e.key === 'ArrowDown') dropPiece();
+            if (e.key === 'ArrowUp') rotate();
+            if (e.key === ' ') { hardDrop(); e.preventDefault(); }
+            draw();
+        });
+
+        const connectButton = (id, eventAction) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const trigger = (e) => {
+                e.preventDefault();
+                initAudio(); 
+                if (gameRunning && !isPaused) { eventAction(); draw(); }
+            };
+            el.addEventListener('touchstart', trigger, { passive: false });
+            el.addEventListener('mousedown', trigger);
+        };
+
+        connectButton('m-left', () => movePiece(-1));
+        connectButton('m-right', () => movePiece(1));
+        connectButton('m-drop', () => dropPiece());
+        connectButton('m-rot', () => rotate());
+        connectButton('m-space', () => hardDrop()); 
+        connectButton('m-up', () => rotate());
+
+        draw();
+    </script>
+</body>
+</html>

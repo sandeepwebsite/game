@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON DASH PRO</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #050505;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            pointer-events: none; z-index: 10;
+        }
+        .stats-container {
+            display: flex; justify-content: space-between; width: 90%;
+            margin-top: 20px; pointer-events: none;
+        }
+        .stat-box { color: #0ff; text-shadow: 0 0 10px #0ff; font-size: 1.2rem; }
+        #score { font-size: 2.5rem; }
+        
+        #controls {
+            position: absolute; bottom: 20px; right: 20px; pointer-events: auto;
+        }
+        .icon-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid #0ff;
+            color: #0ff; padding: 10px; cursor: pointer; border-radius: 5px;
+        }
+
+        #overlay {
+            background: rgba(0, 0, 0, 0.9); padding: 40px;
+            border: 2px solid #f0f; text-align: center;
+            pointer-events: auto; margin-top: 20vh;
+        }
+        h1 { color: #f0f; text-shadow: 0 0 15px #f0f; letter-spacing: 5px; }
+        button#start-btn {
+            background: transparent; color: #0ff; border: 2px solid #0ff;
+            padding: 15px 40px; font-size: 1.2rem; cursor: pointer;
+            transition: 0.3s; margin-top: 20px;
+        }
+        button#start-btn:hover { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="stats-container">
+            <div class="stat-box">HIGH: <span id="high-score">0</span></div>
+            <div class="stat-box" id="score">0</div>
+            <div></div> </div>
+
+        <div id="overlay">
+            <h1 id="title">NEON DASH</h1>
+            <button id="start-btn" onclick="initGame()">START</button>
+        </div>
+
+        <div id="controls">
+            <button class="icon-btn" id="mute-btn" onclick="toggleMute()">SOUND: ON</button>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const highDisplay = document.getElementById('high-score');
+        const muteBtn = document.getElementById('mute-btn');
+        const overlay = document.getElementById('overlay');
+
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem('neonDashHigh') || 0;
+        let isMuted = localStorage.getItem('neonMute') === 'true';
+        let enemies = [];
+        let player = { x: window.innerWidth / 2, y: window.innerHeight - 150, size: 15 };
+
+        // Audio Context for Procedural Sounds (No external files needed!)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(freq, type, duration) {
+            if (isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        highDisplay.innerText = highScore;
+        updateMuteButtonUI();
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.y = canvas.height - 150; // Keep triangle above the bottom
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Control Logic: Positioning the triangle BEHIND (above) the finger/cursor
+        const handleInput = (ex, ey) => {
+            player.x = ex;
+            // The -80 offset keeps the triangle visible above your thumb/finger
+            player.y = ey - 80; 
+        };
+
+        window.addEventListener('mousemove', e => handleInput(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => {
+            handleInput(e.touches[0].clientX, e.touches[0].clientY);
+            e.preventDefault();
+        }, { passive: false });
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('neonMute', isMuted);
+            updateMuteButtonUI();
+        }
+
+        function updateMuteButtonUI() {
+            muteBtn.innerText = isMuted ? "SOUND: OFF" : "SOUND: ON";
+            muteBtn.style.borderColor = isMuted ? "#f0f" : "#0ff";
+            muteBtn.style.color = isMuted ? "#f0f" : "#0ff";
+        }
+
+        class Enemy {
+            constructor() {
+                this.size = Math.random() * 30 + 20;
+                this.x = Math.random() * (canvas.width - this.size);
+                this.y = -this.size;
+                this.speed = 5 + (score * 0.15);
+            }
+            update() { this.y += this.speed; }
+            draw() {
+                ctx.strokeStyle = '#f0f';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        function initGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            score = 0;
+            enemies = [];
+            gameActive = true;
+            scoreDisplay.innerText = '0';
+            overlay.style.display = 'none';
+            playSound(440, 'square', 0.1); // Start sound
+            animate();
+        }
+
+        function gameOver() {
+            gameActive = false;
+            playSound(150, 'sawtooth', 0.5); // Crash sound
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('neonDashHigh', highScore);
+                highDisplay.innerText = highScore;
+            }
+            overlay.style.display = 'block';
+            document.getElementById('title').innerText = "FINAL: " + score;
+        }
+
+        function animate() {
+            if (!gameActive) return;
+
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player Triangle
+            ctx.fillStyle = '#0ff';
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y - player.size);
+            ctx.lineTo(player.x - player.size, player.y + player.size);
+            ctx.lineTo(player.x + player.size, player.y + player.size);
+            ctx.fill();
+
+            if (Math.random() < 0.05) enemies.push(new Enemy());
+
+            enemies.forEach((enemy, i) => {
+                enemy.update();
+                enemy.draw();
+
+                // Collision
+                if (player.x > enemy.x && player.x < enemy.x + enemy.size &&
+                    player.y > enemy.y && player.y < enemy.y + enemy.size) {
+                    gameOver();
+                }
+
+                // Point scored
+                if (enemy.y > canvas.height) {
+                    enemies.splice(i, 1);
+                    score++;
+                    scoreDisplay.innerText = score;
+                    playSound(880 + (score * 10), 'sine', 0.05); // "Ding"
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>

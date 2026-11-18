@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordAntakshari.io - Ultimate English Word Chain Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            500: '#d946ef',
+                            600: '#c026d3',
+                            700: '#a21caf',
+                            900: '#701a75',
+                        },
+                        dark: {
+                            900: '#0b0f19',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PeerJS for P2P Multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px rgba(217, 70, 239, 0.3);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.3);
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .animate-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(217, 70, 239, 0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(217, 70, 239, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <header class="w-full border-b border-gray-800/80 bg-dark-800/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="returnToHome()">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 flex items-center justify-center glow-purple">
+                    <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-brand-500 via-purple-400 to-cyan-400 bg-clip-text text-transparent">WORD ANTAKSHARI</h1>
+                    <p class="text-xs text-gray-400 tracking-tight">English Vocabulary Showdown</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleAudio()" id="audioToggleBtn" class="p-2.5 rounded-xl bg-dark-700 hover:bg-dark-600 border border-gray-700 transition text-gray-300 hover:text-white" title="Toggle Sound">
+                    <i data-lucide="volume-2" class="w-4 h-4" id="audioIcon"></i>
+                </button>
+                <button onclick="openRulesModal()" class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-dark-700 hover:bg-dark-600 border border-gray-700 transition text-sm text-gray-300 hover:text-white">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">How to Play</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 flex flex-col justify-center items-center">
+
+        <!-- VIEW 1: LANDING SCREEN -->
+        <div id="landingView" class="w-full max-w-4xl flex flex-col items-center animate-fade-in">
+            <div class="text-center mb-12">
+                <span class="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-brand-500/10 text-brand-400 border border-brand-500/20 mb-4 inline-block">
+                    ⚡ Multiplayer & AI Word Chain Arena
+                </span>
+                <h2 class="text-4xl sm:text-6xl font-black tracking-tight mb-4 text-white">
+                    Link Words. <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Outsmart Rivals.</span>
+                </h2>
+                <p class="text-gray-400 max-w-lg mx-auto text-base sm:text-lg">
+                    The classic Indian parlor game reimagined in English. Each word must begin with the exact last letter of the previous word.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+                <!-- Mode 1 Card: AI -->
+                <div class="glass-panel p-8 rounded-3xl hover:border-brand-500/50 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition"></div>
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center mb-6 text-brand-400 group-hover:scale-110 transition duration-300">
+                            <i data-lucide="bot" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2 text-white">Play with AI</h3>
+                        <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+                            Challenge our intelligent word bot with tunable difficulties (Easy, Medium, Hard), relaxed pace, and endless vocabulary challenges.
+                        </p>
+                    </div>
+                    <button onclick="showAISetup()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-semibold shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2 transition transform active:scale-98">
+                        <span>Start AI Battle</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Mode 2 Card: Online Friend -->
+                <div class="glass-panel p-8 rounded-3xl hover:border-cyan-500/50 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition"></div>
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center mb-6 text-cyan-400 group-hover:scale-110 transition duration-300">
+                            <i data-lucide="users" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2 text-white">Play with Friend</h3>
+                        <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+                            Create a secure live P2P room with a 6-character code or join a friend instantly. No registration required!
+                        </p>
+                    </div>
+                    <button onclick="showMultiplayerLobby()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold shadow-lg shadow-cyan-600/30 flex items-center justify-center space-x-2 transition transform active:scale-98">
+                        <span>Multiplayer Lobby</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: AI SETUP SCREEN -->
+        <div id="aiSetupView" class="hidden w-full max-w-lg flex flex-col items-center">
+            <div class="glass-panel p-8 rounded-3xl w-full relative">
+                <button onclick="returnToHome()" class="absolute top-6 left-6 text-gray-400 hover:text-white transition flex items-center space-x-1 text-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Back</span>
+                </button>
+
+                <div class="text-center mt-4 mb-8">
+                    <h3 class="text-2xl font-bold mb-1">AI Battle Setup</h3>
+                    <p class="text-gray-400 text-sm">Configure your match parameters</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Select Difficulty</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="setAIDifficulty('easy')" id="diffEasy" class="py-3 px-4 rounded-xl border border-gray-700 bg-dark-700/50 hover:bg-dark-600 transition text-sm font-semibold text-center flex flex-col items-center justify-center space-y-1">
+                                <span class="text-green-400">Easy</span>
+                                <span class="text-[10px] text-gray-400 font-normal">Relaxed AI</span>
+                            </button>
+                            <button onclick="setAIDifficulty('medium')" id="diffMedium" class="py-3 px-4 rounded-xl border border-brand-500 bg-brand-500/20 transition text-sm font-semibold text-center flex flex-col items-center justify-center space-y-1">
+                                <span class="text-brand-300">Medium</span>
+                                <span class="text-[10px] text-gray-300 font-normal">Balanced AI</span>
+                            </button>
+                            <button onclick="setAIDifficulty('hard')" id="diffHard" class="py-3 px-4 rounded-xl border border-gray-700 bg-dark-700/50 hover:bg-dark-600 transition text-sm font-semibold text-center flex flex-col items-center justify-center space-y-1">
+                                <span class="text-red-400">Hard</span>
+                                <span class="text-[10px] text-gray-400 font-normal">Smart AI</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Your Nickname</label>
+                        <input type="text" id="aiPlayerName" value="WordMaster" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition text-sm font-medium">
+                    </div>
+
+                    <button onclick="startAGame()" class="w-full py-4 rounded-xl bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-semibold shadow-lg shadow-brand-600/30 transition transform active:scale-98">
+                        Launch Game 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: MULTIPLAYER LOBBY SCREEN -->
+        <div id="multiplayerLobbyView" class="hidden w-full max-w-xl flex flex-col items-center">
+            <div class="glass-panel p-8 rounded-3xl w-full relative">
+                <button onclick="returnToHome()" class="absolute top-6 left-6 text-gray-400 hover:text-white transition flex items-center space-x-1 text-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Back</span>
+                </button>
+
+                <div class="text-center mt-4 mb-8">
+                    <h3 class="text-2xl font-bold mb-1">Online Friend Mode</h3>
+                    <p class="text-gray-400 text-sm">Create a live P2P room or join an existing code</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Your Nickname</label>
+                        <input type="text" id="mpPlayerName" value="PlayerOne" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition text-sm font-medium">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <button onclick="createRoom()" class="p-6 rounded-2xl bg-gradient-to-br from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 hover:border-cyan-500 transition flex flex-col items-center text-center group">
+                            <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                            </div>
+                            <span class="font-bold text-white mb-1">Create Room</span>
+                            <span class="text-xs text-gray-400">Generate a unique 6-char code</span>
+                        </button>
+
+                        <div class="p-6 rounded-2xl bg-dark-700/40 border border-gray-700/80 flex flex-col justify-between">
+                            <div>
+                                <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
+                                    <i data-lucide="log-in" class="w-6 h-6"></i>
+                                </div>
+                                <span class="font-bold text-white mb-1 block">Join Room</span>
+                            </div>
+                            <div class="space-y-2 mt-3">
+                                <input type="text" id="joinCodeInput" placeholder="Enter 6-char code" maxlength="6" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white uppercase tracking-widest text-center font-mono text-sm focus:outline-none focus:border-purple-500">
+                                <button onclick="joinRoom()" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-brand-600 text-white font-semibold text-xs tracking-wide uppercase transition hover:opacity-95">
+                                    Connect
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: WAITING ROOM SCREEN -->
+        <div id="waitingRoomView" class="hidden w-full max-w-md flex flex-col items-center">
+            <div class="glass-panel p-8 rounded-3xl w-full text-center">
+                <div class="w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto mb-6 animate-glow">
+                    <i data-lucide="radio" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">Room Connected</h3>
+                <p class="text-gray-400 text-sm mb-6">Share your room code with a friend to begin the battle!</p>
+
+                <div class="bg-dark-900 border border-gray-700/80 rounded-2xl p-4 mb-6 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-gray-400 block mb-1">ROOM CODE</span>
+                        <span id="displayRoomCode" class="text-2xl font-mono font-bold tracking-widest text-cyan-400">------</span>
+                    </div>
+                    <button onclick="copyRoomCode()" class="p-3 rounded-xl bg-dark-700 hover:bg-dark-600 border border-gray-700 text-gray-300 hover:text-white transition">
+                        <i data-lucide="copy" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div id="hostControls" class="hidden space-y-3">
+                    <button id="startMultiplayerBtn" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-95 text-white font-bold transition shadow-lg shadow-cyan-600/30">
+                        Start Match Now ⚔️
+                    </button>
+                </div>
+
+                <div id="guestWaitingText" class="text-sm text-brand-400 animate-pulse font-medium">
+                    Waiting for host to start the game...
+                </div>
+
+                <button onclick="leaveRoom()" class="mt-6 text-xs text-red-400 hover:underline">
+                    Cancel & Leave Room
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 5: ACTIVE GAME ARENA -->
+        <div id="gameArenaView" class="hidden w-full max-w-4xl flex flex-col items-center">
+            <div class="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="glass-panel p-4 rounded-2xl flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center">
+                        <i data-lucide="award" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">SCORE</span>
+                        <span id="hudScore" class="text-lg font-bold font-mono">0</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">STREAK</span>
+                        <span id="hudStreak" class="text-lg font-bold font-mono">0</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center">
+                        <i data-lucide="target" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">REQUIRED LETTER</span>
+                        <span id="hudRequiredLetter" class="text-lg font-bold font-mono text-green-400">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-panel p-6 rounded-3xl relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span id="turnIndicatorDot" class="w-3 h-3 rounded-full bg-green-400 animate-pulse"></span>
+                                <span id="turnIndicatorText" class="font-bold text-sm text-gray-200">Your Turn</span>
+                            </div>
+                            <span id="matchModeBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30">AI Battle</span>
+                        </div>
+
+                        <div class="bg-dark-900/80 border border-gray-800 rounded-2xl p-5 mb-4 text-center">
+                            <span class="text-xs text-gray-400 block uppercase tracking-wider mb-1">Previous Word</span>
+                            <div id="lastWordDisplay" class="text-3xl sm:text-4xl font-extrabold font-mono tracking-wide text-brand-400">
+                                NONE
+                            </div>
+                            <p id="lastWordAuthor" class="text-xs text-gray-500 mt-1">Waiting for initial word...</p>
+                        </div>
+
+                        <div id="gameMessage" class="hidden p-3 rounded-xl text-sm font-medium mb-4 text-center transition"></div>
+
+                        <form id="wordForm" onsubmit="handleWordSubmit(event)" class="flex gap-3">
+                            <div class="relative flex-1">
+                                <input type="text" id="wordInput" autocomplete="off" placeholder="Type an English word..." class="w-full bg-dark-900 border border-gray-700 rounded-2xl px-5 py-4 text-white font-mono text-lg focus:outline-none focus:border-brand-500 transition shadow-inner">
+                            </div>
+                            <button type="submit" id="submitWordBtn" class="px-6 py-4 rounded-2xl bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-bold shadow-lg shadow-brand-600/30 transition flex items-center justify-center space-x-2">
+                                <span>Submit</span>
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-3xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-bold text-sm text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                                <i data-lucide="history" class="w-4 h-4 text-brand-400"></i>
+                                <span>Battle History</span>
+                            </h4>
+                            <span id="wordCountBadge" class="text-xs text-gray-400 font-mono">0 words played</span>
+                        </div>
+                        <div id="wordHistoryList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                            <div class="text-center text-xs text-gray-500 py-4">No words played yet in this match.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-bold text-sm text-gray-300 uppercase tracking-wider mb-4 flex items-center space-x-2">
+                            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Match Participants</span>
+                        </h4>
+                        
+                        <div class="space-y-3 mb-6">
+                            <div class="p-3.5 rounded-2xl bg-dark-900 border border-gray-800 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-9 h-9 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm">
+                                        YOU
+                                    </div>
+                                    <div>
+                                        <span id="playerOneNameLabel" class="font-bold text-sm block text-white">WordMaster</span>
+                                        <span class="text-[10px] text-gray-400">Score: <span id="p1ScoreVal">0</span></span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 rounded-md text-[10px] font-semibold bg-green-500/20 text-green-400">Active</span>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-dark-900 border border-gray-800 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div id="rivalAvatar" class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                                        AI
+                                    </div>
+                                    <div>
+                                        <span id="rivalNameLabel" class="font-bold text-sm block text-white">Bot Alpha</span>
+                                        <span class="text-[10px] text-gray-400">Score: <span id="p2ScoreVal">0</span></span>
+                                    </div>
+                                </div>
+                                <span id="rivalStatusBadge" class="px-2 py-1 rounded-md text-[10px] font-semibold bg-blue-500/20 text-blue-400">Ready</span>
+                            </div>
+                        </div>
+
+                        <div id="chatContainer" class="hidden border-t border-gray-800 pt-4 mt-4">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Room Chat</h5>
+                            <div id="chatMessages" class="bg-dark-900/90 border border-gray-800 rounded-xl p-3 h-32 overflow-y-auto space-y-2 mb-3 text-xs">
+                                <div class="text-gray-500 text-center">Connected to room chat. Say hello!</div>
+                            </div>
+                            <form onsubmit="sendChatMessage(event)" class="flex gap-2">
+                                <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500">
+                                <button type="submit" class="px-3 py-2 rounded-lg bg-cyan-600 text-white text-xs font-bold">Send</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <button id="quitGameBtn" class="w-full mt-6 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-semibold text-sm transition">
+                        Surrender / Quit Match
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 6: GAME OVER SCREEN -->
+        <div id="gameOverView" class="hidden w-full max-w-md flex flex-col items-center">
+            <div class="glass-panel p-8 rounded-3xl w-full text-center">
+                <div id="gameOverIconContainer" class="w-20 h-20 rounded-3xl bg-brand-500/20 border border-brand-500/40 text-brand-400 flex items-center justify-center mx-auto mb-6 glow-purple">
+                    <i data-lucide="trophy" class="w-10 h-10"></i>
+                </div>
+                <h3 id="gameOverTitle" class="text-3xl font-black mb-2">Victory!</h3>
+                <p id="gameOverSubtitle" class="text-gray-400 text-sm mb-6">You successfully outsmarted your opponent!</p>
+
+                <div class="bg-dark-900 border border-gray-700/80 rounded-2xl p-5 mb-6 space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Final Score:</span>
+                        <span id="goFinalScore" class="font-bold font-mono text-brand-400">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Max Streak:</span>
+                        <span id="goMaxStreak" class="font-bold font-mono text-purple-400">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Words Played:</span>
+                        <span id="goWordsPlayed" class="font-bold font-mono text-cyan-400">0</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="restartCurrentMode()" class="w-full py-4 rounded-xl bg-gradient-to-r from-brand-600 to-purple-600 hover:opacity-95 text-white font-bold transition shadow-lg shadow-brand-600/30">
+                        Play Again 🔄
+                    </button>
+                    <button onclick="returnToHome()" class="w-full py-3 rounded-xl bg-dark-700 hover:bg-dark-600 text-gray-300 font-semibold text-sm transition">
+                        Main Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- RULES MODAL -->
+    <div id="rulesModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-lg w-full relative">
+            <button onclick="closeRulesModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-2xl font-bold mb-4 flex items-center space-x-2">
+                <i data-lucide="book-open" class="text-brand-400"></i>
+                <span>How to Play</span>
+            </h3>
+            <div class="space-y-3 text-sm text-gray-300 leading-relaxed mb-6">
+                <p>1. <strong>Word Chain Rule:</strong> Every word submitted must start with the exact last letter of the previous word (e.g., Apple ➔ Elephant ➔ Tiger).</p>
+                <p>2. <strong>Valid English Words:</strong> Only valid English dictionary words are accepted. Plurals, nouns, verbs, and adjectives are allowed.</p>
+                <p>3. <strong>No Repetition:</strong> Words cannot be reused once played in the current match.</p>
+                <p>4. <strong>Relaxed Pace:</strong> No countdown timer! Take your time to think of great words.</p>
+                <p>5. <strong>Multiplayer:</strong> In Online Friend mode, host or join with a 6-character room code using PeerJS P2P connection.</p>
+            </div>
+            <button onclick="closeRulesModal()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+                Got It!
+            </button>
+        </div>
+    </div>
+
+    <footer class="w-full border-t border-gray-800/80 py-4 text-center text-xs text-gray-500">
+        WordAntakshari.io • Built with Tailwind, PeerJS & Web Audio API
+    </footer>
+
+    <script>
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(150, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                }
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            if (audioEnabled) {
+                icon.setAttribute('data-lucide', 'volume-2');
+            } else {
+                icon.setAttribute('data-lucide', 'volume-x');
+            }
+            lucide.createIcons();
+        }
+
+        const AI_WORDS_DATABASE = [
+            "apple", "elephant", "tiger", "rabbit", "tomato", "onion", "nectar", "rose", "eagle", "earth", "house", "energy", "yellow", "winter", "river", "road", "dog", "goat", "train", "nest", "tree", "engine", "needle", "ear", "room", "moon", "night", "radius", "star", "rocket", "tide", "echo", "octopus", "snake", "egg", "guitar", "market", "lamp", "paper", "ring", "garden", "nut", "rain", "note",
+            "active", "beacon", "castle", "dragon", "estate", "falcon", "giant", "habit", "island", "jungle", "knight", "lemon", "magic", "noble", "orbit", "pilot", "queen", "radar", "sailing", "Temple", "urban", "velvet", "wagon", "xenon", "yacht", "zebra"
+        ];
+
+        function validateWordFast(word) {
+            word = word.toLowerCase().trim();
+            if (word.length < 2) return { valid: false, message: "Word must be at least 2 letters long." };
+            if (!/^[a-z]+$/.test(word)) return { valid: false, message: "Only standard alphabetic English words are allowed." };
+            return { valid: true };
+        }
+
+        let gameState = {
+            mode: 'ai',
+            difficulty: 'medium',
+            score: 0,
+            streak: 0,
+            maxStreak: 0,
+            wordsPlayedCount: 0,
+            history: [],
+            lastWord: '',
+            requiredLetter: '',
+            isMyTurn: true,
+            playerName: 'WordMaster',
+            rivalName: 'Bot Alpha',
+            rivalScore: 0,
+            isGameOver: false
+        };
+
+        function hideAllViews() {
+            document.getElementById('landingView').classList.add('hidden');
+            document.getElementById('aiSetupView').classList.add('hidden');
+            document.getElementById('multiplayerLobbyView').classList.add('hidden');
+            document.getElementById('waitingRoomView').classList.add('hidden');
+            document.getElementById('gameArenaView').classList.add('hidden');
+            document.getElementById('gameOverView').classList.add('hidden');
+            document.getElementById('chatContainer').classList.add('hidden');
+        }
+
+        function returnToHome() {
+            if (peer) { peer.destroy(); peer = null; }
+            hideAllViews();
+            document.getElementById('landingView').classList.remove('hidden');
+        }
+
+        function showAISetup() {
+            hideAllViews();
+            document.getElementById('aiSetupView').classList.remove('hidden');
+        }
+
+        function showMultiplayerLobby() {
+            hideAllViews();
+            document.getElementById('multiplayerLobbyView').classList.remove('hidden');
+        }
+
+        function openRulesModal() {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        }
+
+        function closeRulesModal() {
+            document.getElementById('rulesModal').classList.add('hidden');
+        }
+
+        window.returnToHome = returnToHome;
+        window.showAISetup = showAISetup;
+        window.showMultiplayerLobby = showMultiplayerLobby;
+        window.openRulesModal = openRulesModal;
+        window.closeRulesModal = closeRulesModal;
+
+        function setAIDifficulty(diff) {
+            gameState.difficulty = diff;
+            ['Easy', 'Medium', 'Hard'].forEach(d => {
+                const btn = document.getElementById(`diff${d}`);
+                if (btn) btn.className = "py-3 px-4 rounded-xl border border-gray-700 bg-dark-700/50 hover:bg-dark-600 transition text-sm font-semibold text-center flex flex-col items-center justify-center space-y-1";
+            });
+            const activeBtn = document.getElementById(`diff${diff.charAt(0).toUpperCase() + diff.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.className = `py-3 px-4 rounded-xl border transition text-sm font-semibold text-center flex flex-col items-center justify-center space-y-1 ${diff === 'easy' ? 'border-green-500 bg-green-500/20 text-green-300' : diff === 'medium' ? 'border-brand-500 bg-brand-500/20 text-brand-300' : 'border-red-500 bg-red-500/20 text-red-300'}`;
+            }
+        }
+        window.setAIDifficulty = setAIDifficulty;
+
+        function startAGame() {
+            const nameInput = document.getElementById('aiPlayerName').value.trim();
+            if (nameInput) gameState.playerName = nameInput;
+
+            gameState.mode = 'ai';
+            gameState.score = 0;
+            gameState.streak = 0;
+            gameState.maxStreak = 0;
+            gameState.wordsPlayedCount = 0;
+            gameState.history = [];
+            document.getElementById('wordHistoryList').innerHTML = ''; // Clear history DOM
+            gameState.rivalScore = 0;
+            gameState.rivalName = `Bot (${gameState.difficulty.toUpperCase()})`;
+            gameState.isGameOver = false;
+
+            hideAllViews();
+            document.getElementById('gameArenaView').classList.remove('hidden');
+            document.getElementById('matchModeBadge').innerText = `AI Battle (${gameState.difficulty.toUpperCase()})`;
+            document.getElementById('playerOneNameLabel').innerText = gameState.playerName;
+            document.getElementById('rivalNameLabel').innerText = gameState.rivalName;
+            document.getElementById('rivalAvatar').innerText = 'AI';
+
+            const starterWords = ["apple", "tiger", "energy", "rocket", "planet", "garden"];
+            const initialWord = starterWords[Math.floor(Math.random() * starterWords.length)];
+            
+            gameState.lastWord = initialWord;
+            gameState.requiredLetter = initialWord.slice(-1).toUpperCase();
+            
+            updateHUD();
+            appendHistoryItem('System', initialWord, 'AI Starter');
+            setTurn(true);
+        }
+        window.startAGame = startAGame;
+
+        function setTurn(isMyTurn) {
+            gameState.isMyTurn = isMyTurn;
+            const dot = document.getElementById('turnIndicatorDot');
+            const text = document.getElementById('turnIndicatorText');
+            const input = document.getElementById('wordInput');
+            const btn = document.getElementById('submitWordBtn');
+
+            if (isMyTurn) {
+                dot.className = "w-3 h-3 rounded-full bg-green-400 animate-pulse";
+                text.innerText = "Your Turn (Take your time!)";
+                input.disabled = false;
+                btn.disabled = false;
+                input.focus();
+            } else {
+                dot.className = "w-3 h-3 rounded-full bg-blue-400 animate-pulse";
+                text.innerText = `${gameState.rivalName}'s Turn...`;
+                input.disabled = true;
+                btn.disabled = true;
+
+                if (gameState.mode === 'ai') {
+                    setTimeout(triggerAITurn, 800);
+                }
+            }
+        }
+
+        function handleWordSubmit(event) {
+            event.preventDefault();
+            if (!gameState.isMyTurn || gameState.isGameOver) return;
+
+            const inputField = document.getElementById('wordInput');
+            const word = inputField.value.trim().toLowerCase();
+            inputField.value = '';
+
+            if (!word) return;
+
+            if (gameState.lastWord && word.charAt(0) !== gameState.requiredLetter.toLowerCase()) {
+                playSound('error');
+                showGameMessage(`Word must start with letter "${gameState.requiredLetter}"!`, "error");
+                return;
+            }
+
+            if (gameState.history.some(item => item.word === word)) {
+                playSound('error');
+                showGameMessage(`"${word.toUpperCase()}" has already been played in this match!`, "error");
+                return;
+            }
+
+            const validation = validateWordFast(word);
+            if (!validation.valid) {
+                playSound('error');
+                showGameMessage(validation.message, "error");
+                return;
+            }
+
+            playSound('success');
+            showGameMessage(`Great word! +10 pts`, "success");
+
+            gameState.score += 10 + (gameState.streak * 2);
+            gameState.streak++;
+            if (gameState.streak > gameState.maxStreak) gameState.maxStreak = gameState.streak;
+            gameState.wordsPlayedCount++;
+
+            gameState.lastWord = word;
+            gameState.requiredLetter = word.slice(-1).toUpperCase();
+
+            appendHistoryItem(gameState.playerName, word, 'success');
+            updateHUD();
+
+            if (gameState.mode === 'ai') {
+                setTurn(false);
+            } else if (gameState.mode === 'multiplayer') {
+                sendPeerMessage({
+                    type: 'PLAY_WORD',
+                    word: word,
+                    score: gameState.score,
+                    streak: gameState.streak,
+                    sender: gameState.playerName
+                });
+                setTurn(false);
+            }
+        }
+        window.handleWordSubmit = handleWordSubmit;
+
+        function triggerAITurn() {
+            if (gameState.isGameOver) return;
+            const lastLtr = gameState.requiredLetter.toLowerCase();
+
+            let candidate = AI_WORDS_DATABASE.find(w => w.startsWith(lastLtr) && !gameState.history.some(h => h.word === w));
+
+            if (!candidate) {
+                candidate = lastLtr + "ing";
+            }
+
+            gameState.rivalScore += 10;
+            gameState.wordsPlayedCount++;
+            gameState.lastWord = candidate;
+            gameState.requiredLetter = candidate.slice(-1).toUpperCase();
+
+            appendHistoryItem(gameState.rivalName, candidate, 'ai');
+            updateHUD();
+            playSound('success');
+            showGameMessage(`${gameState.rivalName} played "${candidate.toUpperCase()}"`, "info");
+
+            setTurn(true);
+        }
+
+        function updateHUD() {
+            document.getElementById('hudScore').innerText = gameState.score;
+            document.getElementById('hudStreak').innerText = gameState.streak;
+            document.getElementById('hudRequiredLetter').innerText = gameState.requiredLetter;
+            document.getElementById('lastWordDisplay').innerText = gameState.lastWord.toUpperCase();
+            document.getElementById('lastWordAuthor').innerText = `Last played word`;
+            document.getElementById('p1ScoreVal').innerText = gameState.score;
+            document.getElementById('p2ScoreVal').innerText = gameState.rivalScore;
+            document.getElementById('wordCountBadge').innerText = `${gameState.wordsPlayedCount} words played`;
+        }
+
+        function appendHistoryItem(author, word, type) {
+            gameState.history.push({ author, word });
+            const list = document.getElementById('wordHistoryList');
+            if (list.querySelector('.text-center')) {
+                list.innerHTML = '';
+            }
+            const item = document.createElement('div');
+            item.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-900 border border-gray-800 text-sm animate-fade-in";
+            item.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-brand-500' : type === 'ai' ? 'bg-cyan-500' : 'bg-purple-500'}"></span>
+                    <span class="font-mono font-bold text-white uppercase">${word}</span>
+                </div>
+                <span class="text-xs text-gray-400">${author}</span>
+            `;
+            list.prepend(item);
+        }
+
+        function showGameMessage(msg, type) {
+            const el = document.getElementById('gameMessage');
+            el.classList.remove('hidden');
+            el.innerText = msg;
+            if (type === 'error') {
+                el.className = "p-3 rounded-xl text-sm font-medium mb-4 text-center bg-red-500/20 text-red-300 border border-red-500/30";
+            } else if (type === 'success') {
+                el.className = "p-3 rounded-xl text-sm font-medium mb-4 text-center bg-green-500/20 text-green-300 border border-green-500/30";
+            } else {
+                el.className = "p-3 rounded-xl text-sm font-medium mb-4 text-center bg-brand-500/20 text-brand-300 border border-brand-500/30";
+            }
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 3000);
+        }
+
+        function restartCurrentMode() {
+            if (gameState.mode === 'ai') {
+                startAGame();
+            } else {
+                showMultiplayerLobby();
+            }
+        }
+        window.restartCurrentMode = restartCurrentMode;
+
+        let peer = null;
+        let conn = null;
+        let roomCode = '';
+        let isHost = false;
+
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        
+function createRoom() {
+    const nameInput = document.getElementById('mpPlayerName').value.trim();
+    if (nameInput) gameState.playerName = nameInput;
+
+    roomCode = generateRoomCode();
+    isHost = true;
+
+    const peerId = `wa-${roomCode.toLowerCase()}-host`;
+
+    if (peer) peer.destroy();
+
+    peer = new Peer(peerId, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        debug: 2
+    });
+
+    peer.on('open', () => {
+        hideAllViews();
+        document.getElementById('waitingRoomView').classList.remove('hidden');
+        document.getElementById('displayRoomCode').innerText = roomCode;
+        document.getElementById('hostControls').classList.remove('hidden');
+        document.getElementById('guestWaitingText').classList.remove('hidden');
+        document.getElementById('guestWaitingText').innerText =
+            'Waiting for a friend to join...';
+    });
+
+    peer.on('connection', (connection) => {
+        if (conn) conn.close();
+
+        conn = connection;
+        setupPeerConnection();
+
+        document.getElementById('guestWaitingText').innerText =
+            'Friend connected! Ready to play.';
+
+        document.getElementById('guestWaitingText').classList.remove('hidden');
+    });
+
+    peer.on('error', (err) => {
+        console.error('Host Peer Error:', err);
+        alert('Room connection error: ' + err.type);
+    });
+
+    peer.on('disconnected', () => {
+        console.warn('Host disconnected from signaling server.');
+    });
+}
+
+window.createRoom = createRoom;
+
+
+       
+function joinRoom() {
+    const codeInput = document.getElementById('joinCodeInput')
+        .value.trim().toUpperCase();
+
+    const nameInput = document.getElementById('mpPlayerName')
+        .value.trim();
+
+    if (nameInput) gameState.playerName = nameInput;
+
+    if (!/^[A-Z0-9]{6}$/.test(codeInput)) {
+        alert('Please enter a valid 6-character room code.');
+        return;
+    }
+
+    roomCode = codeInput;
+    isHost = false;
+
+    if (peer) peer.destroy();
+
+    const myPeerId =
+        `wa-guest-${Math.random().toString(36).substring(2, 10)}`;
+
+    peer = new Peer(myPeerId, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        debug: 2
+    });
+
+    peer.on('open', () => {
+        hideAllViews();
+
+        document.getElementById('waitingRoomView').classList.remove('hidden');
+        document.getElementById('displayRoomCode').innerText = roomCode;
+        document.getElementById('hostControls').classList.add('hidden');
+
+        const waiting = document.getElementById('guestWaitingText');
+        waiting.classList.remove('hidden');
+        waiting.innerText = 'Connecting to host...';
+
+        const hostPeerId = `wa-${roomCode.toLowerCase()}-host`;
+
+        conn = peer.connect(hostPeerId, {
+            reliable: true
+        });
+
+        setupPeerConnection();
+
+        conn.on('open', () => {
+            waiting.innerText = 'Connected! Waiting for host to start.';
+        });
+
+        conn.on('error', (err) => {
+            console.error('Guest connection error:', err);
+            waiting.innerText = 'Connection failed: ' + err;
+        });
+    });
+
+    peer.on('error', (err) => {
+        console.error('Guest Peer Error:', err);
+
+        document.getElementById('guestWaitingText').innerText =
+            'Unable to join room: ' + err.type;
+    });
+
+    peer.on('disconnected', () => {
+        console.warn('Guest disconnected from signaling server.');
+    });
+}
+
+window.joinRoom = joinRoom;
+
+
+        function simulateMultiplayerFallback() {
+            roomCode = roomCode || "DEMO99";
+            isHost = true;
+            hideAllViews();
+            document.getElementById('waitingRoomView').classList.remove('hidden');
+            document.getElementById('displayRoomCode').innerText = roomCode;
+            document.getElementById('hostControls').classList.remove('hidden');
+            document.getElementById('guestWaitingText').classList.add('hidden');
+            showGameMessage("Room initialized in local P2P simulation mode.", "success");
+        }
+
+        
+function setupPeerConnection() {
+    if (!conn) return;
+
+    conn.on('open', () => {
+        console.log('P2P connection established!');
+
+        if (!isHost) {
+            conn.send({
+                type: 'JOIN',
+                name: gameState.playerName
+            });
+        } else {
+            conn.send({
+                type: 'ACK',
+                name: gameState.playerName
+            });
+        }
+    });
+
+    conn.on('data', (data) => {
+        console.log('Received:', data);
+        handlePeerData(data);
+    });
+
+    conn.on('close', () => {
+        console.warn('P2P connection closed.');
+
+        alert('Your opponent disconnected.');
+
+        returnToHome();
+    });
+
+    conn.on('error', (err) => {
+        console.error('Data connection error:', err);
+    });
+}
+
+
+        function copyRoomCode() {
+            const code = document.getElementById('displayRoomCode').innerText;
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showGameMessage("Room code copied to clipboard!", "success");
+        }
+        window.copyRoomCode = copyRoomCode;
+
+        function leaveRoom() {
+            if (peer) { peer.destroy(); peer = null; }
+            returnToHome();
+        }
+        window.leaveRoom = leaveRoom;
+
+        function startMultiplayerGame() {
+            const starterWords = ["planet", "garden", "bridge", "castle", "forest"];
+            const initialWord = starterWords[Math.floor(Math.random() * starterWords.length)];
+
+            gameState.mode = 'multiplayer';
+            gameState.score = 0;
+            gameState.streak = 0;
+            gameState.maxStreak = 0;
+            gameState.wordsPlayedCount = 0;
+            gameState.history = [];
+            document.getElementById('wordHistoryList').innerHTML = ''; // Clear history DOM
+            gameState.rivalScore = 0;
+            gameState.isGameOver = false;
+
+            gameState.lastWord = initialWord;
+            gameState.requiredLetter = initialWord.slice(-1).toUpperCase();
+
+            if (conn && conn.open) {
+                conn.send({
+                    type: 'START_GAME',
+                    initialWord: initialWord,
+                    hostName: gameState.playerName
+                });
+            } else {
+                showGameMessage("Simulation mode active: Launching solo online match.", "info");
+            }
+
+            launchMultiplayerArena(false);
+        }
+        window.startMultiplayerGame = startMultiplayerGame;
+
+        function launchMultiplayerArena(isGuestTurn) {
+            hideAllViews();
+            document.getElementById('gameArenaView').classList.remove('hidden');
+            document.getElementById('chatContainer').classList.remove('hidden');
+            document.getElementById('matchModeBadge').innerText = `Online Friend (${roomCode})`;
+            document.getElementById('playerOneNameLabel').innerText = gameState.playerName;
+            document.getElementById('rivalNameLabel').innerText = gameState.rivalName;
+            document.getElementById('rivalAvatar').innerText = 'P2';
+
+            updateHUD();
+            appendHistoryItem('System', gameState.lastWord, 'AI Starter');
+            setTurn(!isGuestTurn);
+        }
+
+        function handlePeerData(data) {
+            if (data.type === 'JOIN' || data.type === 'ACK') {
+                if (data.name) {
+                    gameState.rivalName = data.name;
+                    document.getElementById('rivalNameLabel').innerText = data.name;
+                }
+                showGameMessage("Player joined the room successfully!", "success");
+            } else if (data.type === 'START_GAME') {
+                gameState.mode = 'multiplayer';
+                gameState.score = 0;
+                gameState.streak = 0;
+                gameState.maxStreak = 0;
+                gameState.wordsPlayedCount = 0;
+                gameState.history = [];
+                document.getElementById('wordHistoryList').innerHTML = ''; // Clear history DOM
+                gameState.rivalScore = 0;
+                gameState.isGameOver = false;
+
+                gameState.lastWord = data.initialWord;
+                gameState.requiredLetter = data.initialWord.slice(-1).toUpperCase();
+                if (data.hostName) {
+                    gameState.rivalName = data.hostName;
+                }
+
+                launchMultiplayerArena(true);
+            } else if (data.type === 'PLAY_WORD') {
+                gameState.rivalScore = data.score;
+                gameState.wordsPlayedCount++;
+                gameState.lastWord = data.word;
+                gameState.requiredLetter = data.word.slice(-1).toUpperCase();
+
+                appendHistoryItem(data.sender, data.word, 'success');
+                updateHUD();
+                playSound('success');
+                setTurn(true);
+            } else if (data.type === 'CHAT') {
+                appendChatMessage(data.sender, data.text);
+            }
+        }
+
+        function sendPeerMessage(msg) {
+            if (conn && conn.open) {
+                conn.send(msg);
+            }
+        }
+
+        function sendChatMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            appendChatMessage('You', text);
+            sendPeerMessage({ type: 'CHAT', sender: gameState.playerName, text: text });
+        }
+        window.sendChatMessage = sendChatMessage;
+
+        function appendChatMessage(sender, text) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.innerHTML = `<span class="font-bold text-cyan-400">${sender}:</span> <span class="text-gray-300">${text}</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function quitGame() {
+            showGameMessage("Match surrendered. Returning to main menu...", "error");
+            setTimeout(() => {
+                returnToHome();
+            }, 1000);
+        }
+        window.quitGame = quitGame;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            const startBtn = document.getElementById('startMultiplayerBtn');
+            if (startBtn) {
+                startBtn.addEventListener('click', startMultiplayerGame);
+            }
+
+            const quitBtn = document.getElementById('quitGameBtn');
+            if (quitBtn) {
+                quitBtn.addEventListener('click', quitGame);
+            }
+        });
+    </script>
+</body>
+</html>
