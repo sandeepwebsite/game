@@ -1,3 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#030712">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PlayPod">
+
+<title>PlayPod - Instant Play Games</title>
+
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        accent: '#06b6d4',
+        darkBg: '#030712',
+        cardBg: '#0f172a'
+      }
+    }
+  }
+}
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  font-family: Inter, sans-serif;
+  background: #030712;
+  color: #f8fafc;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+.game-card {
+  background: linear-gradient(145deg, #111c32, #0b1220);
+  border: 1px solid #1e293b;
+  border-radius: 22px;
+  transition: .25s;
+  min-height: 135px;
+  overflow: hidden;
+}
+
+.game-card:hover {
+  border-color: #06b6d4;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px #06b6d420;
+}
+
+.game-card:active {
+  transform: scale(.97);
+}
+
+.game-card a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 135px;
+  padding: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.category-btn.active {
+  background: #06b6d4;
+  color: #020617;
+  border-color: #06b6d4;
+}
+
+#installPopup {
+  animation: slideUp .4s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hidden-popup {
+  display: none !important;
+}
+</style>
+</head>
+
+<body class="min-h-screen pb-24">
+
+<header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800">
+
+  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+
+    <a href="./" class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-2xl shadow-lg shadow-cyan-500/20">
+        ⚡
+      </div>
+
+      <div>
+        <h1 class="font-black text-lg tracking-wider bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          PLAYPOD
+        </h1>
+        <p class="text-[9px] text-slate-400 font-bold tracking-widest">
+          INSTANT PLAY
+        </p>
+      </div>
+    </a>
+
+    <button onclick="openRandomGame()"
+      class="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-xl px-3 py-2 text-xs font-bold">
+      🎲 Random
+    </button>
+
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 pb-3">
+    <input
+      id="gameSearch"
+      type="search"
+      placeholder="🔍 Search your favorite games..."
+      oninput="filterGames()"
+      class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-sm outline-none focus:border-cyan-500"
+    >
+  </div>
+
+</header>
+
+<main class="max-w-7xl mx-auto px-3 sm:px-6 py-6">
+
+  <section class="mb-6 rounded-3xl border border-cyan-500/20 p-6 sm:p-8 bg-gradient-to-br from-cyan-950/50 via-slate-900 to-blue-950/40">
+
+    <span class="text-cyan-400 text-xs font-black tracking-widest">
+      WELCOME TO THE ARCADE
+    </span>
+
+    <h2 class="text-3xl sm:text-4xl font-black mt-3 leading-tight">
+      Play More.<br>
+      <span class="text-cyan-400">Game On!</span>
+    </h2>
+
+    <p class="text-sm text-slate-400 mt-3">
+      Discover exciting mini games. No downloads required.
+    </p>
+
+    <div class="flex gap-3 mt-5">
+      <span class="text-xs bg-slate-950/60 border border-slate-700 px-3 py-2 rounded-xl">
+        🎮 <span id="totalGames">24</span> Games
+      </span>
+      <span class="text-xs bg-slate-950/60 border border-slate-700 px-3 py-2 rounded-xl">
+        ⚡ Instant Play
+      </span>
+    </div>
+
+  </section>
+
+  <div class="flex gap-2 overflow-x-auto pb-4 mb-3" id="categories">
+
+    <button class="category-btn active shrink-0 border border-slate-700 bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold"
+      onclick="filterCategory('all',this)">
+      🔥 All Games
+    </button>
+
+    <button class="category-btn shrink-0 border border-slate-700 bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold"
+      onclick="filterCategory('action',this)">
+      ⚡ Action
+    </button>
+
+    <button class="category-btn shrink-0 border border-slate-700 bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold"
+      onclick="filterCategory('puzzle',this)">
+      🧩 Puzzle
+    </button>
+
+    <button class="category-btn shrink-0 border border-slate-700 bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold"
+      onclick="filterCategory('race',this)">
+      🚀 Racing & Runner
+    </button>
+
+  </div>
+
+  <div id="gameGrid"
+    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+  </div>
+
+  <div id="noResults" class="hidden text-center py-16">
+    <div class="text-5xl">🔍</div>
+    <h3 class="font-bold mt-3">No Games Found</h3>
+    <p class="text-sm text-slate-400 mt-1">Try another search.</p>
+  </div>
+
+</main>
+   
+   
+   
     <!-- Main Content Area -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-6">
 
