@@ -76,6 +76,8 @@ button{
  flex-direction:column;align-items:center;
 }
 
+/* BOARD */
+
 .board-wrap{
  position:relative;width:min(97vw,640px);
  margin:16px auto 22px;
@@ -176,6 +178,12 @@ button{
  text-align:center;
 }
 
+/* HIDE PANEL */
+
+.panel{
+ display:none !important;
+}
+
 .turn{
  font-size:22px;font-weight:900;margin:6px;
 }
@@ -268,34 +276,157 @@ button:disabled{opacity:.4;cursor:not-allowed}
  flex-shrink:0;
 }
 
+/* FINAL LEADERBOARD POPUP */
+
+.leaderboard-overlay{
+ position:fixed;
+ inset:0;
+ z-index:9999;
+ background:rgba(2,6,23,.88);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:18px;
+}
+
+.leaderboard-overlay.show{
+ display:flex;
+}
+
+.leaderboard-modal{
+ width:min(94vw,390px);
+ max-height:85dvh;
+ overflow-y:auto;
+ background:linear-gradient(145deg,#26364c,#172033);
+ border:2px solid #facc15;
+ border-radius:20px;
+ padding:20px;
+ box-shadow:0 20px 60px #000b;
+ animation:leaderboardPop .3s ease-out;
+}
+
+@keyframes leaderboardPop{
+ from{opacity:0;transform:scale(.8) translateY(20px)}
+ to{opacity:1;transform:scale(1) translateY(0)}
+}
+
+.leaderboard-heading{
+ text-align:center;
+ color:#facc15;
+ font-size:25px;
+ font-weight:1000;
+ margin-bottom:5px;
+}
+
+.leaderboard-subtitle{
+ text-align:center;
+ color:#cbd5e1;
+ font-size:12px;
+ margin-bottom:18px;
+}
+
+.leaderboard-modal .ranking-card{
+ background:#101827;
+ border:1px solid #475569;
+}
+
+.leaderboard-modal .rank-row{
+ padding:13px 7px;
+ font-size:14px;
+}
+
+.leaderboard-actions{
+ display:flex;
+ gap:10px;
+ margin-top:18px;
+}
+
+.leaderboard-actions button{
+ flex:1;
+ padding:13px 8px;
+ font-size:13px;
+}
+
+.popup-restart{
+ background:#facc15;
+ color:#172033;
+}
+
+.popup-home{
+ background:#2563eb;
+ color:white;
+}
+
 /* MOBILE */
 
 @media(max-width:480px){
+
+ html,body{
+  min-height:100%;
+  min-height:100dvh;
+ }
+
+ body{
+  min-height:100dvh;
+ }
+
  header{padding:7px 5px 2px}
  h1{font-size:24px}
  .subtitle{font-size:10px}
- .board-wrap{width:97vw;margin:10px auto 15px}
+
+ /* CENTER BOARD VERTICALLY */
+
+ #gameSection{
+  display:none;
+  flex:1;
+  width:100%;
+  min-height:calc(100dvh - 54px);
+  justify-content:center;
+  align-items:center;
+  padding:0;
+ }
+
+ #gameSection[style*="display: flex"]{
+  display:flex !important;
+ }
+
+ .board-wrap{
+  width:97vw;
+  margin:0 auto;
+ }
+
  .board{border:4px solid #263b54;border-radius:8px}
+
  .dice{width:48px;height:48px}
  .cube,.face{width:43px;height:43px}
  .face{padding:5px}
+
  .front{transform:translateZ(21.5px)}
  .back{transform:rotateY(180deg) translateZ(21.5px)}
  .right{transform:rotateY(90deg) translateZ(21.5px)}
  .left{transform:rotateY(-90deg) translateZ(21.5px)}
  .top{transform:rotateX(90deg) translateZ(21.5px)}
  .bottom{transform:rotateX(-90deg) translateZ(21.5px)}
+
  .panel{width:94vw;margin:3px auto 20px;padding:12px}
  .turn{font-size:20px}
  #message{font-size:12px}
 }
 
 @media(max-width:350px){
+
  h1{font-size:21px}
- .board-wrap{width:98vw;margin:8px auto 12px}
+
+ #gameSection{
+  min-height:calc(100dvh - 49px);
+ }
+
+ .board-wrap{width:98vw;margin:0 auto}
+
  .dice{width:43px;height:43px}
  .cube,.face{width:39px;height:39px}
  .face{padding:4px}
+
  .front{transform:translateZ(19.5px)}
  .back{transform:rotateY(180deg) translateZ(19.5px)}
  .right{transform:rotateY(90deg) translateZ(19.5px)}
@@ -344,7 +475,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
   </div>
  </div>
 
- <div class="panel" style="display: none">
+ <!-- HIDDEN PANEL -->
+
+ <div class="panel">
 
   <div style="font-size:12px;color:#94a3b8">
    CURRENT TURN
@@ -352,7 +485,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
   <div id="turn" class="turn">Red Player</div>
 
-  <button id="rollBtn" class="roll-btn" onclick="rollDice()" style="display: none">
+  <button id="rollBtn" class="roll-btn" onclick="rollDice()" style="display:none">
    ROLL DICE
   </button>
 
@@ -370,6 +503,36 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
  </div>
 </section>
+
+<!-- FINAL LEADERBOARD POPUP -->
+
+<div class="leaderboard-overlay" id="leaderboardPopup">
+
+ <div class="leaderboard-modal">
+
+  <div class="leaderboard-heading">🏆 GAME OVER!</div>
+
+  <div class="leaderboard-subtitle">
+   All player positions have been decided
+  </div>
+
+  <div id="finalLeaderboardContent"></div>
+
+  <div class="leaderboard-actions">
+
+   <button class="popup-restart" onclick="restartFromPopup()">
+    ↻ RESTART
+   </button>
+
+   <button class="popup-home" onclick="homeFromPopup()">
+    ⌂ HOME
+   </button>
+
+  </div>
+
+ </div>
+
+</div>
 
 <script>
 
@@ -550,6 +713,8 @@ function backToSetup(){
 
  clearGameTimers();
 
+ document.getElementById("leaderboardPopup").classList.remove("show");
+
  document.getElementById("gameSection").style.display="none";
  document.getElementById("setupSection").style.display="block";
 }
@@ -580,6 +745,8 @@ function newGame(n=4,colorSelection=[0,1,2,3]){
 
  clearGameTimers();
 
+ document.getElementById("leaderboardPopup").classList.remove("show");
+
  playerCount=n;
  current=0;
  diceValue=0;
@@ -603,6 +770,7 @@ function newGame(n=4,colorSelection=[0,1,2,3]){
  document.getElementById("message").classList.remove("bonus-message");
 
  document.getElementById("rankings").innerHTML="";
+ document.getElementById("finalLeaderboardContent").innerHTML="";
 
  render();
 }
@@ -682,7 +850,7 @@ function renderBoard(){
  });
 
 
- /* CENTER */
+ /* CENTER HOME */
 
  s+=`<path d="M240 240 L360 240 L300 300 Z" fill="#16a34a"/>`;
  s+=`<path d="M360 240 L360 360 L300 300 Z" fill="#eab308"/>`;
@@ -870,6 +1038,49 @@ function renderBoard(){
     </g>
    `;
   });
+ });
+
+
+ /* CENTRAL RANK LABELS - DRAWN AFTER TOKENS */
+
+ const centerPositions={
+  Red:[270,300],
+  Green:[300,270],
+  Yellow:[330,300],
+  Blue:[300,330]
+ };
+
+ rankings.forEach(player=>{
+
+  const [x,y]=centerPositions[player.name];
+
+  const suffix=
+   player.rank===1?"1ST":
+   player.rank===2?"2ND":
+   player.rank===3?"3RD":"4TH";
+
+  s+=`
+   <g pointer-events="none">
+    <circle
+     cx="${x}" cy="${y}"
+     r="17"
+     fill="#172033"
+     stroke="${player.fill}"
+     stroke-width="3"/>
+
+    <text
+     x="${x}" y="${y+4}"
+     text-anchor="middle"
+     font-size="10"
+     font-weight="900"
+     fill="white"
+     stroke="#172033"
+     stroke-width=".5"
+     paint-order="stroke">
+     ${suffix}
+    </text>
+   </g>
+  `;
  });
 
  document.getElementById("board").innerHTML=s;
@@ -1144,7 +1355,9 @@ function declarePlayerRank(pi){
 
  const p=players[pi];
 
- if(p.finished)return;
+ if(p.finished || gameOver)return;
+
+ /* GIVE FINISHING PLAYER THEIR RANK */
 
  p.finished=true;
  p.rank=rankings.length+1;
@@ -1155,30 +1368,36 @@ function declarePlayerRank(pi){
   rank:p.rank
  });
 
- const positions=[
-  "🥇 1st Place",
-  "🥈 2nd Place",
-  "🥉 3rd Place"
- ];
+ const targetRank=players.length-1;
 
- /* THIRD PLAYER FINISHES:
-    LAST PLAYER AUTOMATICALLY GETS FOURTH */
+ /*
+ 2 PLAYERS: STOP AFTER 1ST
+ 3 PLAYERS: STOP AFTER 2ND
+ 4 PLAYERS: STOP AFTER 3RD
+ */
 
- if(rankings.length===3){
+ if(rankings.length>=targetRank){
 
-  const lastPlayer=players.find(player=>!player.finished);
+  /* AUTOMATICALLY ASSIGN LAST REMAINING POSITION */
 
-  if(lastPlayer){
+  players.forEach(player=>{
 
-   lastPlayer.finished=true;
-   lastPlayer.rank=4;
+   if(!player.finished){
 
-   rankings.push({
-    name:lastPlayer.name,
-    fill:lastPlayer.fill,
-    rank:4
-   });
-  }
+    player.finished=true;
+    player.rank=rankings.length+1;
+
+    rankings.push({
+     name:player.name,
+     fill:player.fill,
+     rank:player.rank
+    });
+
+   }
+
+  });
+
+  /* STOP THE ENTIRE GAME */
 
   gameOver=true;
   animating=false;
@@ -1187,25 +1406,30 @@ function declarePlayerRank(pi){
 
   current=pi;
 
-  render();
-  showFinalRanking();
+  clearGameTimers();
 
   document.getElementById("message").classList.add("bonus-message");
 
   document.getElementById("message").textContent=
-   "🏆 ALL FOUR POSITIONS DECIDED!";
+   "🏆 ALL POSITIONS DECIDED! GAME OVER!";
+
+  render();
+  showFinalRanking();
 
   return;
  }
 
- /* FIRST OR SECOND PLACE */
+ /* GAME CONTINUES FOR NEXT ACTIVE PLAYER */
+
+ const suffix=
+  p.rank===1?"1ST":
+  p.rank===2?"2ND":
+  p.rank===3?"3RD":"4TH";
 
  document.getElementById("message").classList.add("bonus-message");
 
  document.getElementById("message").textContent=
-  `🏆 ${p.name.toUpperCase()} SECURED ${positions[p.rank-1]}!`;
-
- /* SKIP FINISHED PLAYER */
+  `🏆 ${p.name.toUpperCase()} SECURED ${suffix} PLACE!`;
 
  current=getNextActivePlayer(pi);
 
@@ -1214,7 +1438,7 @@ function declarePlayerRank(pi){
 }
 
 
-/* RANKING DISPLAY */
+/* RANKING DISPLAY + FINAL POPUP */
 
 function showFinalRanking(){
 
@@ -1226,7 +1450,6 @@ function showFinalRanking(){
    <div class="ranking-title">
     🏆 PLAYER RANKINGS
    </div>
-
  `;
 
  rankings.forEach(player=>{
@@ -1257,48 +1480,39 @@ function showFinalRanking(){
   `;
  });
 
- /* SHOW REMAINING PLAYERS */
+ html+=`</div>`;
 
- players.forEach(player=>{
+ /* UPDATE HIDDEN GAME RANKINGS */
 
-  if(!player.finished){
+ document.getElementById("rankings").innerHTML=html;
 
-   html+=`
-    <div class="rank-row">
-
-     <div class="rank-player" style="color:${player.fill}">
-      <span class="rank-number">⏳</span>
-      <span>${player.name}</span>
-     </div>
-
-     <span class="rank-status">PLAYING</span>
-
-    </div>
-   `;
-  }
- });
+ /* SHOW POPUP ONLY WHEN GAME IS OVER */
 
  if(gameOver){
 
-  html+=`
+  document.getElementById("finalLeaderboardContent").innerHTML=`
+   ${html}
+
    <div class="winner-banner" style="margin-top:12px">
-    🏆 GAME COMPLETED<br>
+    🏆 GAME COMPLETED!
+    <br>
     <span style="font-size:12px">
-     All four positions have been decided!
+     All ${players.length} positions have been decided!
     </span>
    </div>
   `;
+
+  document.getElementById("leaderboardPopup")
+   .classList.add("show");
  }
-
- html+=`</div>`;
-
- document.getElementById("rankings").innerHTML=html;
 }
 
 
 /* FINISH MOVE */
 
 function finishMove(pi,ti,rolled){
+
+ if(gameOver)return;
 
  const p=players[pi];
 
@@ -1373,6 +1587,25 @@ function finishMove(pi,ti,rolled){
  }
 
  render();
+}
+
+
+/* FINAL POPUP BUTTONS */
+
+function restartFromPopup(){
+
+ document.getElementById("leaderboardPopup")
+  .classList.remove("show");
+
+ restartGame();
+}
+
+function homeFromPopup(){
+
+ document.getElementById("leaderboardPopup")
+  .classList.remove("show");
+
+ backToSetup();
 }
 
 
